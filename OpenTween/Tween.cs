@@ -4800,13 +4800,11 @@ namespace OpenTween
 
         public bool RemoveSpecifiedTab(string TabName, bool confirm)
         {
-            int idx = 0;
-            for (idx = 0; idx < ListTab.TabPages.Count; idx++)
+            if (_statuses.IsDefaultTab(TabName) || _statuses.Tabs[TabName].Protected)
             {
-                if (ListTab.TabPages[idx].Text == TabName) break;
+                ClearTab(TabName, true);
+                return false;
             }
-
-            if (_statuses.IsDefaultTab(TabName) || _statuses.Tabs[TabName].Protected) return false;
 
             if (confirm)
             {
@@ -4816,6 +4814,12 @@ namespace OpenTween
                 {
                     return false;
                 }
+            }
+
+            int idx = 0;
+            for (idx = 0; idx < ListTab.TabPages.Count; idx++)
+            {
+                if (ListTab.TabPages[idx].Text == TabName) break;
             }
 
             SetListProperty();   //他のタブに列幅等を反映
