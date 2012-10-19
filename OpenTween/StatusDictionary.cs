@@ -2248,6 +2248,7 @@ namespace OpenTween
         private List<FiltersClass> _filters;
         private int _unreadCount = 0;
         private List<long> _ids;
+        private List<long> _recentIds;
         private List<TemporaryId> _tmpIds = new List<TemporaryId>();
         private MyCommon.TabUsageType _tabType = MyCommon.TabUsageType.Undefined;
 
@@ -2408,6 +2409,7 @@ namespace OpenTween
             SoundFile = "";
             _unreadManage = true;
             _ids = new List<long>();
+            _recentIds = new List<long>();
             this.OldestUnreadId = -1;
             _tabType = MyCommon.TabUsageType.Undefined;
             _listInfo = null;
@@ -2585,6 +2587,14 @@ namespace OpenTween
         public void AddPostToInnerStorage(PostClass Post)
         {
             if (Posts.ContainsKey(Post.StatusId)) return;
+
+            if (_tabType == MyCommon.TabUsageType.UserTimeline ||
+                _tabType == MyCommon.TabUsageType.Lists)
+            {
+                if (_recentIds.Contains(Post.StatusId)) return;
+                _recentIds.Add(Post.StatusId);
+            }
+
             Posts.Add(Post.StatusId, Post);
             _tmpIds.Add(new TemporaryId(Post.StatusId, Post.IsRead));
         }
@@ -2777,6 +2787,21 @@ namespace OpenTween
 
         public void ClearIDs()
         {
+            if (_tabType == MyCommon.TabUsageType.UserTimeline ||
+                _tabType == MyCommon.TabUsageType.Lists)
+            {
+                var ProtectCount = (_tabType == MyCommon.TabUsageType.UserTimeline) ?
+                    AppendSettingDialog.Instance.UserTimelineCountApi : AppendSettingDialog.Instance.ListCountApi;
+                if (_recentIds.Count > ProtectCount)
+                {
+                    _recentIds.Sort();
+                    _recentIds.RemoveRange(0, _recentIds.Count - ProtectCount);
+                }
+            }
+            else
+            {
+                _recentIds.Clear();
+            }
             _ids.Clear();
             _tmpIds.Clear();
             _unreadCount = 0;
