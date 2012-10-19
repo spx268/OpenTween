@@ -74,7 +74,7 @@ namespace OpenTween
         private const string detailHtmlFormat2 = "\", sans-serif; font-size: ";
         private const string detailHtmlFormat3 = "pt; margin: 0; word-wrap: break-word; color:rgb(";
         private const string detailHtmlFormat4 = ");} a:link, a:visited, a:active, a:hover {color:rgb(";
-        private const string detailHtmlFormat5 = "); } --></style></head><body style=\"margin:0px; background-color:rgb(";
+        private const string detailHtmlFormat5 = ");} html {overflow-y: scroll;} --></style></head><body style=\"margin:0px; background-color:rgb(";
         private const string detailHtmlFormatMono6 = ");\"><pre>";
         private const string detailHtmlFormatMono7 = "</pre></body></html>";
         private const string detailHtmlFormat1 = "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\"><style type=\"text/css\"><!-- p {font-family: \"";
