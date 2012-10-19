@@ -2044,25 +2044,37 @@ namespace OpenTween
             //不要なPostを削除
             lock (LockObj)
             {
-                if (!_tabs[TabName].IsInnerStorageTabType)
+                //指定タブをクリア
+                var tbc = _tabs[TabName];
+                tbc.ClearIDs();
+
+                if (!tbc.IsInnerStorageTabType)
                 {
-                    foreach (var Id in _tabs[TabName].BackupIds)
+                    var ProtectCount = AppendSettingDialog.Instance.CountApi;
+                    if (_statuses.Keys.Count > ProtectCount)
                     {
-                        var Hit = false;
-                        foreach (var tb in _tabs.Values)
+                        var oldIds = _statuses.Keys.ToList();
+                        oldIds.Sort();
+                        oldIds.RemoveRange(oldIds.Count - ProtectCount, ProtectCount);
+
+                        foreach (var Id in oldIds)
                         {
-                            if (tb.Contains(Id))
+                            if (!_statuses[Id].IsReply)
                             {
-                                Hit = true;
-                                break;
+                                var Hit = false;
+                                foreach (var tb in _tabs.Values)
+                                {
+                                    if (tb != tbc && !tb.IsInnerStorageTabType && tb.Contains(Id))
+                                    {
+                                        Hit = true;
+                                        break;
+                                    }
+                                }
+                                if (!Hit) _statuses.Remove(Id);
                             }
                         }
-                        if (!Hit) _statuses.Remove(Id);
                     }
                 }
-
-                //指定タブをクリア
-                _tabs[TabName].ClearIDs();
             }
         }
 
