@@ -43,6 +43,7 @@ using System.Reflection;
 using System.Threading;
 using System.Media;
 using System.Web;
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using OpenTween.Thumbnail;
 
@@ -85,6 +86,7 @@ namespace OpenTween
         private bool _myStatusOnline = false;
         private bool soundfileListup = false;
         private SpaceKeyCanceler _spaceKeyCanceler;
+        private FormSnapper _formSnapper;
         private FormWindowState _formWindowState = FormWindowState.Normal; // フォームの状態保存用 通知領域からアイコンをクリックして復帰した際に使用する
 
         //設定ファイル関連
@@ -331,6 +333,109 @@ namespace OpenTween
             }
         }
 
+        private class FormSnapper : NativeWindow, IDisposable
+        {
+            //作業領域へのウィンドウスナップ用
+            const int WM_WINDOWPOSCHANGING = 0x0046;
+            const int WM_ENTERSIZEMOVE     = 0x0231;
+            const int WM_EXITSIZEMOVE      = 0x0232;
+            const uint SWP_NOSIZE = 0x0001;
+            const uint SWP_NOMOVE = 0x0002;
+            const int SNAPDISTANCE = 10;
+
+            Form _form;
+            bool _enterSizeMove = false;
+
+            [StructLayout(LayoutKind.Sequential)]
+            struct WindowPos
+            {
+                public IntPtr hwnd;
+                public IntPtr hwndInsertAfter;
+                public int x;
+                public int y;
+                public int cx;
+                public int cy;
+                public uint flags;
+            };
+
+            public FormSnapper(Form form)
+            {
+                this._form = form;
+
+                this.AssignHandle(form.Handle);
+            }
+
+            public void Dispose()
+            {
+                this.ReleaseHandle();
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                switch (m.Msg)
+                {
+                    case WM_WINDOWPOSCHANGING:
+                        if (_form.WindowState == FormWindowState.Normal && (Control.ModifierKeys & Keys.Control) == 0)
+                        {
+                            WindowPos wp = (WindowPos)Marshal.PtrToStructure(m.LParam, typeof(WindowPos));
+
+                            if ((wp.flags & SWP_NOMOVE) == 0 && wp.cx != 0 && wp.cy != 0)
+                            {
+                                Rectangle cr = _form.Bounds;
+                                Rectangle wr = Screen.FromHandle(_form.Handle).WorkingArea;
+
+                                bool sizeChanged = _enterSizeMove && (wp.cx != (cr.Right - cr.Left) || wp.cy != (cr.Bottom - cr.Top));
+
+                                if (sizeChanged)
+                                {
+                                    wp.flags &= ~SWP_NOSIZE;
+
+                                    if ((wp.x < wr.Left + SNAPDISTANCE) && (wp.x > wr.Left - SNAPDISTANCE))
+                                    {
+                                        wp.cx += wp.x - wr.Left;
+                                        wp.x = wr.Left;
+                                    }
+                                    if ((wp.y < wr.Top + SNAPDISTANCE) && (wp.y > wr.Top - SNAPDISTANCE))
+                                    {
+                                        wp.cy += wp.y - wr.Top;
+                                        wp.y = wr.Top;
+                                    }
+
+                                    int x = wp.x + wp.cx;
+                                    int y = wp.y + wp.cy;
+                                    if ((x < wr.Right + SNAPDISTANCE) && (x > wr.Right - SNAPDISTANCE)) wp.cx += wr.Right - x;
+                                    if ((y < wr.Bottom + SNAPDISTANCE) && (y > wr.Bottom - SNAPDISTANCE)) wp.cy += wr.Bottom - y;
+                                }
+                                else
+                                {
+                                    int w = wr.Right - wp.cx;
+                                    int h = wr.Bottom - wp.cy;
+                                    if ((wp.x < w + SNAPDISTANCE) && (wp.x > w - SNAPDISTANCE)) wp.x = w;
+                                    if ((wp.y < h + SNAPDISTANCE) && (wp.y > h - SNAPDISTANCE)) wp.y = h;
+
+                                    if ((wp.x < wr.Left + SNAPDISTANCE) && (wp.x > wr.Left - SNAPDISTANCE)) wp.x = wr.Left;
+                                    if ((wp.y < wr.Top + SNAPDISTANCE) && (wp.y > wr.Top - SNAPDISTANCE)) wp.y = wr.Top;
+                                }
+
+                                Marshal.StructureToPtr(wp, m.LParam, false);
+                                return;
+                            }
+                        }
+                        break;
+
+                    case WM_ENTERSIZEMOVE:
+                        _enterSizeMove = true;
+                        break;
+
+                    case WM_EXITSIZEMOVE:
+                        _enterSizeMove = false;
+                        break;
+                }
+
+                base.WndProc(ref m);
+            }
+        }
+
         private void TweenMain_Activated(object sender, EventArgs e)
         {
             //画面がアクティブになったら、発言欄の背景色戻す
@@ -349,6 +454,7 @@ namespace OpenTween
             fltDialog.Dispose();
             UrlDialog.Dispose();
             _spaceKeyCanceler.Dispose();
+            _formSnapper.Dispose();
             if (NIconAt != null) NIconAt.Dispose();
             if (NIconAtRed != null) NIconAtRed.Dispose();
             if (NIconAtSmoke != null) NIconAtSmoke.Dispose();
@@ -560,6 +666,8 @@ namespace OpenTween
 
             this._spaceKeyCanceler = new SpaceKeyCanceler(this.PostButton);
             this._spaceKeyCanceler.SpaceCancel += spaceKeyCanceler_SpaceCancel;
+
+            this._formSnapper = new FormSnapper(this);
 
             Regex.CacheSize = 100;
 
