@@ -5463,34 +5463,34 @@ namespace OpenTween
                 {
                     //選択されていない行
                     //文字色
-                    SolidBrush brs = null;
-                    bool flg = false;
+                    //SolidBrush brs = null;
+                    //bool flg = false;
 
-                    if (e.Item.ForeColor == _clUnread)
-                    {
-                        brs = _brsForeColorUnread;
-                    }
-                    else if (e.Item.ForeColor == _clReaded)
-                    {
-                        brs = _brsForeColorReaded;
-                    }
-                    else if (e.Item.ForeColor == _clFav)
-                    {
-                        brs = _brsForeColorFav;
-                    }
-                    else if (e.Item.ForeColor == _clOWL)
-                    {
-                        brs = _brsForeColorOWL;
-                    }
-                    else if (e.Item.ForeColor == _clRetweet)
-                    {
-                        brs = _brsForeColorRetweet;
-                    }
-                    else
-                    {
-                        brs = new SolidBrush(e.Item.ForeColor);
-                        flg = true;
-                    }
+                    //if (e.Item.ForeColor == _clUnread)
+                    //{
+                    //    brs = _brsForeColorUnread;
+                    //}
+                    //else if (e.Item.ForeColor == _clReaded)
+                    //{
+                    //    brs = _brsForeColorReaded;
+                    //}
+                    //else if (e.Item.ForeColor == _clFav)
+                    //{
+                    //    brs = _brsForeColorFav;
+                    //}
+                    //else if (e.Item.ForeColor == _clOWL)
+                    //{
+                    //    brs = _brsForeColorOWL;
+                    //}
+                    //else if (e.Item.ForeColor == _clRetweet)
+                    //{
+                    //    brs = _brsForeColorRetweet;
+                    //}
+                    //else
+                    //{
+                    //    brs = new SolidBrush(e.Item.ForeColor);
+                    //    flg = true;
+                    //}
 
                     if (rct.Width > 0)
                     {
@@ -5504,7 +5504,7 @@ namespace OpenTween
                                                       e.Item.SubItems[2].Text,
                                                       e.Item.Font,
                                                       Rectangle.Round(rct),
-                                                      brs.Color,
+                                                      e.Item.ForeColor,
                                                       TextFormatFlags.WordBreak |
                                                       TextFormatFlags.EndEllipsis |
                                                       TextFormatFlags.GlyphOverhangPadding |
@@ -5513,7 +5513,7 @@ namespace OpenTween
                                                       e.Item.SubItems[4].Text + " / " + e.Item.SubItems[1].Text + " (" + e.Item.SubItems[3].Text + ") " + e.Item.SubItems[5].Text + e.Item.SubItems[6].Text + " [" + e.Item.SubItems[7].Text + "]",
                                                       fnt,
                                                       Rectangle.Round(rctB),
-                                                      brs.Color,
+                                                      e.Item.ForeColor,
                                                       TextFormatFlags.SingleLine |
                                                       TextFormatFlags.EndEllipsis |
                                                       TextFormatFlags.GlyphOverhangPadding |
@@ -5526,7 +5526,7 @@ namespace OpenTween
                                                   e.SubItem.Text,
                                                   e.Item.Font,
                                                   Rectangle.Round(rct),
-                                                  brs.Color,
+                                                  e.Item.ForeColor,
                                                   TextFormatFlags.SingleLine |
                                                   TextFormatFlags.EndEllipsis |
                                                   TextFormatFlags.GlyphOverhangPadding |
@@ -5540,14 +5540,14 @@ namespace OpenTween
                                                   e.SubItem.Text,
                                                   e.Item.Font,
                                                   Rectangle.Round(rct),
-                                                  brs.Color,
+                                                  e.Item.ForeColor,
                                                   TextFormatFlags.WordBreak |
                                                   TextFormatFlags.EndEllipsis |
                                                   TextFormatFlags.GlyphOverhangPadding |
                                                   TextFormatFlags.NoPrefix);
                         }
                     }
-                    if (flg) brs.Dispose();
+                    //if (flg) brs.Dispose();
                 }
                 else
                 {
