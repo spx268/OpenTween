@@ -122,6 +122,7 @@ namespace OpenTween
         private Color _clFav;               //Fav用文字色
         private Color _clOWL;               //片思い用文字色
         private Color _clRetweet;               //Retweet用文字色
+        private Color _clDeleted;               //削除済み用文字色
         private Font _fntDetail;            //発言詳細部用フォント
         private Color _clDetail;              //発言詳細部用色
         private Color _clDetailLink;          //発言詳細部用リンク文字色
@@ -170,6 +171,7 @@ namespace OpenTween
         private SolidBrush _brsForeColorFav;
         private SolidBrush _brsForeColorOWL;
         private SolidBrush _brsForeColorRetweet;
+        private SolidBrush _brsForeColorDeleted;
         private SolidBrush _brsBackColorMine;
         private SolidBrush _brsBackColorAt;
         private SolidBrush _brsBackColorYou;
@@ -473,6 +475,7 @@ namespace OpenTween
             if (_brsForeColorFav != null) _brsForeColorFav.Dispose();
             if (_brsForeColorOWL != null) _brsForeColorOWL.Dispose();
             if (_brsForeColorRetweet != null) _brsForeColorRetweet.Dispose();
+            if (_brsForeColorDeleted != null) _brsForeColorDeleted.Dispose();
             if (_brsBackColorMine != null) _brsBackColorMine.Dispose();
             if (_brsBackColorAt != null) _brsBackColorAt.Dispose();
             if (_brsBackColorYou != null) _brsBackColorYou.Dispose();
@@ -713,6 +716,7 @@ namespace OpenTween
             _clFav = _cfgLocal.ColorFav;
             _clOWL = _cfgLocal.ColorOWL;
             _clRetweet = _cfgLocal.ColorRetweet;
+            _clDeleted = _cfgLocal.ColorDeleted;
             _fntDetail = _cfgLocal.FontDetail;
             _clDetail = _cfgLocal.ColorDetail;
             _clDetailLink = _cfgLocal.ColorDetailLink;
@@ -733,6 +737,7 @@ namespace OpenTween
             _brsForeColorFav = new SolidBrush(_clFav);
             _brsForeColorOWL = new SolidBrush(_clOWL);
             _brsForeColorRetweet = new SolidBrush(_clRetweet);
+            _brsForeColorDeleted = new SolidBrush(_clDeleted);
             _brsBackColorMine = new SolidBrush(_clSelf);
             _brsBackColorAt = new SolidBrush(_clAtSelf);
             _brsBackColorYou = new SolidBrush(_clTarget);
@@ -1040,11 +1045,13 @@ namespace OpenTween
                 _brsForeColorFav.Dispose();
                 _brsForeColorOWL.Dispose();
                 _brsForeColorRetweet.Dispose();
+                _brsForeColorDeleted.Dispose();
                 _brsForeColorUnread = new SolidBrush(_clUnread);
                 _brsForeColorReaded = new SolidBrush(_clReaded);
                 _brsForeColorFav = new SolidBrush(_clFav);
                 _brsForeColorOWL = new SolidBrush(_clOWL);
                 _brsForeColorRetweet = new SolidBrush(_clRetweet);
+                _brsForeColorDeleted = new SolidBrush(_clDeleted);
                 _brsBackColorMine.Dispose();
                 _brsBackColorAt.Dispose();
                 _brsBackColorYou.Dispose();
@@ -2125,7 +2132,9 @@ namespace OpenTween
             }
             //文字色
             Color cl;
-            if (Post.IsFav)
+            if (Post.IsDeleted)
+                cl = _clDeleted;
+            else if (Post.IsFav)
                 cl = _clFav;
             else if (Post.RetweetedId > 0)
                 cl = _clRetweet;
@@ -4191,11 +4200,13 @@ namespace OpenTween
                     _brsForeColorFav.Dispose();
                     _brsForeColorOWL.Dispose();
                     _brsForeColorRetweet.Dispose();
+                    _brsForeColorDeleted.Dispose();
                     _brsForeColorUnread = new SolidBrush(_clUnread);
                     _brsForeColorReaded = new SolidBrush(_clReaded);
                     _brsForeColorFav = new SolidBrush(_clFav);
                     _brsForeColorOWL = new SolidBrush(_clOWL);
                     _brsForeColorRetweet = new SolidBrush(_clRetweet);
+                    _brsForeColorDeleted = new SolidBrush(_clDeleted);
                     _brsBackColorMine.Dispose();
                     _brsBackColorAt.Dispose();
                     _brsBackColorYou.Dispose();
@@ -5485,6 +5496,10 @@ namespace OpenTween
                     //else if (e.Item.ForeColor == _clRetweet)
                     //{
                     //    brs = _brsForeColorRetweet;
+                    //}
+                    //else if (e.Item.ForeColor == _clDeleted)
+                    //{
+                    //    brs = _brsForeColorDeleted;
                     //}
                     //else
                     //{

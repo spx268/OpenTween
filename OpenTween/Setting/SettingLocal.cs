@@ -142,6 +142,14 @@ namespace OpenTween
         }
 
         [XmlIgnore]
+        public Color ColorDeleted = Color.FromKnownColor(System.Drawing.KnownColor.Gray);
+        public string ColorDeletedStr
+        {
+            get { return _cc.ConvertToString(ColorDeleted); }
+            set { ColorDeleted = (Color)_cc.ConvertFromString(value); }
+        }
+
+        [XmlIgnore]
         public Font FontDetail = System.Drawing.SystemFonts.DefaultFont;
         public string FontDetailStr
         {
