@@ -46,14 +46,12 @@ namespace OpenTween.Thumbnail.Services
 
         public ImgAzyobuziNet()
         {
-            this.LoadRegex();
-
             Task.Factory.StartNew(() =>
             {
                 for (;;)
                 {
-                    Thread.Sleep(30 * 60 * 1000); // 30分おきに更新
                     this.LoadRegex();
+                    Thread.Sleep(30 * 60 * 1000); // 30分おきに更新
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -80,7 +78,7 @@ namespace OpenTween.Thumbnail.Services
         {
             try
             {
-                using (var client = new OTWebClient() { Timeout = 1000 })
+                using (var client = new OTWebClient())
                 using (var jsonReader = JsonReaderWriterFactory.CreateJsonReader(client.DownloadData(apiBase + "regex.json"), XmlDictionaryReaderQuotas.Max))
                 {
                     var xElm = XElement.Load(jsonReader);
