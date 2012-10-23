@@ -203,7 +203,6 @@ namespace OpenTween
         private BackgroundWorker[] _bw = new BackgroundWorker[20];
         private BackgroundWorker _bwFollower;
         private InternetSecurityManager SecurityManager;
-        private ThumbnailGenerator Thumbnail;
 
         private int UnreadCounter = -1;
         private int UnreadAtCounter = -1;
@@ -659,7 +658,6 @@ namespace OpenTween
             //Win32Api.SetProxy(HttpConnection.ProxyType.Specified, "127.0.0.1", 8080, "user", "pass")
 
             SecurityManager = new InternetSecurityManager(PostBrowser);
-            this.Thumbnail = new ThumbnailGenerator(this);
 
             MyCommon.TwitterApiInfo.Changed += SetStatusLabelApiHandler;
             Microsoft.Win32.SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
@@ -677,6 +675,8 @@ namespace OpenTween
             MyCommon.fileVersion = ((AssemblyFileVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyFileVersionAttribute), false)[0]).Version;
             InitializeTraceFrag();
             LoadIcons(); // アイコン読み込み
+
+            ThumbnailGenerator.InitializeGenerator();
 
             //発言保持クラス
             _statuses = TabInformations.GetInstance();
@@ -6368,12 +6368,9 @@ namespace OpenTween
                     {
                         PostBrowser.Visible = false;
                         PostBrowser.DocumentText = dTxt;
-                        List<string> lnks = new List<string>();
-                        foreach (Match lnk in Regex.Matches(dTxt, "<a target=\"_self\" href=\"(?<url>http[^\"]+)\"", RegexOptions.IgnoreCase))
-                        {
-                            lnks.Add(lnk.Result("${url}"));
-                        }
-                        Thumbnail.thumbnail(_curPost.StatusId, lnks, _curPost.PostGeo, _curPost.Media);
+
+                        this.SplitContainer3.Panel2Collapsed = true;
+                        this.tweetThumbnail1.ShowThumbnailAsync(_curPost);
                     }
                 }
                 catch (System.Runtime.InteropServices.COMException)
@@ -7069,17 +7066,17 @@ namespace OpenTween
                             CopyUserId();
                             return true;
                         case Keys.Up:
-                            Thumbnail.ScrollThumbnail(false);
+                            this.tweetThumbnail1.ScrollUp();
                             return true;
                         case Keys.Down:
-                            Thumbnail.ScrollThumbnail(true);
+                            this.tweetThumbnail1.ScrollDown();
                             return true;
                     }
                     if (Focused == FocusedControl.ListTab && KeyCode == Keys.Enter)
                     {
                         if (!this.SplitContainer3.Panel2Collapsed)
                         {
-                            Thumbnail.OpenPicture();
+                            OpenThumbnailPicture(this.tweetThumbnail1.Thumbnail);
                         }
                         return true;
                     }
@@ -13319,6 +13316,21 @@ namespace OpenTween
         {
             MatomeMenuItem.Text = MyCommon.ReplaceAppName(MatomeMenuItem.Text);
             AboutMenuItem.Text = MyCommon.ReplaceAppName(AboutMenuItem.Text);
+        }
+
+        private void tweetThumbnail1_ThumbnailLoading(object sender, EventArgs e)
+        {
+            this.SplitContainer3.Panel2Collapsed = false;
+        }
+
+        private void tweetThumbnail1_ThumbnailDoubleClick(object sender, ThumbnailDoubleClickEventArgs e)
+        {
+            this.OpenThumbnailPicture(e.Thumbnail);
+        }
+
+        private void OpenThumbnailPicture(ThumbnailInfo thumbnail)
+        {
+            this.OpenUriAsync(thumbnail.ImageUrl);
         }
     }
 }
