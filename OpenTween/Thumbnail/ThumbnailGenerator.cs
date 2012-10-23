@@ -133,7 +133,7 @@ namespace OpenTween.Thumbnail
                 new SimpleThumbnailService(@"^https?://p\.twimg\.com/.*$", "${0}:thumb"),
 
                 // gyazo.com
-                new SimpleThumbnailService(@"^http://gyazo\.com/(\w+)(?:\.png)?$", "http://gyazo.com/${1}.png"),
+                new SimpleThumbnailService(@"^http://gyazo\.com/(\w+)(?:\.png)?(?:\?.*)?$", "http://gyazo.com/${1}.png"),
 
                 // TwitrPix
                 new SimpleThumbnailService(@"^http://twitrpix\.com/(\w+)$", "http://img.twitrpix.com/thumb/${1}"),
