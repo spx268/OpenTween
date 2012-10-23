@@ -6370,7 +6370,14 @@ namespace OpenTween
                         PostBrowser.DocumentText = dTxt;
 
                         this.SplitContainer3.Panel2Collapsed = true;
-                        this.tweetThumbnail1.ShowThumbnailAsync(_curPost);
+                        if (this.IsPreviewEnable)
+                        {
+                            this.tweetThumbnail1.ShowThumbnailAsync(_curPost);
+                        }
+                        else
+                        {
+                            this.tweetThumbnail1.CancelAsync();
+                        }
                     }
                 }
                 catch (System.Runtime.InteropServices.COMException)
@@ -13320,7 +13327,15 @@ namespace OpenTween
 
         private void tweetThumbnail1_ThumbnailLoading(object sender, EventArgs e)
         {
-            this.SplitContainer3.Panel2Collapsed = false;
+            //this.SplitContainer3.Panel2Collapsed = false;
+        }
+
+        private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            if (!e.Cancelled && e.Error == null)
+            {
+                this.SplitContainer3.Panel2Collapsed = false;
+            }
         }
 
         private void tweetThumbnail1_ThumbnailDoubleClick(object sender, ThumbnailDoubleClickEventArgs e)

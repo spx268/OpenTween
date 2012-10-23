@@ -42,6 +42,7 @@ namespace OpenTween
         private CancellationTokenSource cancelTokenSource;
 
         public event EventHandler ThumbnailLoading;
+        public event EventHandler<AsyncCompletedEventArgs> ThumbnailLoadCompleted;
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
 
         public ThumbnailInfo Thumbnail
@@ -108,6 +109,12 @@ namespace OpenTween
 
         public void CancelAsync()
         {
+            foreach (var picbox in this.pictureBox)
+            {
+                picbox.LoadCompleted -= this.pictureBox_LoadCompleted;
+                picbox.CancelAsync();
+            }
+
             if (this.task != null && !this.task.IsCompleted)
             {
                 try
@@ -149,6 +156,7 @@ namespace OpenTween
                     Dock = DockStyle.Fill,
                     Visible = false,
                 };
+                picbox.LoadCompleted += this.pictureBox_LoadCompleted;
                 picbox.DoubleClick += this.pictureBox_DoubleClick;
 
                 this.Controls.Add(picbox);
@@ -184,6 +192,14 @@ namespace OpenTween
 
             this.pictureBox[e.NewValue].Visible = true;
             this.pictureBox[e.OldValue].Visible = false;
+        }
+
+        private void pictureBox_LoadCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            if (this.ThumbnailLoadCompleted != null)
+            {
+                this.ThumbnailLoadCompleted(this, e);
+            }
         }
 
         private void pictureBox_DoubleClick(object sender, EventArgs e)

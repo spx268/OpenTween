@@ -1145,6 +1145,7 @@
             resources.ApplyResources(this.tweetThumbnail1, "tweetThumbnail1");
             this.tweetThumbnail1.Name = "tweetThumbnail1";
             this.tweetThumbnail1.ThumbnailLoading += new System.EventHandler(this.tweetThumbnail1_ThumbnailLoading);
+            this.tweetThumbnail1.ThumbnailLoadCompleted += new System.EventHandler<System.ComponentModel.AsyncCompletedEventArgs>(this.tweetThumbnail1_ThumbnailLoadCompleted);
             this.tweetThumbnail1.ThumbnailDoubleClick += new System.EventHandler<OpenTween.ThumbnailDoubleClickEventArgs>(this.tweetThumbnail1_ThumbnailDoubleClick);
             // 
             // MenuStrip1
