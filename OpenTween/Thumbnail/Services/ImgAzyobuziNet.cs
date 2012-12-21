@@ -44,14 +44,22 @@ namespace OpenTween.Thumbnail.Services
 
         private object LockObj = new object();
 
-        public ImgAzyobuziNet()
+        public ImgAzyobuziNet(bool autoupdate = false)
+        {
+            this.LoadRegex();
+
+            if (autoupdate)
+                this.StartAutoUpdate();
+        }
+
+        public void StartAutoUpdate()
         {
             Task.Factory.StartNew(() =>
             {
                 for (;;)
                 {
-                    this.LoadRegex();
                     Thread.Sleep(30 * 60 * 1000); // 30分おきに更新
+                    this.LoadRegex();
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -78,8 +86,7 @@ namespace OpenTween.Thumbnail.Services
         {
             try
             {
-                using (var client = new OTWebClient())
-                using (var jsonReader = JsonReaderWriterFactory.CreateJsonReader(client.DownloadData(apiBase + "regex.json"), XmlDictionaryReaderQuotas.Max))
+                using (var jsonReader = JsonReaderWriterFactory.CreateJsonReader(this.FetchRegex(apiBase), XmlDictionaryReaderQuotas.Max))
                 {
                     var xElm = XElement.Load(jsonReader);
 
@@ -98,6 +105,14 @@ namespace OpenTween.Thumbnail.Services
             catch (WebException) { }
 
             return false;
+        }
+
+        protected virtual byte[] FetchRegex(string apiBase)
+        {
+            using (var client = new OTWebClient() { Timeout = 1000 })
+            {
+                return client.DownloadData(apiBase + "regex.json");
+            }
         }
 
         public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
