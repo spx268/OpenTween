@@ -36,7 +36,7 @@ namespace OpenTween
 {
     public partial class TweetThumbnail : UserControl
     {
-        private List<PictureBox> pictureBox = new List<PictureBox>();
+        protected internal List<PictureBox> pictureBox = new List<PictureBox>();
 
         private Task task = null;
         private CancellationTokenSource cancelTokenSource;
@@ -64,7 +64,7 @@ namespace OpenTween
             this.cancelTokenSource = new CancellationTokenSource();
             var cancelToken = this.cancelTokenSource.Token;
 
-            this.task = Task.Factory.StartNew(() => ThumbnailGenerator.GetThumbnails(post), cancelToken)
+            this.task = Task.Factory.StartNew(() => this.GetThumbailInfo(post), cancelToken)
                 .ContinueWith( /* await使いたい */
                     t =>
                     {
@@ -105,6 +105,11 @@ namespace OpenTween
                 );
 
             return this.task;
+        }
+
+        protected virtual List<ThumbnailInfo> GetThumbailInfo(PostClass post)
+        {
+            return ThumbnailGenerator.GetThumbnails(post);
         }
 
         public void CancelAsync()
@@ -148,14 +153,7 @@ namespace OpenTween
 
             for (int i = 0; i < count; i++)
             {
-                var picbox = new PictureBox()
-                {
-                    Name = "pictureBox" + i,
-                    SizeMode = PictureBoxSizeMode.Zoom,
-                    WaitOnLoad = false,
-                    Dock = DockStyle.Fill,
-                    Visible = false,
-                };
+                var picbox = CreatePictureBox("pictureBox" + i);
                 picbox.LoadCompleted += this.pictureBox_LoadCompleted;
                 picbox.DoubleClick += this.pictureBox_DoubleClick;
 
@@ -164,6 +162,18 @@ namespace OpenTween
             }
 
             this.ResumeLayout(false);
+        }
+
+        protected virtual PictureBox CreatePictureBox(string name)
+        {
+            return new PictureBox()
+            {
+                Name = name,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                WaitOnLoad = false,
+                Dock = DockStyle.Fill,
+                Visible = false,
+            };
         }
 
         public void ScrollUp()
