@@ -6363,14 +6363,9 @@ namespace OpenTween
                         PostBrowser.DocumentText = dTxt;
 
                         this.SplitContainer3.Panel2Collapsed = true;
+
                         if (this.IsPreviewEnable)
-                        {
                             this.tweetThumbnail1.ShowThumbnailAsync(_curPost);
-                        }
-                        else
-                        {
-                            this.tweetThumbnail1.CancelAsync();
-                        }
                     }
                 }
                 catch (System.Runtime.InteropServices.COMException)
