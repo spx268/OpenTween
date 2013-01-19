@@ -28,6 +28,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -47,7 +48,7 @@ namespace OpenTween.Thumbnail.Services
 
         public ImgAzyobuziNet(bool autoupdate = false)
         {
-            this.LoadRegex();
+            Task.Factory.StartNew(() => { this.LoadRegex(); }, TaskCreationOptions.LongRunning);
 
             this.UpdateTimer = new Timer(_ => this.LoadRegex());
             this.AutoUpdate = autoupdate;
@@ -123,7 +124,7 @@ namespace OpenTween.Thumbnail.Services
 
         protected virtual byte[] FetchRegex(string apiBase)
         {
-            using (var client = new OTWebClient() { Timeout = 1000 })
+            using (var client = new OTWebClient() { Timeout = 5000 })
             {
                 return client.DownloadData(apiBase + "regex.json");
             }
