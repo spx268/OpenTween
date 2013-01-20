@@ -2130,7 +2130,7 @@ namespace OpenTween.Properties {
         }
         
         /// <summary>
-        ///   http://www.google.com/search?hl=ja&amp;q={0} に類似しているローカライズされた文字列を検索します。
+        ///   http://www.google.co.jp/search?hl=ja&amp;q={0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string SearchItem2Url {
             get {
