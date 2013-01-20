@@ -10429,6 +10429,11 @@ namespace OpenTween
             doSearchToolStrip(Properties.Resources.SearchItem2Url);
         }
 
+        private void SearchAlcContextMenuItem_Click(object sender, EventArgs e)
+        {
+            doSearchToolStrip(Properties.Resources.SearchItem3Url);
+        }
+
         private void SearchPublicSearchContextMenuItem_Click(object sender, EventArgs e)
         {
             doSearchToolStrip(Properties.Resources.SearchItem4Url);

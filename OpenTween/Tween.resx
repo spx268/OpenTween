@@ -1908,6 +1908,12 @@
   <data name="SearchWikipediaContextMenuItem.Text" xml:space="preserve">
     <value>Wikipedia(&amp;W)</value>
   </data>
+  <data name="SearchAlcContextMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>197, 22</value>
+  </data>
+  <data name="SearchAlcContextMenuItem.Text" xml:space="preserve">
+    <value>英辞郎検索(&amp;E)</value>
+  </data>
   <data name="SearchPublicSearchContextMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>197, 22</value>
   </data>
@@ -3660,6 +3666,12 @@
     <value>SearchWikipediaContextMenuItem</value>
   </data>
   <data name="&gt;&gt;SearchWikipediaContextMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;SearchAlcContextMenuItem.Name" xml:space="preserve">
+    <value>SearchAlcContextMenuItem</value>
+  </data>
+  <data name="&gt;&gt;SearchAlcContextMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;SearchPublicSearchContextMenuItem.Name" xml:space="preserve">

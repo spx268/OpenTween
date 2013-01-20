@@ -2139,7 +2139,7 @@ namespace OpenTween.Properties {
         }
         
         /// <summary>
-        ///   http://yats-data.com/yats/search?query={0} に類似しているローカライズされた文字列を検索します。
+        ///   http://eow.alc.co.jp/search?q={0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string SearchItem3Url {
             get {
