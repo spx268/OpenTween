@@ -2170,7 +2170,7 @@ namespace OpenTween
             post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
 
             //Source整形
-            CreateSource(ref post);
+            CreateSource(post);
 
             post.IsReply = post.ReplyToList.Contains(_uname);
             post.IsExcludeReply = false;
@@ -2325,7 +2325,7 @@ namespace OpenTween
             post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
 
             //Source整形
-            this.CreateSource(ref post);
+            this.CreateSource(post);
 
             post.IsReply = post.ReplyToList.Contains(this._uname);
             post.IsExcludeReply = false;
@@ -2487,7 +2487,7 @@ namespace OpenTween
                     tab.RelationTargetPost = p;
                 }
             }
-            relPosts.Add(tab.RelationTargetPost.Copy());
+            relPosts.Add(tab.RelationTargetPost.Clone());
             var tmpPost = relPosts[0];
             do
             {
@@ -2563,7 +2563,7 @@ namespace OpenTween
             }
             else
             {
-                targetItem = targetItem.Copy();
+                targetItem = targetItem.Clone();
             }
             targetItem.RelTabName = tab.TabName;
             TabInformations.GetInstance().AddPost(targetItem);
@@ -2572,7 +2572,7 @@ namespace OpenTween
             var replyToUserName = targetItem.InReplyToUser;
             if (targetItem.InReplyToStatusId > 0 && TabInformations.GetInstance()[targetItem.InReplyToStatusId] != null)
             {
-                replyToItem = TabInformations.GetInstance()[targetItem.InReplyToStatusId].Copy();
+                replyToItem = TabInformations.GetInstance()[targetItem.InReplyToStatusId].Clone();
                 replyToItem.IsRead = read;
                 if (replyToItem.IsMe && !read && _readOwnPost) replyToItem.IsRead = true;
                 replyToItem.RelTabName = tab.TabName;
@@ -2639,7 +2639,7 @@ namespace OpenTween
                     }
                     else
                     {
-                        p = _post.Copy();
+                        p = _post.Clone();
                     }
                     if (p != null)
                     {
@@ -3117,7 +3117,7 @@ namespace OpenTween
                     post.TextFromApi = HttpUtility.HtmlDecode(post.TextFromApi);
                     post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
                     //Source整形
-                    CreateSource(ref post);
+                    CreateSource(post);
 
                     post.IsRead = read;
                     post.IsReply = post.ReplyToList.Contains(_uname);
@@ -4026,8 +4026,10 @@ namespace OpenTween
         }
 
         //Source整形
-        private void CreateSource(ref PostClass post)
+        private void CreateSource(PostClass post)
         {
+            if (string.IsNullOrEmpty(post.Source)) return;
+
             if (post.Source.StartsWith("<"))
             {
                 if (!post.Source.Contains("</a>"))
