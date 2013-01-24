@@ -143,9 +143,9 @@ namespace OpenTween
 
             this.scrollBar.Maximum = count;
 
+            this.panelPictureBox.Controls.Clear();
             foreach (var picbox in this.pictureBox)
             {
-                this.Controls.Remove(picbox);
                 picbox.Dispose();
             }
             this.pictureBox.Clear();
@@ -156,7 +156,7 @@ namespace OpenTween
                 picbox.LoadCompleted += this.pictureBox_LoadCompleted;
                 picbox.DoubleClick += this.pictureBox_DoubleClick;
 
-                this.Controls.Add(picbox);
+                this.panelPictureBox.Controls.Add(picbox);
                 this.pictureBox.Add(picbox);
             }
 
@@ -197,28 +197,14 @@ namespace OpenTween
         private void scrollBar_ValueChanged(object sender, EventArgs e)
         {
             this.SuspendLayout();
+
+            var value = this.scrollBar.Value;
             for (var i = 0; i < this.pictureBox.Count; i++)
             {
-                var picbox = this.pictureBox[i];
-                Console.WriteLine(this.scrollBar.Value + ", " + i);
-
-                if (this.scrollBar.Value == i)
-                    picbox.Visible = true;
-                else
-                    picbox.Visible = false;
+                this.pictureBox[i].Visible = (i == value);
             }
+
             this.ResumeLayout(false);
-        }
-
-        private void ShowPictureBox(int index)
-        {
-            foreach (Control control in this.Controls)
-            {
-                if (control is PictureBox)
-                    this.Controls.Remove(control);
-            }
-
-            this.Controls.Add(this.pictureBox[index]);
         }
 
         private void pictureBox_LoadCompleted(object sender, AsyncCompletedEventArgs e)
