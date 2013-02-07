@@ -982,17 +982,6 @@ namespace OpenTween
             //アイコンリスト作成
             this.IconCache = new ImageCache();
 
-            try
-            {
-                new System.Runtime.Caching.MemoryCache("dummyCache");
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Please install [.NET Framework 4 (Full)].");
-                Application.Exit();
-                return;
-            }
-
             bool saveRequired = false;
             bool firstRun = false;
 
@@ -2463,7 +2452,7 @@ namespace OpenTween
             //Google検索（試験実装）
             if (StatusText.Text.StartsWith("Google:", StringComparison.OrdinalIgnoreCase) && StatusText.Text.Trim().Length > 7)
             {
-                string tmp = string.Format(Properties.Resources.SearchItem2Url, HttpUtility.UrlEncode(StatusText.Text.Substring(7)));
+                string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeDataString(StatusText.Text.Substring(7)));
                 OpenUriAsync(tmp);
             }
 
@@ -4323,7 +4312,7 @@ namespace OpenTween
                    e.Url.AbsoluteUri.StartsWith("https://twitter.com/search?q=%23"))
                 {
                     //ハッシュタグの場合は、タブで開く
-                    string urlStr = HttpUtility.UrlDecode(e.Url.AbsoluteUri);
+                    string urlStr = Uri.UnescapeDataString(e.Url.AbsoluteUri);
                     int i = urlStr.IndexOf('#');
                     if (i == -1) return;
 
@@ -9382,7 +9371,7 @@ namespace OpenTween
                     openUrlStr.StartsWith("https://twitter.com/search?q="))
                 {
                     //ハッシュタグの場合は、タブで開く
-                    string urlStr = HttpUtility.UrlDecode(openUrlStr);
+                    string urlStr = Uri.UnescapeDataString(openUrlStr);
                     string hash = urlStr.Substring(urlStr.IndexOf("#"));
                     HashSupl.AddItem(hash);
                     HashMgr.AddHashToHistory(hash.Trim(), false);
@@ -10376,7 +10365,7 @@ namespace OpenTween
                     return;
                 }
 
-                string tmp = string.Format(url, HttpUtility.UrlEncode(_selText));
+                string tmp = string.Format(url, Uri.EscapeDataString(_selText));
                 OpenUriAsync(tmp);
             }
         }
@@ -10934,7 +10923,7 @@ namespace OpenTween
                 string rtdata = _curPost.Text;
                 rtdata = CreateRetweetUnofficial(rtdata);
 
-                StatusText.Text = "RT @" + _curPost.ScreenName + ": " + HttpUtility.HtmlDecode(rtdata);
+                StatusText.Text = "RT @" + _curPost.ScreenName + ": " + Uri.UnescapeDataString(rtdata);
 
                 StatusText.SelectionStart = 0;
                 StatusText.Focus();
@@ -11530,7 +11519,7 @@ namespace OpenTween
                 string rtdata = _curPost.Text;
                 rtdata = CreateRetweetUnofficial(rtdata);
 
-                StatusText.Text = " QT @" + _curPost.ScreenName + ": " + HttpUtility.HtmlDecode(rtdata);
+                StatusText.Text = " QT @" + _curPost.ScreenName + ": " + Uri.UnescapeDataString(rtdata);
                 if (_curPost.RetweetedId == 0)
                 {
                     _reply_to_id = _curPost.StatusId;
