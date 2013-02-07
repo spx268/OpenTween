@@ -160,6 +160,7 @@ namespace OpenTween
             for (int i = 0; i < count; i++)
             {
                 var picbox = CreatePictureBox("pictureBox" + i);
+                picbox.Visible = (i == 0);
                 picbox.LoadCompleted += this.pictureBox_LoadCompleted;
                 picbox.DoubleClick += this.pictureBox_DoubleClick;
 
