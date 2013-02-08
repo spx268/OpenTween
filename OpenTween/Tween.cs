@@ -47,6 +47,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using OpenTween.Thumbnail;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace OpenTween
 {
@@ -10365,7 +10366,7 @@ namespace OpenTween
                     return;
                 }
 
-                string tmp = string.Format(url, Uri.EscapeDataString(_selText));
+                string tmp = string.Format(url, WebUtility.HtmlDecode(_selText));
                 OpenUriAsync(tmp);
             }
         }
@@ -10923,7 +10924,7 @@ namespace OpenTween
                 string rtdata = _curPost.Text;
                 rtdata = CreateRetweetUnofficial(rtdata);
 
-                StatusText.Text = "RT @" + _curPost.ScreenName + ": " + Uri.UnescapeDataString(rtdata);
+                StatusText.Text = "RT @" + _curPost.ScreenName + ": " + WebUtility.HtmlDecode(rtdata);
 
                 StatusText.SelectionStart = 0;
                 StatusText.Focus();
@@ -11519,7 +11520,7 @@ namespace OpenTween
                 string rtdata = _curPost.Text;
                 rtdata = CreateRetweetUnofficial(rtdata);
 
-                StatusText.Text = " QT @" + _curPost.ScreenName + ": " + Uri.UnescapeDataString(rtdata);
+                StatusText.Text = " QT @" + _curPost.ScreenName + ": " + WebUtility.HtmlDecode(rtdata);
                 if (_curPost.RetweetedId == 0)
                 {
                     _reply_to_id = _curPost.StatusId;
