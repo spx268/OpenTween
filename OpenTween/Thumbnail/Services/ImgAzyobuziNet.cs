@@ -28,7 +28,6 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTween.Thumbnail.Services
 {
