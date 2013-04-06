@@ -65,7 +65,7 @@ namespace OpenTween
         private static string tks = "";
         private static string un = "";
 
-        private Dictionary<string, string> apiStatusHeaders = new Dictionary<string, string>
+        private Dictionary<string, string> apiStatusHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"X-Access-Level", ""},
             {"X-RateLimit-Limit", ""},
@@ -892,10 +892,10 @@ namespace OpenTween
         {
             Dictionary<string, string> param = new Dictionary<string, string>();
 
-            param.Add("name", name);
+            param.Add("name", WebUtility.HtmlEncode(name));
             param.Add("url", url);
-            param.Add("location", location);
-            param.Add("description", description);
+            param.Add("location", WebUtility.HtmlEncode(location));
+            param.Add("description", WebUtility.HtmlEncode(description));
             param.Add("include_entities", "true");
 
             return httpCon.GetContent(PostMethod,
