@@ -117,6 +117,21 @@ namespace OpenTween
         /// </summary>
         public const string ServiceAvailabilityStatusUrl = "https://status.io.watchmouse.com/7617";
 
+        /// <summary>
+        /// ツイートへのパーマリンクURLを判定する正規表現
+        /// </summary>
+        public static readonly Regex StatusUrlRegex = new Regex(@"https?://([^.]+\.)?twitter\.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)/status(es)?/(?<StatusId>[0-9]+)(/photo)?", RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// FavstarやaclogなどTwitter関連サービスのパーマリンクURLからステータスIDを抽出する正規表現
+        /// </summary>
+        public static readonly Regex ThirdPartyStatusUrlRegex = new Regex(@"https?://(?:[^.]+\.)?(?:
+  favstar\.fm/users/[a-zA-Z0-9_]+/status/       # Favstar
+| favstar\.fm/t/                                # Favstar (short)
+| aclog\.koba789\.com/i/                        # aclog
+| frtrt\.net/solo_status\.php\?status=          # RtRT
+)(?<StatusId>[0-9]+)", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+
         delegate void GetIconImageDelegate(PostClass post);
         private readonly object LockObj = new object();
         private List<long> followerId = new List<long>();
@@ -2616,10 +2631,11 @@ namespace OpenTween
             //}
             //return rslt;
 
-
             //MRTとかに対応のためツイート内にあるツイートを指すURLを取り込む
-            var ma = Regex.Matches(tab.RelationTargetPost.Text, "title=\"https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)(/status(es)?/(?<StatusId>[0-9]+))\"");
-            foreach (Match _match in ma)
+            var text = tab.RelationTargetPost.Text;
+            var ma = Twitter.StatusUrlRegex.Matches(text).Cast<Match>()
+                .Concat(Twitter.ThirdPartyStatusUrlRegex.Matches(text).Cast<Match>());
+            foreach (var _match in ma)
             {
                 Int64 _statusId;
                 if (Int64.TryParse(_match.Groups["StatusId"].Value, out _statusId))
