@@ -2317,7 +2317,7 @@ namespace OpenTween
             post.UserId = status.FromUserId;
             post.ScreenName = status.FromUser;
             post.Nickname = status.FromUserName.Trim();
-            post.ImageUrl = status.ProfileImageUrl;
+            post.ImageUrl = status.ProfileImageUrlHttps;
             post.IsProtect = false;
             post.IsMe = post.ScreenName.ToLower().Equals(this._uname);
 

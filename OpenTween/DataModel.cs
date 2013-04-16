@@ -467,7 +467,7 @@ namespace OpenTween
             [DataMember(Name = "in_reply_to_status_id", IsRequired = false)] public long InReplyToStatusId = 0;
             [DataMember(Name = "iso_language_code")] public string IsoLanguageCode;
             [DataMember(Name = "meta_data")] public SearchMetaData MetaData;
-            [DataMember(Name = "profile_image_url")] public string ProfileImageUrl;
+            [DataMember(Name = "profile_image_url_https")] public string ProfileImageUrlHttps;
             [DataMember(Name = "source")] public string Source;
             [DataMember(Name = "text")] public string Text;
             [DataMember(Name = "to_user")] public string ToUser;
