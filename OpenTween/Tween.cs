@@ -2471,7 +2471,7 @@ namespace OpenTween
             //Google検索（試験実装）
             if (StatusText.Text.StartsWith("Google:", StringComparison.OrdinalIgnoreCase) && StatusText.Text.Trim().Length > 7)
             {
-                string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeUriString(StatusText.Text.Substring(7)));
+                string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeDataString(StatusText.Text.Substring(7)));
                 OpenUriAsync(tmp);
             }
 
@@ -10427,7 +10427,7 @@ namespace OpenTween
                     return;
                 }
 
-                string tmp = string.Format(url, Uri.EscapeUriString(_selText));
+                string tmp = string.Format(url, Uri.EscapeDataString(_selText));
                 OpenUriAsync(tmp);
             }
         }
@@ -13367,7 +13367,9 @@ namespace OpenTween
 
         private void OpenThumbnailPicture(ThumbnailInfo thumbnail)
         {
-            this.OpenUriAsync(Uri.EscapeUriString(thumbnail.ImageUrl));
+            string url = thumbnail.ImageUrl;
+            url = url.Replace(" ", "%20");
+            this.OpenUriAsync(url);
         }
 
         private void TwitterApiStatusToolStripMenuItem_Click(object sender, EventArgs e)
