@@ -137,15 +137,17 @@ namespace OpenTween.OpenTweenCustomControl
 
         public void ChangeSubItemFontAndColor(int itemIndex, int subitemIndex, Color foreColor, Font fnt)
         {
-            this.Items[itemIndex].SubItems[subitemIndex].ForeColor = foreColor;
-            this.Items[itemIndex].SubItems[subitemIndex].Font = fnt;
+            var subItem = this.Items[itemIndex].SubItems[subitemIndex];
+            subItem.ForeColor = foreColor;
+            subItem.Font = fnt;
         }
 
         public void ChangeSubItemStyles(int itemIndex, int subitemIndex, Color backColor, Color foreColor, Font fnt)
         {
-            this.Items[itemIndex].SubItems[subitemIndex].BackColor = backColor;
-            this.Items[itemIndex].SubItems[subitemIndex].ForeColor = foreColor;
-            this.Items[itemIndex].SubItems[subitemIndex].Font = fnt;
+            var subItem = this.Items[itemIndex].SubItems[subitemIndex];
+            subItem.BackColor = backColor;
+            subItem.ForeColor = foreColor;
+            subItem.Font = fnt;
         }
 
         [StructLayout(LayoutKind.Sequential)]

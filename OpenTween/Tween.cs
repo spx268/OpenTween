@@ -2150,7 +2150,7 @@ namespace OpenTween
             }
             else
             {
-                DList.Update();
+                //DList.Update();
                 if (SettingDialog.UseUnreadStyle)
                     DList.ChangeItemFontAndColor(Item.Index, cl, fnt);
                 else
