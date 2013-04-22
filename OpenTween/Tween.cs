@@ -125,6 +125,7 @@ namespace OpenTween
         private Color _clOWL;               //片思い用文字色
         private Color _clRetweet;               //Retweet用文字色
         private Color _clDeleted;               //削除済み用文字色
+        private Color _clHighLight = Color.FromKnownColor(KnownColor.HighlightText);         //選択中の行用文字色
         private Font _fntDetail;            //発言詳細部用フォント
         private Color _clDetail;              //発言詳細部用色
         private Color _clDetailLink;          //発言詳細部用リンク文字色
@@ -167,13 +168,6 @@ namespace OpenTween
 
         // 以下DrawItem関連
         private SolidBrush _brsHighLight = new SolidBrush(Color.FromKnownColor(KnownColor.Highlight));
-        private SolidBrush _brsHighLightText = new SolidBrush(Color.FromKnownColor(KnownColor.HighlightText));
-        private SolidBrush _brsForeColorUnread;
-        private SolidBrush _brsForeColorReaded;
-        private SolidBrush _brsForeColorFav;
-        private SolidBrush _brsForeColorOWL;
-        private SolidBrush _brsForeColorRetweet;
-        private SolidBrush _brsForeColorDeleted;
         private SolidBrush _brsBackColorMine;
         private SolidBrush _brsBackColorAt;
         private SolidBrush _brsBackColorYou;
@@ -473,13 +467,6 @@ namespace OpenTween
             if (ReplyIcon != null) ReplyIcon.Dispose();
             if (ReplyIconBlink != null) ReplyIconBlink.Dispose();
             _brsHighLight.Dispose();
-            _brsHighLightText.Dispose();
-            if (_brsForeColorUnread != null) _brsForeColorUnread.Dispose();
-            if (_brsForeColorReaded != null) _brsForeColorReaded.Dispose();
-            if (_brsForeColorFav != null) _brsForeColorFav.Dispose();
-            if (_brsForeColorOWL != null) _brsForeColorOWL.Dispose();
-            if (_brsForeColorRetweet != null) _brsForeColorRetweet.Dispose();
-            if (_brsForeColorDeleted != null) _brsForeColorDeleted.Dispose();
             if (_brsBackColorMine != null) _brsBackColorMine.Dispose();
             if (_brsBackColorAt != null) _brsBackColorAt.Dispose();
             if (_brsBackColorYou != null) _brsBackColorYou.Dispose();
@@ -736,12 +723,6 @@ namespace OpenTween
             _clInputFont = _cfgLocal.ColorInputFont;
             _fntInputFont = _cfgLocal.FontInputFont;
 
-            _brsForeColorUnread = new SolidBrush(_clUnread);
-            _brsForeColorReaded = new SolidBrush(_clReaded);
-            _brsForeColorFav = new SolidBrush(_clFav);
-            _brsForeColorOWL = new SolidBrush(_clOWL);
-            _brsForeColorRetweet = new SolidBrush(_clRetweet);
-            _brsForeColorDeleted = new SolidBrush(_clDeleted);
             _brsBackColorMine = new SolidBrush(_clSelf);
             _brsBackColorAt = new SolidBrush(_clAtSelf);
             _brsBackColorYou = new SolidBrush(_clTarget);
@@ -1035,18 +1016,6 @@ namespace OpenTween
                 _clInputBackcolor = SettingDialog.ColorInputBackcolor;
                 _clInputFont = SettingDialog.ColorInputFont;
                 _fntInputFont = SettingDialog.FontInputFont;
-                _brsForeColorUnread.Dispose();
-                _brsForeColorReaded.Dispose();
-                _brsForeColorFav.Dispose();
-                _brsForeColorOWL.Dispose();
-                _brsForeColorRetweet.Dispose();
-                _brsForeColorDeleted.Dispose();
-                _brsForeColorUnread = new SolidBrush(_clUnread);
-                _brsForeColorReaded = new SolidBrush(_clReaded);
-                _brsForeColorFav = new SolidBrush(_clFav);
-                _brsForeColorOWL = new SolidBrush(_clOWL);
-                _brsForeColorRetweet = new SolidBrush(_clRetweet);
-                _brsForeColorDeleted = new SolidBrush(_clDeleted);
                 _brsBackColorMine.Dispose();
                 _brsBackColorAt.Dispose();
                 _brsBackColorYou.Dispose();
@@ -4169,18 +4138,6 @@ namespace OpenTween
                         MessageBox.Show(ex.Message);
                     }
 
-                    _brsForeColorUnread.Dispose();
-                    _brsForeColorReaded.Dispose();
-                    _brsForeColorFav.Dispose();
-                    _brsForeColorOWL.Dispose();
-                    _brsForeColorRetweet.Dispose();
-                    _brsForeColorDeleted.Dispose();
-                    _brsForeColorUnread = new SolidBrush(_clUnread);
-                    _brsForeColorReaded = new SolidBrush(_clReaded);
-                    _brsForeColorFav = new SolidBrush(_clFav);
-                    _brsForeColorOWL = new SolidBrush(_clOWL);
-                    _brsForeColorRetweet = new SolidBrush(_clRetweet);
-                    _brsForeColorDeleted = new SolidBrush(_clDeleted);
                     _brsBackColorMine.Dispose();
                     _brsBackColorAt.Dispose();
                     _brsBackColorYou.Dispose();
@@ -5490,9 +5447,9 @@ namespace OpenTween
 
                 if (rct.Width > 0)
                 {
-                    Color color = (!e.Item.Selected) ? e.Item.ForeColor :        //選択されていない行
-                        (((Control)sender).Focused) ? _brsHighLightText.Color :  //選択中の行
-                        _brsForeColorUnread.Color;
+                    Color color = (!e.Item.Selected) ? e.Item.ForeColor :   //選択されていない行
+                        (((Control)sender).Focused) ? _clHighLight :        //選択中の行
+                        _clUnread;
 
                     if (_iconCol)
                     {
