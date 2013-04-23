@@ -1628,24 +1628,24 @@ namespace OpenTween
             {
                 try
                 {
-                    if (befCnt != _curList.VirtualListSize)
+                    if (befCnt != _curList.VirtualListSize && _curList.VirtualListSize > 0)
                     {
                         switch (smode)
                         {
                             case -3:
                                 //最上行
-                                if (_curList.VirtualListSize > 0) _curList.EnsureVisible(0);
+                                _curList.EnsureVisible(0);
                                 break;
                             case -2:
                                 //最下行へ
-                                if (_curList.VirtualListSize > 0) _curList.EnsureVisible(_curList.VirtualListSize - 1);
+                                _curList.EnsureVisible(_curList.VirtualListSize - 1);
                                 break;
-                            case -1:
-                                //制御しない
-                                break;
+                            //case -1:
+                            //    //制御しない
+                            //    break;
                             default:
                                 //表示位置キープ
-                                if (_curList.VirtualListSize > 0 && _statuses.IndexOf(_curTab.Text, topId) > -1)
+                                if (_statuses.IndexOf(_curTab.Text, topId) > -1)
                                 {
                                     _curList.EnsureVisible(_curList.VirtualListSize - 1);
                                     _curList.EnsureVisible(_statuses.IndexOf(_curTab.Text, topId));
@@ -5407,18 +5407,19 @@ namespace OpenTween
                 //アイコン以外の列
                 RectangleF rct = e.Bounds;
                 rct.Width = e.Header.Width;
+                int fontHeight = e.Item.Font.Height;
                 if (_iconCol)
                 {
-                    rct.Y += e.Item.Font.Height;
-                    rct.Height -= e.Item.Font.Height;
+                    rct.Y += fontHeight;
+                    rct.Height -= fontHeight;
                 }
 
                 int heightDiff;
-                int drawLineCount = Math.Max(1, Math.DivRem((int)rct.Height, e.Item.Font.Height, out heightDiff));
+                int drawLineCount = Math.Max(1, Math.DivRem((int)rct.Height, fontHeight, out heightDiff));
 
-                //if (heightDiff > e.Item.Font.Height * 0.7)
+                //if (heightDiff > fontHeight * 0.7)
                 //{
-                //    rct.Height += e.Item.Font.Height;
+                //    rct.Height += fontHeight;
                 //    drawLineCount += 1;
                 //}
 
@@ -5426,13 +5427,13 @@ namespace OpenTween
                 if (!_iconCol && drawLineCount <= 1)
                 {
                     //rct.Inflate(0, heightDiff / -2);
-                    //rct.Height += e.Item.Font.Height / 2;
+                    //rct.Height += fontHeight / 2;
                 }
-                else if (heightDiff < e.Item.Font.Height * 0.7)
+                else if (heightDiff < fontHeight * 0.7)
                 {
                     //最終行が70%以上欠けていたら、最終行は表示しない
-                    //rct.Height = (float)((e.Item.Font.Height * drawLineCount) + (e.Item.Font.Height / 2));
-                    rct.Height = (e.Item.Font.Height * drawLineCount) - 1;
+                    //rct.Height = (float)((fontHeight * drawLineCount) + (fontHeight / 2));
+                    rct.Height = (fontHeight * drawLineCount) - 1;
                 }
                 //else
                 //{
@@ -5441,8 +5442,8 @@ namespace OpenTween
 
                 //if (!_iconCol && drawLineCount > 1)
                 //{
-                //    rct.Y += e.Item.Font.Height * 0.2;
-                //    if (heightDiff >= e.Item.Font.Height * 0.8) rct.Height -= e.Item.Font.Height * 0.2;
+                //    rct.Y += fontHeight * 0.2;
+                //    if (heightDiff >= fontHeight * 0.8) rct.Height -= fontHeight * 0.2;
                 //}
 
                 if (rct.Width > 0)
@@ -5455,7 +5456,7 @@ namespace OpenTween
                     {
                         RectangleF rctB = e.Bounds;
                         rctB.Width = e.Header.Width;
-                        rctB.Height = e.Item.Font.Height;
+                        rctB.Height = fontHeight;
 
                         using (Font fnt = new Font(e.Item.Font, FontStyle.Bold))
                         {
@@ -10554,9 +10555,10 @@ namespace OpenTween
             //単一
             Rectangle bnd = new Rectangle();
             bool flg = false;
-            if (LView.FocusedItem != null)
+            ListViewItem item = LView.FocusedItem;
+            if (item != null)
             {
-                bnd = LView.FocusedItem.Bounds;
+                bnd = item.Bounds;
                 flg = true;
             }
 
@@ -10565,9 +10567,10 @@ namespace OpenTween
                 LView.SelectedIndices.Clear();
             }
             while (LView.SelectedIndices.Count > 0);
-            LView.Items[Index].Selected = true;
+            item = LView.Items[Index];
+            item.Selected = true;
             //LView.SelectedIndices.Add(Index);
-            LView.Items[Index].Focused = true;
+            item.Focused = true;
 
             if (flg) LView.Invalidate(bnd);
         }
@@ -10577,9 +10580,10 @@ namespace OpenTween
             //複数
             Rectangle bnd = new Rectangle();
             bool flg = false;
-            if (LView.FocusedItem != null)
+            ListViewItem item = LView.FocusedItem;
+            if (item != null)
             {
-                bnd = LView.FocusedItem.Bounds;
+                bnd = item.Bounds;
                 flg = true;
             }
 

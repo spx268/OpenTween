@@ -1834,7 +1834,7 @@ namespace OpenTween
                                 var Hit = false;
                                 foreach (var tb in _tabs.Values)
                                 {
-                                    if (tb != tbc && !tb.IsInnerStorageTabType && tb.Contains(Id))
+                                    if (!tb.Equals(tbc) && !tb.IsInnerStorageTabType && tb.Contains(Id))
                                     {
                                         Hit = true;
                                         break;
