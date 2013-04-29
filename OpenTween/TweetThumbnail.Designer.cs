@@ -47,6 +47,7 @@
             // 
             // panelPictureBox
             // 
+            this.panelPictureBox.BackColor = System.Drawing.Color.FromArgb(32, 32, 32);
             this.panelPictureBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelPictureBox.Location = new System.Drawing.Point(0, 0);
             this.panelPictureBox.Name = "panelPictureBox";
