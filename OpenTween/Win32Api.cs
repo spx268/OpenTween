@@ -566,7 +566,7 @@ namespace OpenTween
         // returns non-zero value if function succeeds
 
         //スクリーンセーバーが起動中かを取得する定数
-        private const int SPI_GETSCREENSAVERRUNNING = 0x61;
+        private const int SPI_GETSCREENSAVERRUNNING = 0x72;
 
         public static bool IsScreenSaverRunning()
         {
