@@ -1591,9 +1591,9 @@ namespace OpenTween
                 {
                     DetailsListView lst = (DetailsListView)tab.Tag;
                     TabClass tabInfo = _statuses.Tabs[tab.Text];
-                    lst.BeginUpdate();
                     if (isDelete || lst.VirtualListSize != tabInfo.AllCount)
                     {
+                        lst.BeginUpdate();
                         if (lst.Equals(_curList))
                         {
                             this.PurgeListViewItemCache();
@@ -1609,8 +1609,8 @@ namespace OpenTween
                         this.SelectListItem(lst,
                                           _statuses.IndexOf(tab.Text, selId[tab.Text]),
                                           _statuses.IndexOf(tab.Text, focusedId[tab.Text]));
+                        lst.EndUpdate();
                     }
-                    lst.EndUpdate();
                     if (tabInfo.UnreadCount > 0)
                         if (SettingDialog.TabIconDisp)
                             if (tab.ImageIndex == -1) tab.ImageIndex = 0; //タブアイコン
@@ -2050,11 +2050,16 @@ namespace OpenTween
             this.PushSelectPostChain();
 
             if (SettingDialog.UnreadManage) _statuses.SetReadAllTab(true, _curTab.Text, _curItemIndex);
+
+            _curList.BeginUpdate();
+
             //キャッシュの書き換え
             ChangeCacheStyleRead(true, _curItemIndex, _curTab);   //既読へ（フォント、文字色）
 
             ColorizeList();
             _colorize = true;
+
+            _curList.EndUpdate();
         }
 
         private void ChangeCacheStyleRead(bool Read, int Index, TabPage Tab)
