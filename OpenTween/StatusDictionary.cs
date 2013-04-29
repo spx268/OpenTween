@@ -2572,8 +2572,8 @@ namespace OpenTween
             if (_tabType == MyCommon.TabUsageType.UserTimeline ||
                 _tabType == MyCommon.TabUsageType.Lists)
             {
-                var ProtectCount = (_tabType == MyCommon.TabUsageType.UserTimeline) ?
-                    AppendSettingDialog.Instance.UserTimelineCountApi : AppendSettingDialog.Instance.ListCountApi;
+                var ProtectCount = ((_tabType == MyCommon.TabUsageType.UserTimeline) ?
+                    AppendSettingDialog.Instance.UserTimelineCountApi : AppendSettingDialog.Instance.ListCountApi) * 2;
                 if (_recentIds.Count > ProtectCount)
                 {
                     _recentIds.Sort();
