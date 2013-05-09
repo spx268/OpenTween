@@ -13176,9 +13176,11 @@ namespace OpenTween
 
         private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, AsyncCompletedEventArgs e)
         {
-            if (!e.Cancelled && e.Error == null)
+            if (!e.Cancelled && e.Error == null && this.SplitContainer3.Panel2Collapsed)
             {
                 this.SplitContainer3.Panel2Collapsed = false;
+                if (this.SplitContainer3.FixedPanel == FixedPanel.None)
+                    this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
             }
         }
 

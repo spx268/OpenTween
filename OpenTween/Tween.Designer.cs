@@ -776,7 +776,6 @@
             // SplitContainer3
             // 
             resources.ApplyResources(this.SplitContainer3, "SplitContainer3");
-            this.SplitContainer3.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
             this.SplitContainer3.Name = "SplitContainer3";
             // 
             // SplitContainer3.Panel1
