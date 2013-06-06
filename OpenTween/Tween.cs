@@ -5513,49 +5513,51 @@ namespace OpenTween
         private void DrawListViewItemIcon(DrawListViewItemEventArgs e)
         {
             ImageListViewItem item = (ImageListViewItem)e.Item;
-            Rectangle stateRect;
 
             //e.Bounds.Leftが常に0を指すから自前で計算
             Rectangle itemRect = item.Bounds;
             itemRect.Width = e.Item.ListView.Columns[0].Width;
 
-            foreach (ColumnHeader clm in e.Item.ListView.Columns)
+            int dispIndex = e.Item.ListView.Columns[0].DisplayIndex;
+            if (dispIndex > 0)
             {
-                if (clm.DisplayIndex < e.Item.ListView.Columns[0].DisplayIndex)
-                    itemRect.X += clm.Width;
+                foreach (ColumnHeader clm in e.Item.ListView.Columns)
+                {
+                    if (clm.DisplayIndex < dispIndex)
+                        itemRect.X += clm.Width;
+                }
             }
 
             Rectangle iconRect;
-            if (item.Image != null)
+            var img = item.Image;
+            if (img != null)
             {
                 iconRect = Rectangle.Intersect(new Rectangle(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(_iconSz, _iconSz)), itemRect);
                 iconRect.Offset(0, Math.Max(0, (itemRect.Height - _iconSz) / 2));
-                stateRect = Rectangle.Intersect(new Rectangle(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
+
+                if (iconRect.Width > 0)
+                {
+                    e.Graphics.FillRectangle(Brushes.White, iconRect);
+                    e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                    try
+                    {
+                        e.Graphics.DrawImage(img.Image, iconRect);
+                    }
+                    catch (ArgumentException)
+                    {
+                        item.RegetImage();
+                    }
+                }
             }
             else
             {
                 iconRect = Rectangle.Intersect(new Rectangle(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(1, 1)), itemRect);
                 //iconRect.Offset(0, Math.Max(0, (itemRect.Height - _iconSz) / 2));
-                stateRect = Rectangle.Intersect(new Rectangle(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
-            }
-
-            var img = item.Image;
-            if (img != null && iconRect.Width > 0)
-            {
-                e.Graphics.FillRectangle(Brushes.White, iconRect);
-                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
-                try
-                {
-                    e.Graphics.DrawImage(img.Image, iconRect);
-                }
-                catch (ArgumentException)
-                {
-                    item.RegetImage();
-                }
             }
 
             if (item.StateImageIndex > -1)
             {
+                Rectangle stateRect = Rectangle.Intersect(new Rectangle(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
                 if (stateRect.Width > 0)
                 {
                     //e.Graphics.FillRectangle(Brushes.White, stateRect);
