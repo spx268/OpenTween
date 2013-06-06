@@ -408,7 +408,7 @@ namespace OpenTween
         /// マルチバイト文字のコードはUTF-8またはUnicodeで自動的に判断します。
         /// </newpara>
         /// </summary>
-        /// <param name = input>エンコード対象のURL</param>
+        /// <param name="_input">エンコード対象のURL</param>
         /// <returns>マルチバイト文字の部分をUTF-8/%xx形式でエンコードした文字列を返します。</returns>
 
         public static string urlEncodeMultibyteChar(string _input)
@@ -759,11 +759,9 @@ namespace OpenTween
         public static T CreateDataFromJson<T>(string content)
         {
             T data;
-            using (var stream = new MemoryStream())
+            var buf = Encoding.Unicode.GetBytes(content);
+            using (var stream = new MemoryStream(buf))
             {
-                var buf = Encoding.Unicode.GetBytes(content);
-                stream.Write(Encoding.Unicode.GetBytes(content), offset: 0, count: buf.Length);
-                stream.Seek(offset: 0, loc: SeekOrigin.Begin);
                 data = (T)((new DataContractJsonSerializer(typeof(T))).ReadObject(stream));
             }
             return data;

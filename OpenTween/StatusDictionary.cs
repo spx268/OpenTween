@@ -3457,7 +3457,7 @@ namespace OpenTween
             {
                 foreach (var flt in this.BodyFilter)
                 {
-                    destination.BodyFilter.Add(string.Copy(flt));
+                    destination.BodyFilter.Add(flt);
                 }
             }
 
@@ -3465,7 +3465,7 @@ namespace OpenTween
             {
                 foreach (var flt in this.ExBodyFilter)
                 {
-                    destination.ExBodyFilter.Add(string.Copy(flt));
+                    destination.ExBodyFilter.Add(flt);
                 }
             }
 
