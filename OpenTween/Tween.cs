@@ -13202,6 +13202,11 @@ namespace OpenTween
             this.OpenThumbnailPicture(e.Thumbnail);
         }
 
+        private void tweetThumbnail1_ThumbnailImageSearchClick(object sender, ThumbnailImageSearchEventArgs e)
+        {
+            this.OpenUriAsync(e.ImageUrl);
+        }
+
         private void OpenThumbnailPicture(ThumbnailInfo thumbnail)
         {
             string url = thumbnail.ImageUrl;
