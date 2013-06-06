@@ -12349,6 +12349,8 @@ namespace OpenTween
             {
                 ImageSelectedPicture.Image = ImageSelectedPicture.InitialImage;
                 ImageSelectedPicture.Tag = MyCommon.UploadFileType.Invalid;
+                TimelinePanel.Visible = true;
+                TimelinePanel.Enabled = true;
                 ImageSelectionPanel.Visible = false;
                 ImageSelectionPanel.Enabled = false;
                 ((DetailsListView)ListTab.SelectedTab.Tag).Focus();
@@ -12406,6 +12408,8 @@ namespace OpenTween
         private void ImageCancelButton_Click(object sender, EventArgs e)
         {
             ImagefilePathText.CausesValidation = false;
+            TimelinePanel.Visible = true;
+            TimelinePanel.Enabled = true;
             ImageSelectionPanel.Visible = false;
             ImageSelectionPanel.Enabled = false;
             ((DetailsListView)ListTab.SelectedTab.Tag).Focus();
