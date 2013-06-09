@@ -7024,6 +7024,7 @@ namespace OpenTween
             {
                 var post = _statuses[_curTab.Text, idx];
                 sb.Append(MyCommon.GetStatusUrl(post));
+                sb.Append(Environment.NewLine);
             }
             if (sb.Length > 0)
             {
