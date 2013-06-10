@@ -191,7 +191,7 @@ namespace OpenTween
         {
             [DataMember(Name = "coordinates", IsRequired = false)] public Coordinates Coordinates;
             [DataMember(Name = "geo", IsRequired = false)] public Geo Geo;
-            [DataMember(Name = "in_reply_to_user_id")] public string InReplyToUserId;
+            [DataMember(Name = "in_reply_to_user_id")] public long? InReplyToUserId;
             [DataMember(Name = "source")] public string Source;
             [DataMember(Name = "user")] public User User;
             [DataMember(Name = "in_reply_to_screen_name")] public string InReplyToScreenName;
@@ -202,7 +202,7 @@ namespace OpenTween
             [DataMember(Name = "id")] public Int64 Id;
             [DataMember(Name = "annotations", IsRequired = false)] public Annotations Annotations;
             [DataMember(Name = "place", IsRequired = false)] public Place Place;
-            [DataMember(Name = "in_reply_to_status_id")] public string InReplyToStatusId;
+            [DataMember(Name = "in_reply_to_status_id")] public long? InReplyToStatusId;
             [DataMember(Name = "text")] public string Text;
             [DataMember(Name = "entities", IsRequired = false)] public Entities Entities;
         }
@@ -213,13 +213,13 @@ namespace OpenTween
             [DataMember(Name = "in_reply_to_status_id_str")] public string InReplyToStatusIdStr;
             [DataMember(Name = "contributors", IsRequired = false)] public int[] Contributors;
             [DataMember(Name = "in_reply_to_screen_name")] public string InReplyToScreenName;
-            [DataMember(Name = "in_reply_to_status_id")] public string InReplyToStatusId;
+            [DataMember(Name = "in_reply_to_status_id")] public long? InReplyToStatusId;
             [DataMember(Name = "in_reply_to_user_id_str")] public string InReplyToUserIdStr;
-            [DataMember(Name = "retweet_count")] public string RetweetCount;
+            [DataMember(Name = "retweet_count")] public int RetweetCount;
             [DataMember(Name = "created_at")] public string CreatedAt;
             [DataMember(Name = "geo", IsRequired = false)] public Geo Geo;
             [DataMember(Name = "retweeted")] public bool Retweeted;
-            [DataMember(Name = "in_reply_to_user_id")] public string InReplyToUserId;
+            [DataMember(Name = "in_reply_to_user_id")] public long? InReplyToUserId;
             [DataMember(Name = "source")] public string Source;
             [DataMember(Name = "id_str")] public string IdStr;
             [DataMember(Name = "coordinates", IsRequired = false)] public Coordinates Coordinates;
@@ -485,7 +485,7 @@ namespace OpenTween
             [DataMember(Name = "from_user_name")] public string FromUserName;
             [DataMember(Name = "geo", IsRequired = false)] public Geo Geo;
             [DataMember(Name = "id")] public long Id;
-            [DataMember(Name = "in_reply_to_status_id", IsRequired = false)] public long InReplyToStatusId = 0;
+            [DataMember(Name = "in_reply_to_status_id", IsRequired = false)] public long? InReplyToStatusId;
             [DataMember(Name = "iso_language_code")] public string IsoLanguageCode;
             [DataMember(Name = "meta_data")] public SearchMetaData MetaData;
             [DataMember(Name = "profile_image_url_https")] public string ProfileImageUrlHttps;

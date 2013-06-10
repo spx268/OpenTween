@@ -1380,9 +1380,7 @@ namespace OpenTween
                 MyCommon.TraceOut(ex, MethodBase.GetCurrentMethod().Name + " " + content);
                 return "Invalid Json!";
             }
-            int tmp;
-            if (int.TryParse(status.RetweetCount, out tmp))
-                retweeted_count = tmp;
+            retweeted_count = status.RetweetCount;
             return "";
         }
 
@@ -2126,13 +2124,9 @@ namespace OpenTween
                 //Source取得（htmlの場合は、中身を取り出し）
                 post.Source = retweeted.Source;
                 //Reply先
-                long inReplyToStatusId;
-                long.TryParse(retweeted.InReplyToStatusId, out inReplyToStatusId);
-                post.InReplyToStatusId = inReplyToStatusId;
+                post.InReplyToStatusId = retweeted.InReplyToStatusId ?? 0;
                 post.InReplyToUser = retweeted.InReplyToScreenName;
-                long inReplyToUserId;
-                long.TryParse(status.InReplyToUserId, out inReplyToUserId);
-                post.InReplyToUserId = inReplyToUserId;
+                post.InReplyToUserId = status.InReplyToUserId ?? 0;
 
                 //幻覚fav対策
                 var tc = TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites);
@@ -2164,13 +2158,9 @@ namespace OpenTween
                 entities = status.Entities;
                 //Source取得（htmlの場合は、中身を取り出し）
                 post.Source = status.Source;
-                long inReplyToStatusId;
-                long.TryParse(status.InReplyToStatusId, out inReplyToStatusId);
-                post.InReplyToStatusId = inReplyToStatusId;
+                post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
                 post.InReplyToUser = status.InReplyToScreenName;
-                long inReplyToUserId;
-                long.TryParse(status.InReplyToUserId, out inReplyToUserId);
-                post.InReplyToUserId = inReplyToUserId;
+                post.InReplyToUserId = status.InReplyToUserId ?? 0;
 
                 if (status.Geo != null) post.PostGeo = new PostClass.StatusGeo {Lat = status.Geo.Coordinates[0], Lng = status.Geo.Coordinates[1]};
 
@@ -2378,9 +2368,9 @@ namespace OpenTween
             post.TextFromApi = status.Text;
             var entities = status.Entities;
             post.Source = WebUtility.HtmlDecode(status.Source);
-            post.InReplyToStatusId = status.InReplyToStatusId;
+            post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
             post.InReplyToUser = status.ToUser;
-            post.InReplyToUserId = !status.ToUserId.HasValue ? 0 : (long)status.ToUserId;
+            post.InReplyToUserId = status.ToUserId ?? 0;
 
             if (status.Geo != null) post.PostGeo = new PostClass.StatusGeo { Lat = status.Geo.Coordinates[0], Lng = status.Geo.Coordinates[1] };
 
@@ -3132,13 +3122,9 @@ namespace OpenTween
                         //Source取得（htmlの場合は、中身を取り出し）
                         post.Source = retweeted.Source;
                         //Reply先
-                        long inReplyToStatusId;
-                        long.TryParse(retweeted.InReplyToStatusId, out inReplyToStatusId);
-                        post.InReplyToStatusId = inReplyToStatusId;
+                        post.InReplyToStatusId = retweeted.InReplyToStatusId ?? 0;
                         post.InReplyToUser = retweeted.InReplyToScreenName;
-                        long inReplyToUserId;
-                        long.TryParse(retweeted.InReplyToUserId, out inReplyToUserId);
-                        post.InReplyToUserId = inReplyToUserId;
+                        post.InReplyToUserId = retweeted.InReplyToUserId ?? 0;
                         post.IsFav = true;
 
                         //以下、ユーザー情報
@@ -3162,13 +3148,9 @@ namespace OpenTween
                         entities = status.Entities;
                         //Source取得（htmlの場合は、中身を取り出し）
                         post.Source = status.Source;
-                        long inReplyToStatusId;
-                        long.TryParse(status.InReplyToStatusId, out inReplyToStatusId);
-                        post.InReplyToStatusId = inReplyToStatusId;
+                        post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
                         post.InReplyToUser = status.InReplyToScreenName;
-                        long inReplyToUserId;
-                        long.TryParse(status.InReplyToUserId, out inReplyToUserId);
-                        post.InReplyToUserId = inReplyToUserId;
+                        post.InReplyToUserId = status.InReplyToUserId ?? 0;
 
                         post.IsFav = true;
 
