@@ -2310,6 +2310,7 @@ namespace OpenTween
 
                 post.IsRead = read;
                 if ((post.IsMe && !read) && this._readOwnPost) post.IsRead = true;
+                post.IsOwl = false;  //検索分は片思い表示にしない
 
                 if (tab != null) post.RelTabName = tab.TabName;
                 //非同期アイコン取得＆StatusDictionaryに追加
