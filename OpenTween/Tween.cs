@@ -6611,7 +6611,7 @@ namespace OpenTween
                                 return true;
                             case Keys.C:
                             case Keys.Insert:
-                                string _selText = WebBrowser_GetSelectionText(ref PostBrowser);
+                                string _selText = WebBrowser_GetSelectionText(PostBrowser);
                                 if (!string.IsNullOrEmpty(_selText))
                                 {
                                     try
@@ -10214,7 +10214,7 @@ namespace OpenTween
             //}
         }
 
-        public string WebBrowser_GetSelectionText(ref WebBrowser ComponentInstance)
+        public string WebBrowser_GetSelectionText(WebBrowser ComponentInstance)
         {
             //発言詳細で「選択文字列をコピー」を行う
             //WebBrowserコンポーネントのインスタンスを渡す
@@ -10227,7 +10227,7 @@ namespace OpenTween
         private void SelectionCopyContextMenuItem_Click(object sender, EventArgs e)
         {
             //発言詳細で「選択文字列をコピー」
-            string _selText = WebBrowser_GetSelectionText(ref PostBrowser);
+            string _selText = WebBrowser_GetSelectionText(PostBrowser);
             try
             {
                 Clipboard.SetDataObject(_selText, false, 5, 100);
@@ -10241,7 +10241,7 @@ namespace OpenTween
         private void doSearchToolStrip(string url)
         {
             //発言詳細で「選択文字列で検索」（選択文字列取得）
-            string _selText = WebBrowser_GetSelectionText(ref PostBrowser);
+            string _selText = WebBrowser_GetSelectionText(PostBrowser);
 
             if (_selText != null)
             {
@@ -10359,7 +10359,7 @@ namespace OpenTween
                 ListManageUserContextToolStripMenuItem.Enabled = false;
             }
             // 文字列選択されていないときは選択文字列関係の項目を非表示に
-            string _selText = WebBrowser_GetSelectionText(ref PostBrowser);
+            string _selText = WebBrowser_GetSelectionText(PostBrowser);
             if (_selText == null)
             {
                 SelectionSearchContextMenuItem.Enabled = false;
@@ -10396,7 +10396,7 @@ namespace OpenTween
         private void CurrentTabToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //発言詳細の選択文字列で現在のタブを検索
-            string _selText = WebBrowser_GetSelectionText(ref PostBrowser);
+            string _selText = WebBrowser_GetSelectionText(PostBrowser);
 
             if (_selText != null)
             {
@@ -13025,7 +13025,7 @@ namespace OpenTween
 
         private void SelectionTranslationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            doTranslation(WebBrowser_GetSelectionText(ref PostBrowser));
+            doTranslation(WebBrowser_GetSelectionText(PostBrowser));
         }
 
         private bool ExistCurrentPost

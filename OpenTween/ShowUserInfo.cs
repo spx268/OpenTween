@@ -446,7 +446,7 @@ namespace OpenTween
             WebBrowser sc = ContextMenuRecentPostBrowser.SourceControl as WebBrowser;
             if (sc != null)
             {
-                string _selText = MyOwner.WebBrowser_GetSelectionText(ref sc);
+                string _selText = MyOwner.WebBrowser_GetSelectionText(sc);
                 if (_selText != null)
                 {
                     try
@@ -466,7 +466,7 @@ namespace OpenTween
             WebBrowser sc = ContextMenuRecentPostBrowser.SourceControl as WebBrowser;
             if (sc != null)
             {
-                string _selText = MyOwner.WebBrowser_GetSelectionText(ref sc);
+                string _selText = MyOwner.WebBrowser_GetSelectionText(sc);
                 if (_selText == null)
                     SelectionCopyToolStripMenuItem.Enabled = false;
                 else
