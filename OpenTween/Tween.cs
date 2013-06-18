@@ -2103,6 +2103,8 @@ namespace OpenTween
             }
         }
 
+        private long dispPostTicks = 0;
+
         private void MyList_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_curList == null || !_curList.Equals(sender) || _curList.SelectedIndices.Count != 1) return;
@@ -2127,6 +2129,13 @@ namespace OpenTween
 
             ColorizeList();
             _colorize = true;
+
+            long ticks = System.DateTime.Now.Ticks;
+            if (ticks > dispPostTicks + 1500000)  //150ms
+            {
+                dispPostTicks = ticks;
+                DispSelectedPost();
+            }
         }
 
         private void ChangeCacheStyleRead(bool Read, int Index, TabPage Tab)
