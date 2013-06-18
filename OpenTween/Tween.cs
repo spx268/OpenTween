@@ -340,8 +340,6 @@ namespace OpenTween
         {
             const int WM_KEYDOWN = 0x100;
             const int VK_SPACE = 0x20;
-            const int VK_UP = 0x26;
-            const int VK_DOWN = 0x28;
 
             const int WM_MOUSEWHEEL = 0x020A;
             const int MK_CONTROL = 0x08;
