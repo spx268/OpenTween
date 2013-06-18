@@ -6446,6 +6446,18 @@ namespace OpenTween
                                 break;
                         }
                     }
+                    else if (Focused == FocusedControl.PostBrowser)
+                    {
+                        switch (KeyCode)
+                        {
+                            case Keys.Up:
+                                ScrollDownPostBrowser(false);
+                                return true;
+                            case Keys.Down:
+                                ScrollDownPostBrowser(true);
+                                return true;
+                        }
+                    }
                     break;
                 case ModifierState.Ctrl:
                     //フォーカス関係なし
@@ -6652,10 +6664,14 @@ namespace OpenTween
                     //フォーカスStatusText以外
                     if (Focused != FocusedControl.StatusText)
                     {
-                        if (KeyCode == Keys.R)
+                        switch (KeyCode)
                         {
-                            DoRefreshMore();
-                            return true;
+                            case Keys.R:
+                                DoRefreshMore();
+                                return true;
+                            case Keys.Space:
+                                GoBackSelectPostChain();
+                                return true;
                         }
                     }
                     //フォーカスリスト
@@ -6693,9 +6709,6 @@ namespace OpenTween
                             case Keys.Left:
                                 // お気に入り前後ジャンプ(SHIFT+N←/P→)
                                 GoFav(false);
-                                return true;
-                            case Keys.Space:
-                                this.GoBackSelectPostChain();
                                 return true;
                         }
                     }
@@ -6932,24 +6945,26 @@ namespace OpenTween
         {
             HtmlDocument doc = PostBrowser.Document;
             if (doc == null) return;
-            if (doc.Body == null) return;
+            HtmlElement  html = doc.GetElementsByTagName("html")[0];
+            if (html == null) return;
 
             if (forward)
-                doc.Body.ScrollTop += SettingDialog.FontDetail.Height;
+                html.ScrollTop += SettingDialog.FontDetail.Height;
             else
-                doc.Body.ScrollTop -= SettingDialog.FontDetail.Height;
+                html.ScrollTop -= SettingDialog.FontDetail.Height;
         }
 
         private void PageDownPostBrowser(bool forward)
         {
             HtmlDocument doc = PostBrowser.Document;
             if (doc == null) return;
-            if (doc.Body == null) return;
+            HtmlElement html = doc.GetElementsByTagName("html")[0];
+            if (html == null) return;
 
             if (forward)
-                doc.Body.ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+                html.ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
             else
-                doc.Body.ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+                html.ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
         }
 
         private void GoNextTab(bool forward)
