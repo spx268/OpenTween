@@ -1610,7 +1610,6 @@ namespace OpenTween
                 Interlocked.Exchange(ref refreshFollowers, 0);
                 doGetFollowersMenu();
                 GetTimeline(MyCommon.WORKERTYPE.Configuration, 0, 0, "");
-                if (InvokeRequired && !IsDisposed) this.Invoke(new MethodInvoker(this.TrimPostChain));
             }
             if (osResumed)
             {
@@ -1627,7 +1626,6 @@ namespace OpenTween
                     GetTimeline(MyCommon.WORKERTYPE.List, 1, 0, "");
                     doGetFollowersMenu();
                     GetTimeline(MyCommon.WORKERTYPE.Configuration, 0, 0, "");
-                    if (InvokeRequired && !IsDisposed) this.Invoke(new MethodInvoker(this.TrimPostChain));
                 }
             }
         }
@@ -7644,16 +7642,23 @@ namespace OpenTween
 
         private void GoBackSelectPostChain()
         {
+            if (this.selectPostChains.Count < 2) return;
             try
             {
                 this.selectPostChains.Pop();
                 Tuple<TabPage, PostClass> tabPostPair = this.selectPostChains.Pop();
                 if (!this.ListTab.TabPages.Contains(tabPostPair.Item1)) return;
                 this.ListTab.SelectedTab = tabPostPair.Item1;
-                if (tabPostPair.Item2 != null && this._statuses.Tabs[this._curTab.Text].IndexOf(tabPostPair.Item2.StatusId) > -1)
+                if (tabPostPair.Item2 != null)
                 {
-                    this.SelectListItem(this._curList, this._statuses.Tabs[this._curTab.Text].IndexOf(tabPostPair.Item2.StatusId));
-                    this._curList.EnsureVisible(this._statuses.Tabs[this._curTab.Text].IndexOf(tabPostPair.Item2.StatusId));
+                    int idx = this._statuses.Tabs[this._curTab.Text].IndexOf(tabPostPair.Item2.StatusId);
+                    if (idx > -1)
+                    {
+                        DetailsListView lst = (DetailsListView)tabPostPair.Item1.Tag;
+                        SelectListItem(lst, idx);
+                        lst.EnsureVisible(idx);
+                        lst.Focus();
+                    }
                 }
             }
             catch (InvalidOperationException)
@@ -7663,22 +7668,26 @@ namespace OpenTween
 
         private void PushSelectPostChain()
         {
-            if (this.selectPostChains.Count == 0 || (this.selectPostChains.Peek().Item1.Text != this._curTab.Text || this._curPost != this.selectPostChains.Peek().Item2))
+            int count = this.selectPostChains.Count;
+            if (count > 0)
             {
-                this.selectPostChains.Push(Tuple.Create(this._curTab, _curPost));
+                Tuple<TabPage, PostClass> p = this.selectPostChains.Peek();
+                if (p.Item2 == this._curPost && p.Item1.Text.Equals(this._curTab.Text)) return;  //最新と同一
             }
+            this.selectPostChains.Push(Tuple.Create(this._curTab, _curPost));
+            if (count >= 400) TrimPostChain();
         }
 
         private void TrimPostChain()
         {
-            if (this.selectPostChains.Count < 2000) return;
-            Stack<Tuple<TabPage, PostClass>> p = new Stack<Tuple<TabPage, PostClass>>();
-            for (int i = 0; i < 2000; i++)
+            if (this.selectPostChains.Count <= 300) return;
+            Stack<Tuple<TabPage, PostClass>> p = new Stack<Tuple<TabPage, PostClass>>(300);
+            for (int i = 0; i < 300; i++)
             {
                 p.Push(this.selectPostChains.Pop());
             }
             this.selectPostChains.Clear();
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < 300; i++)
             {
                 this.selectPostChains.Push(p.Pop());
             }
