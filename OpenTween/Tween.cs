@@ -90,6 +90,7 @@ namespace OpenTween
         private bool _myStatusOnline = false;
         private bool soundfileListup = false;
         private SpaceKeyCanceler _spaceKeyCanceler;
+        private WebBrowserKeyCanceler _webBrowserKeyCanceler;
         private FormSnapper _formSnapper;
         private FormWindowState _formWindowState = FormWindowState.Normal; // フォームの状態保存用 通知領域からアイコンをクリックして復帰した際に使用する
 
@@ -335,6 +336,73 @@ namespace OpenTween
             }
         }
 
+        private class WebBrowserKeyCanceler : IMessageFilter, IDisposable
+        {
+            const int WM_KEYDOWN = 0x100;
+            const int VK_SPACE = 0x20;
+            const int VK_UP = 0x26;
+            const int VK_DOWN = 0x28;
+
+            const int WM_MOUSEWHEEL = 0x020A;
+            const int MK_CONTROL = 0x08;
+
+            private uint LoWord(IntPtr ptr) { return ((uint)ptr & 0xFFFF); }
+
+            Control _filterTarget;
+
+            public WebBrowserKeyCanceler(Control filterTarget)
+            {
+                this._filterTarget = filterTarget;
+                Application.AddMessageFilter(this);
+            }
+
+            public bool PreFilterMessage(ref Message m)
+            {
+                switch (m.Msg)
+                {
+                    case WM_KEYDOWN:
+                        switch ((int)m.WParam | (int)Control.ModifierKeys)
+                        {
+                            case VK_SPACE:
+                                if (IsFilterTarget(m.HWnd))
+                                {
+                                    //スクロール阻止＆イベント処理
+                                    if (SpaceCancel != null)
+                                        SpaceCancel(this, EventArgs.Empty);
+                                    return true;
+                                }
+                                break;
+                        }
+                        break;
+
+                    case WM_MOUSEWHEEL:
+                        if ((LoWord(m.WParam) & MK_CONTROL) == MK_CONTROL)
+                        {
+                            if (IsFilterTarget(m.HWnd))
+                            {
+                                //フォントサイズの変更を阻止
+                                return true;
+                            }
+                        }
+                        break;
+                }
+
+                return false;
+            }
+
+            private bool IsFilterTarget(IntPtr handleOfMessage)
+            {
+                return Control.FromChildHandle(handleOfMessage) == this._filterTarget;
+            }
+
+            public event EventHandler SpaceCancel;
+
+            public void Dispose()
+            {
+                Application.RemoveMessageFilter(this);
+            }
+        }
+
         private class FormSnapper : NativeWindow, IDisposable
         {
             //作業領域へのウィンドウスナップ用
@@ -455,6 +523,7 @@ namespace OpenTween
             fltDialog.Dispose();
             UrlDialog.Dispose();
             _spaceKeyCanceler.Dispose();
+            _webBrowserKeyCanceler.Dispose();
             _formSnapper.Dispose();
             if (NIconAt != null) NIconAt.Dispose();
             if (NIconAtRed != null) NIconAtRed.Dispose();
@@ -661,6 +730,9 @@ namespace OpenTween
 
             this._spaceKeyCanceler = new SpaceKeyCanceler(this.PostButton);
             this._spaceKeyCanceler.SpaceCancel += spaceKeyCanceler_SpaceCancel;
+
+            this._webBrowserKeyCanceler = new WebBrowserKeyCanceler(this.PostBrowser);
+            this._webBrowserKeyCanceler.SpaceCancel += spaceKeyCanceler_SpaceCancel;
 
             this._formSnapper = new FormSnapper(this);
 
@@ -6196,9 +6268,9 @@ namespace OpenTween
                 sb.AppendFormat("SearchTabName  : {0}<br>", _curPost.RelTabName);
                 sb.Append("-----End PostClass Dump<br>");
 
-                PostBrowser.Visible = false;
+                //PostBrowser.Visible = false;
                 PostBrowser.DocumentText = detailHtmlFormatHeader + sb.ToString() + detailHtmlFormatFooter;
-                PostBrowser.Visible = true;
+                //PostBrowser.Visible = true;
             }
             else
             {
@@ -6206,7 +6278,7 @@ namespace OpenTween
                 {
                     if (PostBrowser.DocumentText != dTxt)
                     {
-                        PostBrowser.Visible = false;
+                        //PostBrowser.Visible = false;
                         PostBrowser.DocumentText = dTxt;
 
                         this.SplitContainer3.Panel2Collapsed = true;
@@ -6225,7 +6297,7 @@ namespace OpenTween
                 }
                 finally
                 {
-                    PostBrowser.Visible = true;
+                    //PostBrowser.Visible = true;
                 }
             }
         }
