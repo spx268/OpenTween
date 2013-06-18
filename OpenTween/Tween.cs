@@ -2122,16 +2122,11 @@ namespace OpenTween
             this.PushSelectPostChain();
 
             if (SettingDialog.UnreadManage) _statuses.SetReadAllTab(true, _curTab.Text, _curItemIndex);
-
-            _curList.BeginUpdate();
-
             //キャッシュの書き換え
             ChangeCacheStyleRead(true, _curItemIndex, _curTab);   //既読へ（フォント、文字色）
 
             ColorizeList();
             _colorize = true;
-
-            _curList.EndUpdate();
         }
 
         private void ChangeCacheStyleRead(bool Read, int Index, TabPage Tab)
