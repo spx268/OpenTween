@@ -2132,7 +2132,7 @@ namespace OpenTween
                 var tc = TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites);
                 post.IsFav = tc.Contains(post.RetweetedId);
 
-                if (retweeted.Geo != null) post.PostGeo = new PostClass.StatusGeo {Lat = retweeted.Geo.Coordinates[0], Lng = retweeted.Geo.Coordinates[1]};
+                if (retweeted.Coordinates != null) post.PostGeo = new PostClass.StatusGeo { Lng = retweeted.Coordinates.coordinates[0], Lat = retweeted.Coordinates.coordinates[1] };
 
                 //以下、ユーザー情報
                 var user = retweeted.User;
@@ -2162,7 +2162,7 @@ namespace OpenTween
                 post.InReplyToUser = status.InReplyToScreenName;
                 post.InReplyToUserId = status.InReplyToUserId ?? 0;
 
-                if (status.Geo != null) post.PostGeo = new PostClass.StatusGeo {Lat = status.Geo.Coordinates[0], Lng = status.Geo.Coordinates[1]};
+                if (status.Coordinates != null) post.PostGeo = new PostClass.StatusGeo { Lng = status.Coordinates.coordinates[0], Lat = status.Coordinates.coordinates[1] };
 
                 //以下、ユーザー情報
                 var user = status.User;
