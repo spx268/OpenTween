@@ -7021,26 +7021,26 @@ namespace OpenTween
         {
             HtmlDocument doc = PostBrowser.Document;
             if (doc == null) return;
-            HtmlElement  html = doc.GetElementsByTagName("html")[0];
-            if (html == null) return;
+            HtmlElementCollection htmlCol = doc.GetElementsByTagName("html");
+            if (htmlCol.Count < 1) return;
 
             if (forward)
-                html.ScrollTop += SettingDialog.FontDetail.Height;
+                htmlCol[0].ScrollTop += SettingDialog.FontDetail.Height;
             else
-                html.ScrollTop -= SettingDialog.FontDetail.Height;
+                htmlCol[0].ScrollTop -= SettingDialog.FontDetail.Height;
         }
 
         private void PageDownPostBrowser(bool forward)
         {
             HtmlDocument doc = PostBrowser.Document;
             if (doc == null) return;
-            HtmlElement html = doc.GetElementsByTagName("html")[0];
-            if (html == null) return;
+            HtmlElementCollection htmlCol = doc.GetElementsByTagName("html");
+            if (htmlCol.Count < 1) return;
 
             if (forward)
-                html.ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+                htmlCol[0].ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
             else
-                html.ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+                htmlCol[0].ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
         }
 
         private void GoNextTab(bool forward)
