@@ -5393,31 +5393,17 @@ namespace OpenTween
             //if (Post.IsProtect) mk.Append("Ю");
             //if (Post.InReplyToStatusId > 0) mk.Append("⇒");
             if (Post.FavoritedCount > 0) mk.Append("+" + Post.FavoritedCount.ToString());
-            ImageListViewItem itm;
-            if (Post.RetweetedId == 0)
-            {
-                string[] sitem= {"",
-                                 Post.Nickname,
-                                 Post.IsDeleted ? "(DELETED)" : Post.TextSingleLine,
-                                 Post.CreatedAt.ToString(SettingDialog.DateTimeFormat),
-                                 Post.ScreenName,
-                                 "",
-                                 mk.ToString(),
-                                 Post.Source};
-                itm = new ImageListViewItem(sitem, this.IconCache, Post.ImageUrl);
-            }
-            else
-            {
-                string[] sitem = {"",
-                                  Post.Nickname,
-                                  Post.IsDeleted ? "(DELETED)" : Post.TextSingleLine,
-                                  Post.CreatedAt.ToString(SettingDialog.DateTimeFormat),
-                                  Post.ScreenName + Environment.NewLine + "(RT:" + Post.RetweetedBy + ")",
-                                  "",
-                                  mk.ToString(),
-                                  Post.Source};
-                itm = new ImageListViewItem(sitem, this.IconCache, Post.ImageUrl);
-            }
+            string[] sitem = {"",
+                              Post.Nickname,
+                              Post.IsDeleted ? "(DELETED)" : Post.TextSingleLine,
+                              Post.CreatedAt.ToString(SettingDialog.DateTimeFormat),
+                              Post.RetweetedId == 0 ? Post.ScreenName : Post.ScreenName + Environment.NewLine + "(RT:" + Post.RetweetedBy + ")",
+                              "",
+                              mk.ToString(),
+                              Post.Source};
+            ImageListViewItem itm = SettingDialog.IconSz != MyCommon.IconSizes.IconNone ?
+                                        new ImageListViewItem(sitem, this.IconCache, Post.ImageUrl) :
+                                        new ImageListViewItem(sitem, "");
             itm.StateImageIndex = Post.StateIndex;
 
             bool read = Post.IsRead;
