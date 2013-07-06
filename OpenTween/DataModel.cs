@@ -134,12 +134,12 @@ namespace OpenTween
             [DataMember(Name = "profile_background_image_url_https")] public string ProfileBackgroundImageUrlHttps;
             [DataMember(Name = "screen_name")] public string ScreenName;
             [DataMember(Name = "name")] public string Name;
-            [DataMember(Name = "following")] public string Following;
+            [DataMember(Name = "following")] public bool? Following;
             [DataMember(Name = "profile_link_color")] public string ProfileLinkColor;
             [DataMember(Name = "id")] public Int64 Id;
             [DataMember(Name = "listed_count")] public int ListedCount;
             [DataMember(Name = "profile_background_tile")] public bool ProfileBackgroundTile;
-            [DataMember(Name = "utc_offset")] public string UtcOffset;
+            [DataMember(Name = "utc_offset")] public int? UtcOffset;
             [DataMember(Name = "place", IsRequired = false)] public Place Place;
             [DataMember(Name = "status", IsRequired = false)] public Status Status;
         }
@@ -198,7 +198,7 @@ namespace OpenTween
             [DataMember(Name = "created_at")] public string CreatedAt;
             [DataMember(Name = "contributors")] public int[] Contributors;
             [DataMember(Name = "favorited")] public bool Favorited;
-            [DataMember(Name = "truncated")] public string Truncated;
+            [DataMember(Name = "truncated")] public bool? Truncated;
             [DataMember(Name = "id")] public Int64 Id;
             [DataMember(Name = "annotations", IsRequired = false)] public Annotations Annotations;
             [DataMember(Name = "place", IsRequired = false)] public Place Place;

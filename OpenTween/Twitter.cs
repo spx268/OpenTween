@@ -554,7 +554,7 @@ namespace OpenTween
             return false;
         }
 
-        public string PostStatus(string postStr, long reply_to)
+        public string PostStatus(string postStr, long? reply_to)
         {
 
             if (MyCommon._endingFlag) return "";
@@ -663,7 +663,7 @@ namespace OpenTween
             }
         }
 
-        public string PostStatusWithMedia(string postStr, long reply_to, FileInfo mediaFile)
+        public string PostStatusWithMedia(string postStr, long? reply_to, FileInfo mediaFile)
         {
             if (MyCommon._endingFlag) return "";
 
@@ -916,9 +916,9 @@ namespace OpenTween
             {
                 return "Err:Target isn't found.";
             }
-            if (TabInformations.GetInstance()[id].RetweetedId > 0)
+            if (TabInformations.GetInstance()[id].RetweetedId != null)
             {
-                target = TabInformations.GetInstance()[id].RetweetedId; //再RTの場合は元発言をRT
+                target = TabInformations.GetInstance()[id].RetweetedId.Value; //再RTの場合は元発言をRT
             }
 
             HttpStatusCode res = HttpStatusCode.BadRequest;
@@ -971,7 +971,7 @@ namespace OpenTween
                 if (TabInformations.GetInstance().ContainsKey(post.StatusId)) return "";
             }
             //Retweet判定
-            if (post.RetweetedId == 0) return "Invalid Json!";
+            if (post.RetweetedId == null) return "Invalid Json!";
             //ユーザー情報
             post.IsMe = true;
 
@@ -1896,22 +1896,22 @@ namespace OpenTween
                 {
                     if (more)
                     {
-                        res = twCon.HomeTimeline(count, this.minHomeTimeline, 0, ref content);
+                        res = twCon.HomeTimeline(count, this.minHomeTimeline, null, ref content);
                     }
                     else
                     {
-                        res = twCon.HomeTimeline(count, 0, 0, ref content);
+                        res = twCon.HomeTimeline(count, null, null, ref content);
                     }
                 }
                 else
                 {
                     if (more)
                     {
-                        res = twCon.Mentions(count, this.minMentions, 0, ref content);
+                        res = twCon.Mentions(count, this.minMentions, null, ref content);
                     }
                     else
                     {
-                        res = twCon.Mentions(count, 0, 0, ref content);
+                        res = twCon.Mentions(count, null, null, ref content);
                     }
                 }
             }
@@ -1964,17 +1964,17 @@ namespace OpenTween
                     var target = tab.User;
                     if (string.IsNullOrEmpty(target)) return "";
                     userName = target;
-                    res = twCon.UserTimeline(0, target, count, 0, 0, ref content);
+                    res = twCon.UserTimeline(null, target, count, null, null, ref content);
                 }
                 else
                 {
                     if (more)
                     {
-                        res = twCon.UserTimeline(0, userName, count, tab.OldestId, 0, ref content);
+                        res = twCon.UserTimeline(null, userName, count, tab.OldestId, null, ref content);
                     }
                     else
                     {
-                        res = twCon.UserTimeline(0, userName, count, 0, 0, ref content);
+                        res = twCon.UserTimeline(null, userName, count, null, null, ref content);
                     }
                 }
             }
@@ -2124,13 +2124,13 @@ namespace OpenTween
                 //Source取得（htmlの場合は、中身を取り出し）
                 post.Source = retweeted.Source;
                 //Reply先
-                post.InReplyToStatusId = retweeted.InReplyToStatusId ?? 0;
+                post.InReplyToStatusId = retweeted.InReplyToStatusId;
                 post.InReplyToUser = retweeted.InReplyToScreenName;
-                post.InReplyToUserId = status.InReplyToUserId ?? 0;
+                post.InReplyToUserId = status.InReplyToUserId;
 
                 //幻覚fav対策
                 var tc = TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites);
-                post.IsFav = tc.Contains(post.RetweetedId);
+                post.IsFav = tc.Contains(retweeted.Id);
 
                 if (retweeted.Coordinates != null) post.PostGeo = new PostClass.StatusGeo { Lng = retweeted.Coordinates.coordinates[0], Lat = retweeted.Coordinates.coordinates[1] };
 
@@ -2158,9 +2158,9 @@ namespace OpenTween
                 entities = status.Entities;
                 //Source取得（htmlの場合は、中身を取り出し）
                 post.Source = status.Source;
-                post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
+                post.InReplyToStatusId = status.InReplyToStatusId;
                 post.InReplyToUser = status.InReplyToScreenName;
-                post.InReplyToUserId = status.InReplyToUserId ?? 0;
+                post.InReplyToUserId = status.InReplyToUserId;
 
                 if (status.Coordinates != null) post.PostGeo = new PostClass.StatusGeo { Lng = status.Coordinates.coordinates[0], Lat = status.Coordinates.coordinates[1] };
 
@@ -2246,7 +2246,7 @@ namespace OpenTween
                 }
 
                 //RT禁止ユーザーによるもの
-                if (post.RetweetedId > 0 && this.noRTId.Contains(post.RetweetedByUserId)) continue;
+                if (post.RetweetedByUserId != null && this.noRTId.Contains(post.RetweetedByUserId.Value)) continue;
 
                 post.IsRead = read;
                 if (post.IsMe && !read && _readOwnPost) post.IsRead = true;
@@ -2376,7 +2376,7 @@ namespace OpenTween
             post.Source = WebUtility.HtmlDecode(status.Source);
             post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
             post.InReplyToUser = status.ToUser;
-            post.InReplyToUserId = status.ToUserId ?? 0;
+            post.InReplyToUserId = status.ToUserId;
 
             if (status.Geo != null) post.PostGeo = new PostClass.StatusGeo { Lat = status.Geo.Coordinates[0], Lng = status.Geo.Coordinates[1] };
 
@@ -2499,11 +2499,11 @@ namespace OpenTween
             {
                 if (more)
                 {
-                    res = twCon.GetListsStatuses(tab.ListInfo.UserId, tab.ListInfo.Id, count, tab.OldestId, 0, AppendSettingDialog.Instance.IsListStatusesIncludeRts, ref content);
+                    res = twCon.GetListsStatuses(tab.ListInfo.UserId, tab.ListInfo.Id, count, tab.OldestId, null, AppendSettingDialog.Instance.IsListStatusesIncludeRts, ref content);
                 }
                 else
                 {
-                    res = twCon.GetListsStatuses(tab.ListInfo.UserId, tab.ListInfo.Id, count, 0, 0, AppendSettingDialog.Instance.IsListStatusesIncludeRts, ref content);
+                    res = twCon.GetListsStatuses(tab.ListInfo.UserId, tab.ListInfo.Id, count, null, null, AppendSettingDialog.Instance.IsListStatusesIncludeRts, ref content);
                 }
             }
             catch(Exception ex)
@@ -2537,11 +2537,11 @@ namespace OpenTween
                 throw new ArgumentException("startStatusId (" + startStatusId + ") が posts の中から見つかりませんでした。");
 
             var nextPost = posts[startStatusId];
-            while (nextPost.InReplyToStatusId != 0)
+            while (nextPost.InReplyToStatusId != null)
             {
-                if (!posts.ContainsKey(nextPost.InReplyToStatusId))
+                if (!posts.ContainsKey(nextPost.InReplyToStatusId.Value))
                     break;
-                nextPost = posts[nextPost.InReplyToStatusId];
+                nextPost = posts[nextPost.InReplyToStatusId.Value];
             }
 
             return nextPost;
@@ -2551,11 +2551,11 @@ namespace OpenTween
         {
             var rslt = "";
             var relPosts = new Dictionary<Int64, PostClass>();
-            if (tab.RelationTargetPost.TextFromApi.Contains("@") && tab.RelationTargetPost.InReplyToStatusId == 0)
+            if (tab.RelationTargetPost.TextFromApi.Contains("@") && tab.RelationTargetPost.InReplyToStatusId == null)
             {
                 //検索結果対応
                 var p = TabInformations.GetInstance()[tab.RelationTargetPost.StatusId];
-                if (p != null && p.InReplyToStatusId > 0)
+                if (p != null && p.InReplyToStatusId != null)
                 {
                     tab.RelationTargetPost = p;
                 }
@@ -2581,15 +2581,15 @@ namespace OpenTween
                     rslt = this.GetRelatedResultsApi(nextPost, relPosts);
                     if (!string.IsNullOrEmpty(rslt)) break;
                     nextPost = FindTopOfReplyChain(relPosts, nextPost.StatusId);
-                } while (nextPost.InReplyToStatusId != 0 && loopCount++ <= 5);
+                } while (nextPost.InReplyToStatusId != null && loopCount++ <= 5);
             }
 
             // 二周目: in_reply_to_status_id を使用してリプライチェインを辿る
             nextPost = FindTopOfReplyChain(relPosts, tab.RelationTargetPost.StatusId);
             loopCount = 1;
-            while (nextPost.InReplyToStatusId != 0 && loopCount++ <= 20)
+            while (nextPost.InReplyToStatusId != null && loopCount++ <= 20)
             {
-                var inReplyToId = nextPost.InReplyToStatusId;
+                var inReplyToId = nextPost.InReplyToStatusId.Value;
 
                 var inReplyToPost = TabInformations.GetInstance()[inReplyToId];
                 if (inReplyToPost != null)
@@ -2664,9 +2664,9 @@ namespace OpenTween
             var content = "";
             try
             {
-                if (post.RetweetedId > 0)
+                if (post.RetweetedId != null)
                 {
-                    res = twCon.GetRelatedResults(post.RetweetedId, ref content);
+                    res = twCon.GetRelatedResults(post.RetweetedId.Value, ref content);
                 }
                 else
                 {
@@ -2730,8 +2730,8 @@ namespace OpenTween
 
             HttpStatusCode res;
             var content = "";
-            var maxId = 0L;
-            var sinceId = 0L;
+            long? maxId = null;
+            long? sinceId = null;
             var count = 100;
             if (AppendSettingDialog.Instance.UseAdditionalCount &&
                 AppendSettingDialog.Instance.SearchCountApi != 0)
@@ -2790,8 +2790,8 @@ namespace OpenTween
 
             HttpStatusCode res;
             var content = "";
-            var page = 0;
-            var sinceId = 0L;
+            int? page = null;
+            long? sinceId = null;
             var count = 100;
             var querystr = "";
             if (AppendSettingDialog.Instance.UseAdditionalCount &&
@@ -2997,22 +2997,22 @@ namespace OpenTween
                 {
                     if (more)
                     {
-                        res = twCon.DirectMessages(20, minDirectmessage, 0, ref content);
+                        res = twCon.DirectMessages(20, minDirectmessage, null, ref content);
                     }
                     else
                     {
-                        res = twCon.DirectMessages(20, 0, 0, ref content);
+                        res = twCon.DirectMessages(20, null, null, ref content);
                     }
                 }
                 else
                 {
                     if (more)
                     {
-                        res = twCon.DirectMessagesSent(20, minDirectmessageSent, 0, ref content);
+                        res = twCon.DirectMessagesSent(20, minDirectmessageSent, null, ref content);
                     }
                     else
                     {
-                        res = twCon.DirectMessagesSent(20, 0, 0, ref content);
+                        res = twCon.DirectMessagesSent(20, null, null, ref content);
                     }
                 }
             }
@@ -3134,9 +3134,9 @@ namespace OpenTween
                         //Source取得（htmlの場合は、中身を取り出し）
                         post.Source = retweeted.Source;
                         //Reply先
-                        post.InReplyToStatusId = retweeted.InReplyToStatusId ?? 0;
+                        post.InReplyToStatusId = retweeted.InReplyToStatusId;
                         post.InReplyToUser = retweeted.InReplyToScreenName;
-                        post.InReplyToUserId = retweeted.InReplyToUserId ?? 0;
+                        post.InReplyToUserId = retweeted.InReplyToUserId;
                         post.IsFav = true;
 
                         //以下、ユーザー情報
@@ -3160,9 +3160,9 @@ namespace OpenTween
                         entities = status.Entities;
                         //Source取得（htmlの場合は、中身を取り出し）
                         post.Source = status.Source;
-                        post.InReplyToStatusId = status.InReplyToStatusId ?? 0;
+                        post.InReplyToStatusId = status.InReplyToStatusId;
                         post.InReplyToUser = status.InReplyToScreenName;
-                        post.InReplyToUserId = status.InReplyToUserId ?? 0;
+                        post.InReplyToUserId = status.InReplyToUserId;
 
                         post.IsFav = true;
 

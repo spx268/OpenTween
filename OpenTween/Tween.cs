@@ -159,7 +159,7 @@ namespace OpenTween
         private int _hisIdx;                  //発言履歴カレントインデックス
 
         //発言投稿時のAPI引数（発言編集時に設定。手書きreplyでは設定されない）
-        private long _reply_to_id;     // リプライ先のステータスID 0の場合はリプライではない 注：複数あてのものはリプライではない
+        private long? _reply_to_id;     // リプライ先のステータスID 0の場合はリプライではない 注：複数あてのものはリプライではない
         private string _reply_to_name;    // リプライ先ステータスの書き込み者の名前
 
         //時速表示用
@@ -291,14 +291,14 @@ namespace OpenTween
         private class PostingStatus
         {
             public string status = "";
-            public long inReplyToId = 0;
-            public string inReplyToName = "";
+            public long? inReplyToId = null;
+            public string inReplyToName = null;
             public string imageService = "";      //画像投稿サービス名
             public string imagePath = "";
             public PostingStatus()
             {
             }
-            public PostingStatus(string status, long replyToId, string replyToName)
+            public PostingStatus(string status, long? replyToId, string replyToName)
             {
                 this.status = status;
                 this.inReplyToId = replyToId;
@@ -757,8 +757,8 @@ namespace OpenTween
 
             _history.Add(new PostingStatus());
             _hisIdx = 0;
-            _reply_to_id = 0;
-            _reply_to_name = "";
+            _reply_to_id = null;
+            _reply_to_name = null;
 
             //<<<<<<<<<設定関連>>>>>>>>>
             //設定コンバージョン
@@ -2181,7 +2181,7 @@ namespace OpenTween
                 cl = _clDeleted;
             else if (Post.IsFav)
                 cl = _clFav;
-            else if (Post.RetweetedId > 0)
+            else if (Post.RetweetedId != null)
                 cl = _clRetweet;
             else if (Post.IsOwl && (Post.IsDm || SettingDialog.OneWayLove))
                 cl = _clOWL;
@@ -2408,7 +2408,7 @@ namespace OpenTween
                 //ハッシュタグ
                 if (HashMgr.IsNotAddToAtReply)
                 {
-                    if (!string.IsNullOrEmpty(HashMgr.UseHash) && _reply_to_id == 0 && string.IsNullOrEmpty(_reply_to_name))
+                    if (!string.IsNullOrEmpty(HashMgr.UseHash) && _reply_to_id == null && string.IsNullOrEmpty(_reply_to_name))
                     {
                         if (HashMgr.IsHead)
                             header = HashMgr.UseHash + " ";
@@ -2527,8 +2527,8 @@ namespace OpenTween
                 OpenUriAsync(tmp);
             }
 
-            _reply_to_id = 0;
-            _reply_to_name = "";
+            _reply_to_id = null;
+            _reply_to_name = null;
             StatusText.Text = "";
             _history.Add(new PostingStatus());
             _hisIdx = _history.Count - 1;
@@ -2659,10 +2659,10 @@ namespace OpenTween
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
                             if (!post.IsFav)
                             {
-                                if (post.RetweetedId == 0)
+                                if (post.RetweetedId == null)
                                     ret = tw.PostFavAdd(post.StatusId);
                                 else
-                                    ret = tw.PostFavAdd(post.RetweetedId);
+                                    ret = tw.PostFavAdd(post.RetweetedId.Value);
 
                                 if (ret.Length == 0)
                                 {
@@ -2712,10 +2712,10 @@ namespace OpenTween
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
                             if (post.IsFav)
                             {
-                                if (post.RetweetedId == 0)
+                                if (post.RetweetedId == null)
                                     ret = tw.PostFavRemove(post.StatusId);
                                 else
-                                    ret = tw.PostFavRemove(post.RetweetedId);
+                                    ret = tw.PostFavRemove(post.RetweetedId.Value);
 
                                 if (ret.Length == 0)
                                 {
@@ -3777,7 +3777,7 @@ namespace OpenTween
             //}
             if (_statuses.Tabs[ListTab.SelectedTab.Text].TabType == MyCommon.TabUsageType.PublicSearch
                                 || !this.ExistCurrentPost
-                                || !(_curPost.InReplyToStatusId > 0))
+                                || _curPost.InReplyToStatusId == null)
             {
                 RepliedStatusOpenMenuItem.Enabled = false;
             }
@@ -5188,8 +5188,8 @@ namespace OpenTween
             }
             if (string.IsNullOrEmpty(StatusText.Text))
             {
-                _reply_to_id = 0;
-                _reply_to_name = "";
+                _reply_to_id = null;
+                _reply_to_name = null;
             }
         }
 
@@ -5391,13 +5391,13 @@ namespace OpenTween
             //if (Post.IsDeleted) mk.Append("×");
             //if (Post.IsMark) mk.Append("♪");
             //if (Post.IsProtect) mk.Append("Ю");
-            //if (Post.InReplyToStatusId > 0) mk.Append("⇒");
+            //if (Post.InReplyToStatusId != null) mk.Append("⇒");
             if (Post.FavoritedCount > 0) mk.Append("+" + Post.FavoritedCount.ToString());
             string[] sitem = {"",
                               Post.Nickname,
                               Post.IsDeleted ? "(DELETED)" : Post.TextSingleLine,
                               Post.CreatedAt.ToString(SettingDialog.DateTimeFormat),
-                              Post.RetweetedId == 0 ? Post.ScreenName : Post.ScreenName + Environment.NewLine + "(RT:" + Post.RetweetedBy + ")",
+                              Post.RetweetedId == null ? Post.ScreenName : Post.ScreenName + Environment.NewLine + "(RT:" + Post.RetweetedBy + ")",
                               "",
                               mk.ToString(),
                               Post.Source};
@@ -6216,7 +6216,7 @@ namespace OpenTween
             NameLabel.ForeColor = System.Drawing.SystemColors.ControlText;
             DateTimeLabel.Text = _curPost.CreatedAt.ToString();
             if (_curPost.IsOwl && (SettingDialog.OneWayLove || _statuses.Tabs[_curTab.Text].TabType == MyCommon.TabUsageType.DirectMessage)) NameLabel.ForeColor = _clOWL;
-            if (_curPost.RetweetedId > 0) NameLabel.ForeColor = _clRetweet;
+            if (_curPost.RetweetedId != null) NameLabel.ForeColor = _clRetweet;
             if (_curPost.IsFav) NameLabel.ForeColor = _clFav;
 
             if (DumpPostClassToolStripMenuItem.Checked)
@@ -7064,7 +7064,7 @@ namespace OpenTween
                 if (post.IsDeleted) continue;
                 if (!isDm)
                 {
-                    if (post.RetweetedId > 0)
+                    if (post.RetweetedId != null)
                         sb.AppendFormat("{0}:{1} [http://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.RetweetedId, Environment.NewLine);
                     else
                         sb.AppendFormat("{0}:{1} [http://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.StatusId, Environment.NewLine);
@@ -7251,7 +7251,7 @@ namespace OpenTween
             }
 
             string name = "";
-            if (_curPost.RetweetedId == 0)
+            if (_curPost.RetweetedId == null)
             {
                 name = _curPost.ScreenName;
             }
@@ -7261,7 +7261,7 @@ namespace OpenTween
             }
             for (int idx = fIdx; idx != toIdx; idx += stp)
             {
-                if (_statuses[_curTab.Text, idx].RetweetedId == 0)
+                if (_statuses[_curTab.Text, idx].RetweetedId == null)
                 {
                     if (_statuses[_curTab.Text, idx].ScreenName == name)
                     {
@@ -7436,7 +7436,7 @@ namespace OpenTween
 
             TabClass curTabClass = _statuses.Tabs[_curTab.Text];
 
-            if (curTabClass.TabType == MyCommon.TabUsageType.PublicSearch && _curPost.InReplyToStatusId == 0 && _curPost.TextFromApi.Contains("@"))
+            if (curTabClass.TabType == MyCommon.TabUsageType.PublicSearch && _curPost.InReplyToStatusId == null && _curPost.TextFromApi.Contains("@"))
             {
                 PostClass post = null;
                 string r = tw.GetStatusApi(false, _curPost.StatusId, ref post);
@@ -7454,17 +7454,17 @@ namespace OpenTween
                 }
             }
 
-            if (!(this.ExistCurrentPost && _curPost.InReplyToUser != null && _curPost.InReplyToStatusId > 0)) return;
+            if (!(this.ExistCurrentPost && _curPost.InReplyToUser != null && _curPost.InReplyToStatusId != null)) return;
 
             if (replyChains == null || (replyChains.Count > 0 && replyChains.Peek().InReplyToId != _curPost.StatusId))
             {
                 replyChains = new Stack<ReplyChain>();
             }
-            replyChains.Push(new ReplyChain(_curPost.StatusId, _curPost.InReplyToStatusId, _curTab));
+            replyChains.Push(new ReplyChain(_curPost.StatusId, _curPost.InReplyToStatusId.Value, _curTab));
 
             int inReplyToIndex;
             string inReplyToTabName;
-            long inReplyToId = _curPost.InReplyToStatusId;
+            long inReplyToId = _curPost.InReplyToStatusId.Value;
             string inReplyToUser = _curPost.InReplyToUser;
             Dictionary<long, PostClass> curTabPosts;
 
@@ -7490,7 +7490,7 @@ namespace OpenTween
             catch (InvalidOperationException)
             {
                 PostClass post = null;
-                string r = tw.GetStatusApi(false, _curPost.InReplyToStatusId, ref post);
+                string r = tw.GetStatusApi(false, _curPost.InReplyToStatusId.Value, ref post);
                 if (string.IsNullOrEmpty(r) && post != null)
                 {
                     post.IsRead = true;
@@ -7539,7 +7539,7 @@ namespace OpenTween
 
             if (parallel)
             {
-                if (_curPost.InReplyToStatusId != 0)
+                if (_curPost.InReplyToStatusId != null)
                 {
                     var posts = from t in _statuses.Tabs
                                 from p in t.Value.IsInnerStorageTabType ? t.Value.Posts : _statuses.Posts
@@ -8274,8 +8274,8 @@ namespace OpenTween
                         StatusText.Text = "D " + _curPost.ScreenName + " " + StatusText.Text;
                         StatusText.SelectionStart = StatusText.Text.Length;
                         StatusText.Focus();
-                        _reply_to_id = 0;
-                        _reply_to_name = "";
+                        _reply_to_id = null;
+                        _reply_to_name = null;
                         return;
                     }
                     if (string.IsNullOrEmpty(StatusText.Text))
@@ -8284,9 +8284,9 @@ namespace OpenTween
 
                         // ステータステキストが入力されていない場合先頭に@ユーザー名を追加する
                         StatusText.Text = "@" + _curPost.ScreenName + " ";
-                        if (_curPost.RetweetedId > 0)
+                        if (_curPost.RetweetedId != null)
                         {
-                            _reply_to_id = _curPost.RetweetedId;
+                            _reply_to_id = _curPost.RetweetedId.Value;
                         }
                         else
                         {
@@ -8303,12 +8303,12 @@ namespace OpenTween
                             //1件選んでEnter or DoubleClick
                             if (StatusText.Text.Contains("@" + _curPost.ScreenName + " "))
                             {
-                                if (_reply_to_id > 0 && _reply_to_name == _curPost.ScreenName)
+                                if (_reply_to_id != null && _reply_to_name == _curPost.ScreenName)
                                 {
                                     //返信先書き換え
-                                    if (_curPost.RetweetedId > 0)
+                                    if (_curPost.RetweetedId != null)
                                     {
-                                        _reply_to_id = _curPost.RetweetedId;
+                                        _reply_to_id = _curPost.RetweetedId.Value;
                                     }
                                     else
                                     {
@@ -8325,16 +8325,16 @@ namespace OpenTween
                                 {
                                     // 複数リプライ
                                     StatusText.Text = StatusText.Text.Insert(2, "@" + _curPost.ScreenName + " ");
-                                    _reply_to_id = 0;
-                                    _reply_to_name = "";
+                                    _reply_to_id = null;
+                                    _reply_to_name = null;
                                 }
                                 else
                                 {
                                     // 単独リプライ
                                     StatusText.Text = "@" + _curPost.ScreenName + " " + StatusText.Text;
-                                    if (_curPost.RetweetedId > 0)
+                                    if (_curPost.RetweetedId != null)
                                     {
-                                        _reply_to_id = _curPost.RetweetedId;
+                                        _reply_to_id = _curPost.RetweetedId.Value;
                                     }
                                     else
                                     {
@@ -8349,8 +8349,8 @@ namespace OpenTween
                                 // 複数リプライ
                                 StatusText.Text = ". @" + _curPost.ScreenName + " " + StatusText.Text;
                                 //StatusText.Text = "@" + _curPost.ScreenName + " " + StatusText.Text;
-                                _reply_to_id = 0;
-                                _reply_to_name = "";
+                                _reply_to_id = null;
+                                _reply_to_name = null;
                             }
                         }
                         else
@@ -8402,8 +8402,8 @@ namespace OpenTween
                         if (!sTxt.StartsWith(". "))
                         {
                             sTxt = ". " + sTxt;
-                            _reply_to_id = 0;
-                            _reply_to_name = "";
+                            _reply_to_id = null;
+                            _reply_to_name = null;
                         }
                         for (int cnt = 0; cnt < _curList.SelectedIndices.Count; cnt++)
                         {
@@ -8454,8 +8454,8 @@ namespace OpenTween
                             {
                                 StatusText.Text = ". " + StatusText.Text;
                                 sidx += 2;
-                                _reply_to_id = 0;
-                                _reply_to_name = "";
+                                _reply_to_id = null;
+                                _reply_to_name = null;
                             }
                             if (sidx > 0)
                             {
@@ -8519,9 +8519,9 @@ namespace OpenTween
                                 StatusText.Text = ids;
                                 StatusText.SelectionStart = ids.Length;
                                 StatusText.Focus();
-                                if (post.RetweetedId > 0)
+                                if (post.RetweetedId != null)
                                 {
-                                    _reply_to_id = post.RetweetedId;
+                                    _reply_to_id = post.RetweetedId.Value;
                                 }
                                 else
                                 {
@@ -8926,7 +8926,7 @@ namespace OpenTween
                 if (!SelectTab(out tabName)) return;
 
                 fltDialog.SetCurrent(tabName);
-                if (_statuses[_curTab.Text, idx].RetweetedId == 0)
+                if (_statuses[_curTab.Text, idx].RetweetedId == null)
                 {
                     fltDialog.AddNewFilter(_statuses[_curTab.Text, idx].ScreenName, _statuses[_curTab.Text, idx].TextFromApi);
                 }
@@ -9084,7 +9084,7 @@ namespace OpenTween
                 {
                     FiltersClass fc = new FiltersClass();
                     ids.Add(post.ScreenName);
-                    if (post.RetweetedId == 0)
+                    if (post.RetweetedId == null)
                     {
                         fc.NameFilter = post.ScreenName;
                     }
@@ -9619,12 +9619,12 @@ namespace OpenTween
             }
 
             // リプライ先ステータスIDの指定がない場合は指定しない
-            if (_reply_to_id == 0) return;
+            if (_reply_to_id == null) return;
 
             // リプライ先ユーザー名がない場合も指定しない
             if (string.IsNullOrEmpty(_reply_to_name))
             {
-                _reply_to_id = 0;
+                _reply_to_id = null;
                 return;
             }
 
@@ -9649,8 +9649,8 @@ namespace OpenTween
                 }
             }
 
-            _reply_to_id = 0;
-            _reply_to_name = "";
+            _reply_to_id = null;
+            _reply_to_name = null;
 
         }
 
@@ -9733,28 +9733,28 @@ namespace OpenTween
 
         private void doRepliedStatusOpen()
         {
-            if (this.ExistCurrentPost && _curPost.InReplyToUser != null && _curPost.InReplyToStatusId > 0)
+            if (this.ExistCurrentPost && _curPost.InReplyToUser != null && _curPost.InReplyToStatusId != null)
             {
                 if (MyCommon.IsKeyDown(Keys.Shift))
                 {
-                    OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId));
+                    OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
                     return;
                 }
-                if (_statuses.ContainsKey(_curPost.InReplyToStatusId))
+                if (_statuses.ContainsKey(_curPost.InReplyToStatusId.Value))
                 {
-                    PostClass repPost = _statuses[_curPost.InReplyToStatusId];
+                    PostClass repPost = _statuses[_curPost.InReplyToStatusId.Value];
                     MessageBox.Show(repPost.ScreenName + " / " + repPost.Nickname + "   (" + repPost.CreatedAt.ToString() + ")" + Environment.NewLine + repPost.TextFromApi);
                 }
                 else
                 {
                     foreach (TabClass tb in _statuses.GetTabsByType(MyCommon.TabUsageType.Lists | MyCommon.TabUsageType.PublicSearch))
                     {
-                        if (tb == null || !tb.Contains(_curPost.InReplyToStatusId)) break;
-                        PostClass repPost = _statuses[_curPost.InReplyToStatusId];
+                        if (tb == null || !tb.Contains(_curPost.InReplyToStatusId.Value)) break;
+                        PostClass repPost = _statuses[_curPost.InReplyToStatusId.Value];
                         MessageBox.Show(repPost.ScreenName + " / " + repPost.Nickname + "   (" + repPost.CreatedAt.ToString() + ")" + Environment.NewLine + repPost.TextFromApi);
                         return;
                     }
-                    OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId));
+                    OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
                 }
             }
         }
@@ -11029,8 +11029,8 @@ namespace OpenTween
             else
                 status = Regex.Replace(status, @"(\r\n|\n|\r)?<br>", " ", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
-            _reply_to_id = 0;
-            _reply_to_name = "";
+            _reply_to_id = null;
+            _reply_to_name = null;
             status = status.Replace("&nbsp;", " ");
 
             return status;
@@ -11522,13 +11522,13 @@ namespace OpenTween
                 rtdata = CreateRetweetUnofficial(rtdata);
 
                 StatusText.Text = " QT @" + _curPost.ScreenName + ": " + WebUtility.HtmlDecode(rtdata);
-                if (_curPost.RetweetedId == 0)
+                if (_curPost.RetweetedId == null)
                 {
                     _reply_to_id = _curPost.StatusId;
                 }
                 else
                 {
-                    _reply_to_id = _curPost.RetweetedId;
+                    _reply_to_id = _curPost.RetweetedId.Value;
                 }
                 _reply_to_name = _curPost.ScreenName;
 
@@ -11642,7 +11642,7 @@ namespace OpenTween
             if (_curList.SelectedIndices.Count > 0)
             {
                 PostClass post = GetCurTabPost(_curList.SelectedIndices[0]);
-                if (post.RetweetedId > 0)
+                if (post.RetweetedId != null)
                 {
                     OpenUriAsync("http://twitter.com/" + GetCurTabPost(_curList.SelectedIndices[0]).RetweetedBy);
                 }
@@ -11954,7 +11954,7 @@ namespace OpenTween
             }
             if (_statuses.Tabs[ListTab.SelectedTab.Text].TabType == MyCommon.TabUsageType.PublicSearch
                                 || !this.ExistCurrentPost
-                                || !(_curPost.InReplyToStatusId > 0))
+                                || _curPost.InReplyToStatusId == null)
             {
                 OpenRepSourceOpMenuItem.Enabled = false;
             }
@@ -12211,9 +12211,9 @@ namespace OpenTween
             int counter = 0;
 
             long statusid;
-            if (_curPost.RetweetedId > 0)
+            if (_curPost.RetweetedId != null)
             {
-                statusid = _curPost.RetweetedId;
+                statusid = _curPost.RetweetedId.Value;
             }
             else
             {
@@ -13214,7 +13214,7 @@ namespace OpenTween
                     {
                         string xUrl = SettingDialog.UserAppointUrl;
                         xUrl = xUrl.Replace("{ID}", _curPost.ScreenName);
-                        if (_curPost.RetweetedId != 0)
+                        if (_curPost.RetweetedId != null)
                         {
                             xUrl = xUrl.Replace("{STATUS}", _curPost.RetweetedId.ToString());
                         }
