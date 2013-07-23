@@ -3330,7 +3330,6 @@ namespace OpenTween
                 {
                     noRTId.Clear();
                     noRTId.AddRange(tmpIds);
-                    _GetNoRetweetResult = false;
                     return ret;
                 }
             } while (cursor > 0);
