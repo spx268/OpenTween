@@ -192,14 +192,15 @@ namespace OpenTween
         {
             this.SuspendLayout();
 
-            this.scrollBar.Maximum = count;
-
             this.panelPictureBox.Controls.Clear();
             foreach (var picbox in this.pictureBox)
             {
                 picbox.Dispose();
             }
             this.pictureBox.Clear();
+
+            this.scrollBar.Maximum = count;
+            this.scrollBar.Value = 0;
 
             for (int i = 0; i < count; i++)
             {
