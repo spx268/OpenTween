@@ -1329,55 +1329,60 @@ namespace OpenTween
             //デフォルトタブの存在チェック、ない場合には追加
             if (_statuses.GetTabByType(MyCommon.TabUsageType.Home) == null)
             {
-                if (!_statuses.Tabs.ContainsKey(MyCommon.DEFAULTTAB.RECENT))
+                TabClass tab;
+                if (!_statuses.Tabs.TryGetValue(MyCommon.DEFAULTTAB.RECENT, out tab))
                 {
                     _statuses.AddTab(MyCommon.DEFAULTTAB.RECENT, MyCommon.TabUsageType.Home, null);
                 }
                 else
                 {
-                    _statuses.Tabs[MyCommon.DEFAULTTAB.RECENT].TabType = MyCommon.TabUsageType.Home;
+                    tab.TabType = MyCommon.TabUsageType.Home;
                 }
             }
             if (_statuses.GetTabByType(MyCommon.TabUsageType.Mentions) == null)
             {
-                if (!_statuses.Tabs.ContainsKey(MyCommon.DEFAULTTAB.REPLY))
+                TabClass tab;
+                if (!_statuses.Tabs.TryGetValue(MyCommon.DEFAULTTAB.REPLY, out tab))
                 {
                     _statuses.AddTab(MyCommon.DEFAULTTAB.REPLY, MyCommon.TabUsageType.Mentions, null);
                 }
                 else
                 {
-                    _statuses.Tabs[MyCommon.DEFAULTTAB.REPLY].TabType = MyCommon.TabUsageType.Mentions;
+                    tab.TabType = MyCommon.TabUsageType.Mentions;
                 }
             }
             if (_statuses.GetTabByType(MyCommon.TabUsageType.DirectMessage) == null)
             {
-                if (!_statuses.Tabs.ContainsKey(MyCommon.DEFAULTTAB.DM))
+                TabClass tab;
+                if (!_statuses.Tabs.TryGetValue(MyCommon.DEFAULTTAB.DM, out tab))
                 {
                     _statuses.AddTab(MyCommon.DEFAULTTAB.DM, MyCommon.TabUsageType.DirectMessage, null);
                 }
                 else
                 {
-                    _statuses.Tabs[MyCommon.DEFAULTTAB.DM].TabType = MyCommon.TabUsageType.DirectMessage;
+                    tab.TabType = MyCommon.TabUsageType.DirectMessage;
                 }
             }
             if (_statuses.GetTabByType(MyCommon.TabUsageType.Favorites) == null)
             {
-                if (!_statuses.Tabs.ContainsKey(MyCommon.DEFAULTTAB.FAV))
+                TabClass tab;
+                if (!_statuses.Tabs.TryGetValue(MyCommon.DEFAULTTAB.FAV, out tab))
                 {
                     _statuses.AddTab(MyCommon.DEFAULTTAB.FAV, MyCommon.TabUsageType.Favorites, null);
                 }
                 else
                 {
-                    _statuses.Tabs[MyCommon.DEFAULTTAB.FAV].TabType = MyCommon.TabUsageType.Favorites;
+                    tab.TabType = MyCommon.TabUsageType.Favorites;
                 }
             }
             foreach (string tn in _statuses.Tabs.Keys)
             {
-                if (_statuses.Tabs[tn].TabType == MyCommon.TabUsageType.Undefined)
+                var tab = _statuses.Tabs[tn];
+                if (tab.TabType == MyCommon.TabUsageType.Undefined)
                 {
-                    _statuses.Tabs[tn].TabType = MyCommon.TabUsageType.UserDefined;
+                    tab.TabType = MyCommon.TabUsageType.UserDefined;
                 }
-                if (!AddNewTab(tn, true, _statuses.Tabs[tn].TabType, _statuses.Tabs[tn].ListInfo)) throw new Exception(Properties.Resources.TweenMain_LoadText1);
+                if (!AddNewTab(tn, true, tab.TabType, tab.ListInfo)) throw new Exception(Properties.Resources.TweenMain_LoadText1);
             }
 
             this.JumpReadOpMenuItem.ShortcutKeyDisplayString = "Space";
@@ -6078,17 +6083,20 @@ namespace OpenTween
                 SetMainWindowTitle();
             }
             if (!StatusLabelUrl.Text.StartsWith("http")) SetStatusLabelUrl();
-            foreach (TabPage tb in ListTab.TabPages)
+            if (SettingDialog.TabIconDisp)
             {
-                if (_statuses.Tabs[tb.Text].UnreadCount == 0)
+                foreach (TabPage tb in ListTab.TabPages)
                 {
-                    if (SettingDialog.TabIconDisp)
+                    if (_statuses.Tabs[tb.Text].UnreadCount == 0)
                     {
                         if (tb.ImageIndex == 0) tb.ImageIndex = -1;
                     }
                 }
             }
-            if (!SettingDialog.TabIconDisp) ListTab.Refresh();
+            else
+            {
+                ListTab.Refresh();
+            }
         }
 
         public string createDetailHtml(string orgdata)
@@ -6182,13 +6190,17 @@ namespace OpenTween
             }
             SourceLinkLabel.TabStop = false;
 
-            if (_statuses.Tabs[_curTab.Text].TabType == MyCommon.TabUsageType.DirectMessage && !_curPost.IsOwl)
+            bool isDmTab = _statuses.Tabs[_curTab.Text].TabType == MyCommon.TabUsageType.DirectMessage;
+            if (isDmTab)
             {
-                NameLabel.Text = "DM TO -> ";
-            }
-            else if (_statuses.Tabs[_curTab.Text].TabType == MyCommon.TabUsageType.DirectMessage)
-            {
-                NameLabel.Text = "DM FROM <- ";
+                if (!_curPost.IsOwl)
+                {
+                    NameLabel.Text = "DM TO -> ";
+                }
+                else
+                {
+                    NameLabel.Text = "DM FROM <- ";
+                }
             }
             else
             {
@@ -6219,11 +6231,16 @@ namespace OpenTween
                 }
             }
 
-            NameLabel.ForeColor = System.Drawing.SystemColors.ControlText;
             DateTimeLabel.Text = _curPost.CreatedAt.ToString();
-            if (_curPost.IsOwl && (SettingDialog.OneWayLove || _statuses.Tabs[_curTab.Text].TabType == MyCommon.TabUsageType.DirectMessage)) NameLabel.ForeColor = _clOWL;
-            if (_curPost.RetweetedId != null) NameLabel.ForeColor = _clRetweet;
-            if (_curPost.IsFav) NameLabel.ForeColor = _clFav;
+
+            if (_curPost.IsFav)
+                NameLabel.ForeColor = _clFav;
+            else if (_curPost.RetweetedId != null)
+                NameLabel.ForeColor = _clRetweet;
+            else if (_curPost.IsOwl && (SettingDialog.OneWayLove || isDmTab))
+                NameLabel.ForeColor = _clOWL;
+            else
+                NameLabel.ForeColor = System.Drawing.SystemColors.ControlText;
 
             if (DumpPostClassToolStripMenuItem.Checked)
             {
@@ -8627,21 +8644,24 @@ namespace OpenTween
                 return;
             }
 
-            TabClass tb = _statuses.GetTabByType(MyCommon.TabUsageType.Mentions);
-            if (SettingDialog.ReplyIconState != MyCommon.REPLY_ICONSTATE.None && tb != null && tb.UnreadCount > 0)
+            if (SettingDialog.ReplyIconState != MyCommon.REPLY_ICONSTATE.None)
             {
-                if (blinkCnt > 0) return;
-                blink = !blink;
-                if (blink || SettingDialog.ReplyIconState == MyCommon.REPLY_ICONSTATE.StaticIcon)
+                TabClass tb = _statuses.GetTabByType(MyCommon.TabUsageType.Mentions);
+                if (tb != null && tb.UnreadCount > 0)
                 {
-                    NotifyIcon1.Icon = ReplyIcon;
+                    if (blinkCnt > 0) return;
+                    blink = !blink;
+                    if (blink || SettingDialog.ReplyIconState == MyCommon.REPLY_ICONSTATE.StaticIcon)
+                    {
+                        NotifyIcon1.Icon = ReplyIcon;
+                    }
+                    else
+                    {
+                        NotifyIcon1.Icon = ReplyIconBlink;
+                    }
+                    idle = false;
+                    return;
                 }
-                else
-                {
-                    NotifyIcon1.Icon = ReplyIconBlink;
-                }
-                idle = false;
-                return;
             }
 
             if (idle) return;
@@ -9426,10 +9446,10 @@ namespace OpenTween
                 SettingDialog.DispLatestPost != MyCommon.DispTitleEnum.Ver &&
                 SettingDialog.DispLatestPost != MyCommon.DispTitleEnum.OwnStatus)
             {
-                foreach (string key in _statuses.Tabs.Keys)
+                foreach (var tab in _statuses.Tabs.Values)
                 {
-                    ur += _statuses.Tabs[key].UnreadCount;
-                    al += _statuses.Tabs[key].AllCount;
+                    ur += tab.UnreadCount;
+                    al += tab.AllCount;
                 }
             }
 
@@ -9491,12 +9511,13 @@ namespace OpenTween
             {
                 foreach (string key in _statuses.Tabs.Keys)
                 {
-                    ur += _statuses.Tabs[key].UnreadCount;
-                    al += _statuses.Tabs[key].AllCount;
+                    var tab = _statuses.Tabs[key];
+                    ur += tab.UnreadCount;
+                    al += tab.AllCount;
                     if (key.Equals(_curTab.Text))
                     {
-                        tur = _statuses.Tabs[key].UnreadCount;
-                        tal = _statuses.Tabs[key].AllCount;
+                        tur = tab.UnreadCount;
+                        tal = tab.AllCount;
                     }
                 }
             }

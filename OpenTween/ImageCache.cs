@@ -100,8 +100,11 @@ namespace OpenTween
                     if (force)
                         this.innerDictionary.Remove(address);
 
-                    if (this.innerDictionary.ContainsKey(address) && !this.innerDictionary[address].IsFaulted)
-                        cachedImageTask = this.innerDictionary[address];
+                    {
+                        Task<MemoryImage> cached;
+                        if (this.innerDictionary.TryGetValue(address, out cached) && !cached.IsFaulted)
+                            cachedImageTask = cached;
+                    }
 
                     if (cachedImageTask != null)
                         return cachedImageTask;
@@ -144,10 +147,10 @@ namespace OpenTween
         {
             lock (this.lockObject)
             {
-                if (!this.innerDictionary.ContainsKey(address))
+                Task<MemoryImage> imageTask;
+                if (!this.innerDictionary.TryGetValue(address, out imageTask))
                     return null;
 
-                var imageTask = this.innerDictionary[address];
                 if (imageTask.Status != TaskStatus.RanToCompletion)
                     return null;
 

@@ -2533,15 +2533,16 @@ namespace OpenTween
         /// <returns>posts の中から検索されたリプライチェインの末端</returns>
         internal static PostClass FindTopOfReplyChain(IDictionary<Int64, PostClass> posts, Int64 startStatusId)
         {
-            if (!posts.ContainsKey(startStatusId))
+            PostClass nextPost;
+            if (!posts.TryGetValue(startStatusId, out nextPost))
                 throw new ArgumentException("startStatusId (" + startStatusId + ") が posts の中から見つかりませんでした。");
 
-            var nextPost = posts[startStatusId];
             while (nextPost.InReplyToStatusId != null)
             {
-                if (!posts.ContainsKey(nextPost.InReplyToStatusId.Value))
+                PostClass tempPost;
+                if (!posts.TryGetValue(nextPost.InReplyToStatusId.Value, out tempPost))
                     break;
-                nextPost = posts[nextPost.InReplyToStatusId.Value];
+                nextPost = tempPost;
             }
 
             return nextPost;
