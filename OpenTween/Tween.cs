@@ -343,8 +343,9 @@ namespace OpenTween
 
             const int WM_MOUSEWHEEL = 0x020A;
             const int MK_CONTROL = 0x08;
+            const int MK_SHIFT   = 0x04;
 
-            private uint LoWord(IntPtr ptr) { return ((uint)ptr & 0xFFFF); }
+            private int LoWord(IntPtr param) { return (IntPtr.Size == 8) ? (int)(param.ToInt64() & 0xFFFF) : param.ToInt32() & 0xFFFF; }
 
             Control _filterTarget;
 
@@ -359,27 +360,30 @@ namespace OpenTween
                 switch (m.Msg)
                 {
                     case WM_KEYDOWN:
-                        switch ((int)m.WParam | (int)Control.ModifierKeys)
+                        if (m.WParam.ToInt32() == VK_SPACE &&
+                            Control.ModifierKeys == Keys.None)
                         {
-                            case VK_SPACE:
-                                if (IsFilterTarget(m.HWnd))
-                                {
-                                    //スクロール阻止＆イベント処理
-                                    if (SpaceCancel != null)
-                                        SpaceCancel(this, EventArgs.Empty);
-                                    return true;
-                                }
-                                break;
+                            if (IsFilterTarget(m.HWnd))
+                            {
+                                //スクロール阻止＆イベント処理
+                                if (SpaceCancel != null)
+                                    SpaceCancel(this, EventArgs.Empty);
+                                return true;
+                            }
                         }
                         break;
 
                     case WM_MOUSEWHEEL:
-                        if ((LoWord(m.WParam) & MK_CONTROL) == MK_CONTROL)
                         {
-                            if (IsFilterTarget(m.HWnd))
+                            int vkeys = LoWord(m.WParam);
+                            if ((vkeys & MK_CONTROL) == MK_CONTROL &&
+                                (vkeys & MK_SHIFT) == 0)
                             {
-                                //フォントサイズの変更を阻止
-                                return true;
+                                if (IsFilterTarget(m.HWnd))
+                                {
+                                    //フォントサイズの変更を阻止
+                                    return true;
+                                }
                             }
                         }
                         break;
