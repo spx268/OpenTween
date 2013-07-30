@@ -347,29 +347,31 @@ namespace OpenTween
 
             private int LoWord(IntPtr param) { return (IntPtr.Size == 8) ? (int)(param.ToInt64() & 0xFFFF) : param.ToInt32() & 0xFFFF; }
 
-            Control _filterTarget;
+            IntPtr _filterTargetHandle = IntPtr.Zero;
 
-            public WebBrowserKeyCanceler(Control filterTarget)
+            public WebBrowserKeyCanceler(WebBrowser filterTarget)
             {
-                this._filterTarget = filterTarget;
-                Application.AddMessageFilter(this);
+                SetFilterTargetHandle(filterTarget);
+
+                if (this._filterTargetHandle != IntPtr.Zero)
+                    Application.AddMessageFilter(this);
             }
 
             public bool PreFilterMessage(ref Message m)
             {
+                if (m.HWnd != this._filterTargetHandle)
+                    return false;
+
                 switch (m.Msg)
                 {
                     case WM_KEYDOWN:
                         if (m.WParam.ToInt32() == VK_SPACE &&
                             Control.ModifierKeys == Keys.None)
                         {
-                            if (IsFilterTarget(m.HWnd))
-                            {
-                                //スクロール阻止＆イベント処理
-                                if (SpaceCancel != null)
-                                    SpaceCancel(this, EventArgs.Empty);
-                                return true;
-                            }
+                            //スクロール阻止＆イベント処理
+                            if (SpaceCancel != null)
+                                SpaceCancel(this, EventArgs.Empty);
+                            return true;
                         }
                         break;
 
@@ -379,11 +381,8 @@ namespace OpenTween
                             if ((vkeys & MK_CONTROL) == MK_CONTROL &&
                                 (vkeys & MK_SHIFT) == 0)
                             {
-                                if (IsFilterTarget(m.HWnd))
-                                {
-                                    //フォントサイズの変更を阻止
-                                    return true;
-                                }
+                                //フォントサイズの変更を阻止
+                                return true;
                             }
                         }
                         break;
@@ -392,17 +391,40 @@ namespace OpenTween
                 return false;
             }
 
-            private bool IsFilterTarget(IntPtr handleOfMessage)
-            {
-                return Control.FromChildHandle(handleOfMessage) == this._filterTarget;
-            }
-
             public event EventHandler SpaceCancel;
 
             public void Dispose()
             {
-                Application.RemoveMessageFilter(this);
+                if (this._filterTargetHandle != IntPtr.Zero)
+                    Application.RemoveMessageFilter(this);
             }
+
+            #region "WebBrowserコントロールから Internet Explorer_Server のハンドルを取得する"
+            private void SetFilterTargetHandle(WebBrowser browser)
+            {
+                EnumChildWindows(browser.Handle, (hWnd, lParam) =>
+                {
+                    StringBuilder className = new StringBuilder(32);
+                    if (GetClassName(hWnd, className, className.Capacity) > 0)
+                    {
+                        if (className.ToString().Equals("Internet Explorer_Server"))
+                        {
+                            this._filterTargetHandle = hWnd;
+                            return false;
+                        }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+            }
+
+            private delegate bool EnumChildProc(IntPtr hWnd, IntPtr lParam);
+
+            [DllImport("user32.dll")]
+            static extern bool EnumChildWindows(IntPtr hWndParent, EnumChildProc lpEnumFunc, IntPtr lParam);
+
+            [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+            static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+            #endregion
         }
 
         private class FormSnapper : NativeWindow, IDisposable
