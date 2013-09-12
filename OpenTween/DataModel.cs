@@ -488,13 +488,17 @@ namespace OpenTween
             /// </summary>
             InternalError = 131,
             /// <summary>
+            /// oauth_timestamp の時刻が無効。クライアントかサーバーの時計が大幅にずれている
+            /// </summary>
+            TimestampOutOfRange = 135,
+            /// <summary>
             /// ユーザーからブロックされている (公式ドキュメントに記述無し)
             /// </summary>
             Blocked = 136,
             /// <summary>
-            /// oauth_timestamp の時刻が無効。クライアントかサーバーの時計が大幅にずれている
+            /// 既にふぁぼっているツイートをふぁぼろうとした (公式ドキュメントに記述無し)
             /// </summary>
-            TimestampOutOfRange = 135,
+            AlreadyFavorited = 139,
             /// <summary>
             /// 投稿されたステータスが重複しています
             /// </summary>
