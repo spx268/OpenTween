@@ -189,13 +189,20 @@ namespace OpenTween
 
         protected override void Dispose(bool disposing)
         {
+            base.Image = null;
             base.Dispose(disposing);
 
             if (this.memoryImage != null)
+            {
                 this.memoryImage.Dispose();
+                this.memoryImage = null;
+            }
 
             if (this.loadAsyncCancelTokenSource != null)
+            {
                 this.loadAsyncCancelTokenSource.Dispose();
+                this.loadAsyncCancelTokenSource = null;
+            }
         }
     }
 }

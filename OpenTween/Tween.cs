@@ -4908,7 +4908,10 @@ namespace OpenTween
                     pnl.Controls.Remove(ctrl);
                     ctrl.Dispose();
                 }
+                pnl.Enter -= SearchControls_Enter;
+                pnl.Leave -= SearchControls_Leave;
                 _tabPage.Controls.Remove(pnl);
+                pnl.Dispose();
             }
 
             _tabPage.Controls.Remove(_listCustom);
