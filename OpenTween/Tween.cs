@@ -2128,8 +2128,6 @@ namespace OpenTween
             }
         }
 
-        private long dispPostTicks = 0;
-
         private void MyList_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_curList == null || !_curList.Equals(sender) || _curList.SelectedIndices.Count != 1) return;
@@ -2155,12 +2153,7 @@ namespace OpenTween
             ColorizeList();
             _colorize = true;
 
-            long ticks = System.DateTime.Now.Ticks;
-            if (ticks > dispPostTicks + 1500000)  //150ms
-            {
-                dispPostTicks = ticks;
-                DispSelectedPost();
-            }
+            DispSelectedPostIfAppropriate();
         }
 
         private void ChangeCacheStyleRead(bool Read, int Index, TabPage Tab)
@@ -6148,6 +6141,18 @@ namespace OpenTween
             }
         }
 
+        private long dispPostTicks = 0;
+
+        private void DispSelectedPostIfAppropriate()
+        {
+            long ticks = System.DateTime.Now.Ticks;
+            if (ticks > dispPostTicks + 1500000)  //150ms
+            {
+                dispPostTicks = ticks;
+                DispSelectedPost();
+            }
+        }
+
         private void DispSelectedPost()
         {
             DispSelectedPost(false);
@@ -6162,6 +6167,8 @@ namespace OpenTween
 
             if (!forceupdate && _curPost.Equals(displaypost))
                 return;
+
+            bool updateRequired = (displaypost.Text != _curPost.Text);
 
             displaypost = _curPost;
             if (displayItem != null)
@@ -6308,7 +6315,8 @@ namespace OpenTween
             {
                 try
                 {
-                    if (PostBrowser.DocumentText != dTxt)
+                    //if (PostBrowser.DocumentText != dTxt)
+                    if (updateRequired)
                     {
                         //PostBrowser.Visible = false;
                         PostBrowser.DocumentText = dTxt;
