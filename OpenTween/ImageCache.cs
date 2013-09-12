@@ -111,34 +111,35 @@ namespace OpenTween
 
                     cancelToken.ThrowIfCancellationRequested();
 
-                    using (var client = new OTWebClient() { Timeout = 10000 })
+                    var client = new OTWebClient() { Timeout = 10000 };
+
+                    var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken).ContinueWith(t =>
                     {
-                        var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken).ContinueWith(t =>
+                        client.Dispose();
+
+                        MemoryImage image = null;
+                        if (t.Status == TaskStatus.RanToCompletion)
                         {
-                            MemoryImage image = null;
-                            if (t.Status == TaskStatus.RanToCompletion)
+                            try
                             {
-                                try
-                                {
-                                    image = MemoryImage.CopyFromBytes(t.Result);
-                                }
-                                catch (ArgumentException)  // 画像形式が不正
-                                {
-                                    image = null;
-                                }
+                                image = MemoryImage.CopyFromBytes(t.Result);
                             }
+                            catch (ArgumentException)  // 画像形式が不正
+                            {
+                                image = null;
+                            }
+                        }
 
-                            if (t.Exception != null)
-                                t.Exception.Handle(e => e is WebException);
+                        if (t.Exception != null)
+                            t.Exception.Handle(e => e is WebException);
 
-                            // FIXME: MemoryImage.Dispose() が正しいタイミングで呼ばれるように修正すべき
-                            return image;
-                        }, cancelToken);
+                        // FIXME: MemoryImage.Dispose() が正しいタイミングで呼ばれるように修正すべき
+                        return image;
+                    }, cancelToken);
 
-                        this.innerDictionary[address] = imageTask;
+                    this.innerDictionary[address] = imageTask;
 
-                        return imageTask;
-                    }
+                    return imageTask;
                 }
             }, cancelToken).Unwrap();
         }
