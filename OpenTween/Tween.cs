@@ -11656,16 +11656,55 @@ namespace OpenTween
             else
             {
                 TabClass tb = _statuses.RemovedTab.Pop();
-                string renamed = tb.TabName;
-                for (int i = 1; i < int.MaxValue; i++)
+                if (tb.TabType == MyCommon.TabUsageType.Related)
                 {
-                    if (!_statuses.ContainsTab(renamed)) break;
-                    renamed = tb.TabName + "(" + i.ToString() + ")";
+                    var relatedTab = _statuses.GetTabByType(MyCommon.TabUsageType.Related);
+                    if (relatedTab != null)
+                    {
+                        // 関連発言なら既存のタブを置き換える
+                        tb.TabName = relatedTab.TabName;
+                        this.ClearTab(tb.TabName, false);
+                        _statuses.Tabs[tb.TabName] = tb;
+                        for (int i = 0; i < ListTab.TabPages.Count; i++)
+                        {
+                            if (tb.TabName == ListTab.TabPages[i].Text)
+                            {
+                                ListTab.SelectedIndex = i;
+                                ListTabSelect(ListTab.TabPages[i]);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const string TabName = "Related Tweets";
+                        string renamed = TabName;
+                        for (int i = 2; i <= 100; i++)
+                        {
+                            if (!_statuses.ContainsTab(renamed)) break;
+                            renamed = TabName + i.ToString();
+                        }
+                        tb.TabName = renamed;
+                        AddNewTab(renamed, false, tb.TabType, tb.ListInfo);
+                        _statuses.Tabs.Add(renamed, tb);  // 後に
+                        ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
+                        ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
+                    }
                 }
-                tb.TabName = renamed;
-                _statuses.Tabs.Add(renamed, tb);
-                AddNewTab(renamed, false, tb.TabType, tb.ListInfo);
-                ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
+                else
+                {
+                    string renamed = tb.TabName;
+                    for (int i = 1; i < int.MaxValue; i++)
+                    {
+                        if (!_statuses.ContainsTab(renamed)) break;
+                        renamed = tb.TabName + "(" + i.ToString() + ")";
+                    }
+                    tb.TabName = renamed;
+                    _statuses.Tabs.Add(renamed, tb);  // 先に
+                    AddNewTab(renamed, false, tb.TabType, tb.ListInfo);
+                    ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
+                    ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
+                }
                 SaveConfigsTabs();
             }
         }
@@ -12676,7 +12715,8 @@ namespace OpenTween
             if (this.ExistCurrentPost && !_curPost.IsDm)
             {
                 //PublicSearchも除外した方がよい？
-                if (_statuses.GetTabByType(MyCommon.TabUsageType.Related) == null)
+                var tb = _statuses.GetTabByType(MyCommon.TabUsageType.Related);
+                if (tb == null)
                 {
                     const string TabName = "Related Tweets";
                     string tName = TabName;
@@ -12696,11 +12736,11 @@ namespace OpenTween
                     {
                         _statuses.AddTab(tName, MyCommon.TabUsageType.Related, null);
                     }
-                    _statuses.GetTabByName(tName).UnreadManage = false;
-                    _statuses.GetTabByName(tName).Notify = false;
+                    tb = _statuses.GetTabByName(tName);
+                    tb.UnreadManage = false;
+                    tb.Notify = false;
                 }
 
-                TabClass tb = _statuses.GetTabByType(MyCommon.TabUsageType.Related);
                 tb.RelationTargetPost = _curPost;
                 this.ClearTab(tb.TabName, false);
                 for (int i = 0; i < ListTab.TabPages.Count; i++)
