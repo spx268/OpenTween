@@ -28,6 +28,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace OpenTween
 {
@@ -60,6 +61,8 @@ namespace OpenTween
 
         private Task GetImageAsync(bool force = false)
         {
+            var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+
             return this.imageCache.DownloadImageAsync(this.imageUrl, force).ContinueWith(t =>
             {
                 var image = t.Result;
@@ -72,19 +75,18 @@ namespace OpenTween
                     this.ListView.Created &&
                     !this.ListView.IsDisposed)
                 {
-                    this.ListView.Invoke(new MethodInvoker(() =>
+                    if (this.Index < this.ListView.VirtualListSize)
                     {
-                        if (this.Index < this.ListView.VirtualListSize)
+                        this.ListView.RedrawItems(this.Index, this.Index, true);
+                        if (ImageDownloaded != null)
                         {
-                            this.ListView.RedrawItems(this.Index, this.Index, true);
-                            if (ImageDownloaded != null)
-                            {
-                                ImageDownloaded(this, EventArgs.Empty);
-                            }
+                            ImageDownloaded(this, EventArgs.Empty);
                         }
-                    }));
+                    }
                 }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+            }, CancellationToken.None,
+               TaskContinuationOptions.OnlyOnRanToCompletion,
+               uiScheduler);
         }
 
         public MemoryImage Image
