@@ -921,7 +921,6 @@ namespace OpenTween
             SettingDialog.SortOrderLock = _cfgCommon.SortOrderLock;
             SettingDialog.ViewTabBottom = _cfgCommon.ViewTabBottom;
             SettingDialog.TinyUrlResolve = _cfgCommon.TinyUrlResolve;
-            SettingDialog.ShortUrlForceResolve = _cfgCommon.ShortUrlForceResolve;
 
             SettingDialog.SelectedProxyType = _cfgLocal.ProxyType;
             SettingDialog.ProxyAddress = _cfgLocal.ProxyAddress;
@@ -1171,7 +1170,6 @@ namespace OpenTween
             tw.ReadOwnPost = SettingDialog.ReadOwnPost;
             tw.UseSsl = SettingDialog.UseSsl;
             ShortUrl.IsResolve = SettingDialog.TinyUrlResolve;
-            ShortUrl.IsForceResolve = SettingDialog.ShortUrlForceResolve;
             ShortUrl.BitlyId = SettingDialog.BitlyUser;
             ShortUrl.BitlyKey = SettingDialog.BitlyPwd;
             HttpTwitter.TwitterUrl = _cfgCommon.TwitterUrl;
@@ -1331,7 +1329,6 @@ namespace OpenTween
                 tw.IconSize = _iconSz;
             }
             tw.TinyUrlResolve = SettingDialog.TinyUrlResolve;
-            ShortUrl.IsForceResolve = SettingDialog.ShortUrlForceResolve;
 
             //発言詳細部アイコンをリストアイコンにサイズ変更
             int sz = _iconSz;
@@ -4124,7 +4121,6 @@ namespace OpenTween
                     tw.ReadOwnPost = SettingDialog.ReadOwnPost;
                     tw.UseSsl = SettingDialog.UseSsl;
                     ShortUrl.IsResolve = SettingDialog.TinyUrlResolve;
-                    ShortUrl.IsForceResolve = SettingDialog.ShortUrlForceResolve;
                     ShortUrl.BitlyId = SettingDialog.BitlyUser;
                     ShortUrl.BitlyKey = SettingDialog.BitlyPwd;
                     HttpTwitter.TwitterUrl = _cfgCommon.TwitterUrl;
@@ -7878,7 +7874,6 @@ namespace OpenTween
                 _cfgCommon.SortOrderLock = SettingDialog.SortOrderLock;
                 _cfgCommon.ViewTabBottom = SettingDialog.ViewTabBottom;
                 _cfgCommon.TinyUrlResolve = SettingDialog.TinyUrlResolve;
-                _cfgCommon.ShortUrlForceResolve = SettingDialog.ShortUrlForceResolve;
                 _cfgCommon.StartupVersion = SettingDialog.StartupVersion;
                 _cfgCommon.StartupFollowers = SettingDialog.StartupFollowers;
                 _cfgCommon.RestrictFavCheck = SettingDialog.RestrictFavCheck;

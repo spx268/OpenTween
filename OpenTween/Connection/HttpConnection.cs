@@ -47,12 +47,12 @@ namespace OpenTween
         ///<summary>
         ///プロキシ
         ///</summary>
-        private static WebProxy proxy = null;
+        internal static WebProxy proxy = null;
 
         ///<summary>
         ///ユーザーが選択したプロキシの方式
         ///</summary>
-        private static ProxyType proxyKind = ProxyType.IE;
+        internal static ProxyType proxyKind = ProxyType.IE;
 
         ///<summary>
         ///初期化済みフラグ
@@ -126,6 +126,8 @@ namespace OpenTween
             if (this.UseCookie) webReq.CookieContainer = this.cookieContainer;
             //タイムアウト設定
             webReq.Timeout = this.InstanceTimeout ?? HttpConnection.DefaultTimeout;
+
+            webReq.UserAgent = MyCommon.GetUserAgentString();
 
             return webReq;
         }
