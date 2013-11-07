@@ -65,9 +65,13 @@ namespace OpenTween
 
             return this.imageCache.DownloadImageAsync(this.imageUrl, force).ContinueWith(t =>
             {
-                var image = t.Result;
+                if (t.IsFaulted)
+                {
+                    t.Exception.Handle(x => x is InvalidImageException);
+                    return;
+                }
 
-                if (image == null) return;
+                var image = t.Result;
 
                 this._ImageReference.Target = image;
 
@@ -85,7 +89,7 @@ namespace OpenTween
                     }
                 }
             }, CancellationToken.None,
-               TaskContinuationOptions.OnlyOnRanToCompletion,
+               TaskContinuationOptions.None,
                uiScheduler);
         }
 

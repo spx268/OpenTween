@@ -117,20 +117,13 @@ namespace OpenTween
                     {
                         client.Dispose();
 
-                        if (t.Exception != null)
+                        if (t.IsFaulted)
+                        {
                             t.Exception.Handle(e => e is WebException);
-
-                        if (t.Status != TaskStatus.RanToCompletion)
-                            return null;
-
-                        try
-                        {
-                            return MemoryImage.CopyFromBytes(t.Result);
-                        }
-                        catch (InvalidImageException)  // 画像形式が不正
-                        {
                             return null;
                         }
+
+                        return MemoryImage.CopyFromBytes(t.Result);
                     }, cancelToken);
 
                     this.innerDictionary[address] = imageTask;
