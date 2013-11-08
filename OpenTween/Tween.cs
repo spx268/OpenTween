@@ -5337,7 +5337,7 @@ namespace OpenTween
                 {
                     //不正な要求に対する間に合わせの応答
                     string[] sitem = {"", "", "", "", "", "", "", ""};
-                    e.Item = new ImageListViewItem(sitem, "");
+                    e.Item = new ImageListViewItem(sitem);
                 }
             }
         }
@@ -5631,7 +5631,7 @@ namespace OpenTween
                     }
                     catch (ArgumentException)
                     {
-                        item.RegetImage();
+                        item.RefreshImage();
                     }
                 }
             }
