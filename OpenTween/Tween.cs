@@ -53,7 +53,7 @@ using OpenTween.Thumbnail;
 
 namespace OpenTween
 {
-    public partial class TweenMain : Form
+    public partial class TweenMain : OTBaseForm
     {
         //各種設定
         private Size _mySize;           //画面サイズ
@@ -89,7 +89,6 @@ namespace OpenTween
         private bool _myStatusError = false;
         private bool _myStatusOnline = false;
         private bool soundfileListup = false;
-        private SpaceKeyCanceler _spaceKeyCanceler;
         private WebBrowserKeyCanceler _webBrowserKeyCanceler;
         private FormSnapper _formSnapper;
         private FormWindowState _formWindowState = FormWindowState.Normal; // フォームの状態保存用 通知領域からアイコンをクリックして復帰した際に使用する
@@ -225,6 +224,11 @@ namespace OpenTween
 
         private ImageListViewItem displayItem;
 
+        /// <summary>
+        /// デザイン時の DPI (96dpi) と実際の表示時の DPI との比を表します
+        /// </summary>
+        protected SizeF currentScaleFactor = new SizeF();
+
         //URL短縮のUndo用
         private struct urlUndo
         {
@@ -303,36 +307,6 @@ namespace OpenTween
                 this.status = status;
                 this.inReplyToId = replyToId;
                 this.inReplyToName = replyToName;
-            }
-        }
-
-        private class SpaceKeyCanceler : NativeWindow, IDisposable
-        {
-            int WM_KEYDOWN = 0x100;
-            int VK_SPACE = 0x20;
-
-            public SpaceKeyCanceler(Control control)
-            {
-                this.AssignHandle(control.Handle);
-            }
-
-            protected override void WndProc(ref Message m)
-            {
-                if ((m.Msg == WM_KEYDOWN) && ((int)m.WParam == VK_SPACE))
-                {
-                    if (SpaceCancel != null)
-                        SpaceCancel(this, EventArgs.Empty);
-                    return;
-                }
-
-                base.WndProc(ref m);
-            }
-
-            public event EventHandler SpaceCancel;
-
-            public void Dispose()
-            {
-                this.ReleaseHandle();
             }
         }
 
@@ -546,7 +520,6 @@ namespace OpenTween
             SearchDialog.Dispose();
             fltDialog.Dispose();
             UrlDialog.Dispose();
-            _spaceKeyCanceler.Dispose();
             _webBrowserKeyCanceler.Dispose();
             _formSnapper.Dispose();
             if (NIconAt != null) NIconAt.Dispose();
@@ -751,11 +724,8 @@ namespace OpenTween
             string[] cmdArgs = Environment.GetCommandLineArgs();
             if (cmdArgs.Length != 0 && cmdArgs.Contains("/d")) MyCommon.TraceFlag = true;
 
-            this._spaceKeyCanceler = new SpaceKeyCanceler(this.PostButton);
-            this._spaceKeyCanceler.SpaceCancel += spaceKeyCanceler_SpaceCancel;
-
             this._webBrowserKeyCanceler = new WebBrowserKeyCanceler(this.PostBrowser);
-            this._webBrowserKeyCanceler.SpaceCancel += spaceKeyCanceler_SpaceCancel;
+            this._webBrowserKeyCanceler.SpaceCancel += webBrowserKeyCanceler_SpaceCancel;
 
             this._formSnapper = new FormSnapper(this);
 
@@ -1243,6 +1213,9 @@ namespace OpenTween
             StatusText.Font = _fntInputFont;
             StatusText.ForeColor = _clInputFont;
 
+            // NameLabel のフォントを OTBaseForm.GlobalFont に変更
+            this.NameLabel.Font = this.ReplaceToGlobalFont(this.NameLabel.Font);
+
             //全新着通知のチェック状態により、Reply＆DMの新着通知有効無効切り替え（タブ別設定にするため削除予定）
             if (SettingDialog.UnreadManage == false)
             {
@@ -1477,7 +1450,7 @@ namespace OpenTween
             };
         }
 
-        private void spaceKeyCanceler_SpaceCancel(object sender, EventArgs e)
+        private void webBrowserKeyCanceler_SpaceCancel(object sender, EventArgs e)
         {
             JumpUnreadMenuItem_Click(null, null);
         }
@@ -5425,7 +5398,7 @@ namespace OpenTween
                               Post.Source};
             ImageListViewItem itm = SettingDialog.IconSz != MyCommon.IconSizes.IconNone ?
                                         new ImageListViewItem(sitem, this.IconCache, Post.ImageUrl) :
-                                        new ImageListViewItem(sitem, "");
+                                        new ImageListViewItem(sitem);
             itm.StateImageIndex = Post.StateIndex;
 
             bool read = Post.IsRead;
@@ -5614,12 +5587,15 @@ namespace OpenTween
                 }
             }
 
-            Rectangle iconRect;
+            // ディスプレイの DPI 設定を考慮したアイコンサイズ
+            var realIconSize = new SizeF(this._iconSz * this.currentScaleFactor.Width, this._iconSz * this.currentScaleFactor.Height);
+
+            RectangleF iconRect;
             var img = item.Image;
             if (img != null)
             {
-                iconRect = Rectangle.Intersect(new Rectangle(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(_iconSz, _iconSz)), itemRect);
-                iconRect.Offset(0, Math.Max(0, (itemRect.Height - _iconSz) / 2));
+                iconRect = RectangleF.Intersect(new RectangleF(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, realIconSize), itemRect);
+                iconRect.Offset(0, Math.Max(0, (itemRect.Height - realIconSize.Height) / 2));
 
                 if (iconRect.Width > 0)
                 {
@@ -5637,13 +5613,13 @@ namespace OpenTween
             }
             else
             {
-                iconRect = Rectangle.Intersect(new Rectangle(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(1, 1)), itemRect);
-                //iconRect.Offset(0, Math.Max(0, (itemRect.Height - _iconSz) / 2));
+                iconRect = RectangleF.Intersect(new RectangleF(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(1, 1)), itemRect);
+                //iconRect.Offset(0, Math.Max(0, (itemRect.Height - realIconSize.Height) / 2));
             }
 
             if (item.StateImageIndex > -1)
             {
-                Rectangle stateRect = Rectangle.Intersect(new Rectangle(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
+                RectangleF stateRect = RectangleF.Intersect(new RectangleF(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
                 if (stateRect.Width > 0)
                 {
                     //e.Graphics.FillRectangle(Brushes.White, stateRect);
@@ -5651,6 +5627,18 @@ namespace OpenTween
                     e.Graphics.DrawImage(this.PostStateImageList.Images[item.StateImageIndex], stateRect);
                 }
             }
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            base.ScaleControl(factor, specified);
+
+            const int baseDpi = 96;
+
+            // デザイン時の DPI (96dpi) との比を更新する
+            this.currentScaleFactor = new SizeF(
+                this.CurrentAutoScaleDimensions.Width / baseDpi,
+                this.CurrentAutoScaleDimensions.Height / baseDpi);
         }
 
         //private void DrawListViewItemStateIcon(DrawListViewSubItemEventArgs e, RectangleF rct)
@@ -12331,6 +12319,9 @@ namespace OpenTween
             this._hookGlobalHotkey.HotkeyPressed += _hookGlobalHotkey_HotkeyPressed;
             this.gh.NotifyClicked += GrowlHelper_Callback;
 
+            // メイリオフォント指定時にタブの最小幅が広くなる問題の対策
+            this.ListTab.HandleCreated += (s, e) => Win32Api.SetMinTabWidth((TabControl)s, 10);
+
             this._apiGauge = new ToolStripAPIGauge();
             this.StatusStrip1.Items.Insert(2, this._apiGauge);
 
@@ -13403,6 +13394,16 @@ namespace OpenTween
         private void TwitterApiStatusToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.OpenUriAsync(Twitter.ServiceAvailabilityStatusUrl);
+        }
+
+        private void PostButton_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                this.JumpUnreadMenuItem_Click(null, null);
+
+                e.SuppressKeyPress = true;
+            }
         }
     }
 }

@@ -105,17 +105,20 @@ namespace OpenTween
         [DllImport("user32.dll")]
         private extern static IntPtr SendMessage(
             IntPtr hwnd,
-            int wMsg,
+            SendMessageType wMsg,
             IntPtr wParam,
             IntPtr lParam);
 
         // SendMessageで送信するメッセージ
-        private enum Sm_Message : int
+        private enum SendMessageType : int
         {
             WM_USER = 0x400,                     //ユーザー定義メッセージ
             TB_GETBUTTON = WM_USER + 23,         //ツールバーのボタン取得
             TB_BUTTONCOUNT = WM_USER + 24,       //ツールバーのボタン（アイコン）数取得
             TB_GETBUTTONINFO = WM_USER + 65,     //ツールバーのボタン詳細情報取得
+
+            TCM_FIRST = 0x1300,                  //タブコントロールメッセージ
+            TCM_SETMINTABWIDTH = TCM_FIRST + 49, //タブアイテムの最小幅を設定
         }
         // ツールバーボタン構造体
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -292,6 +295,17 @@ namespace OpenTween
             WM_LBUTTONUP = 0x202,        //左マウスボタン離し
         }
 
+        /// <summary>
+        /// タブコントロールのアイテムの最小幅を設定します
+        /// </summary>
+        /// <param name="tabControl">対象となるタブコントロール</param>
+        /// <param name="width">アイテムの最小幅。-1 を指定するとデフォルトの幅が使用されます</param>
+        /// <returns>設定前の最小幅</returns>
+        public static int SetMinTabWidth(TabControl tabControl, int width)
+        {
+            return (int)SendMessage(tabControl.Handle, SendMessageType.TCM_SETMINTABWIDTH, IntPtr.Zero, (IntPtr)width);
+        }
+
         //タスクトレイアイコンのクリック処理
         public static bool ClickTasktrayIcon(string tooltip)
         {
@@ -346,7 +360,7 @@ namespace OpenTween
                             try
                             {
                                 //通知領域ボタン数取得
-                                var iCount = (int)SendMessage(toolWin, (int)Sm_Message.TB_BUTTONCOUNT, new IntPtr(0), new IntPtr(0));
+                                var iCount = (int)SendMessage(toolWin, SendMessageType.TB_BUTTONCOUNT, new IntPtr(0), new IntPtr(0));
                                 //左から順に情報取得
                                 for (var i = 0; i < iCount; i++)
                                 {
@@ -362,7 +376,7 @@ namespace OpenTween
                                         //ボタン情報取得（idCommandを取得するため）
                                         SendMessage(
                                             toolWin,
-                                            (int)Sm_Message.TB_GETBUTTON,
+                                            SendMessageType.TB_GETBUTTON,
                                             new IntPtr(i),
                                             ptbSysButton);
                                         //Explorer内のメモリを共有メモリに読み込み
@@ -397,7 +411,7 @@ namespace OpenTween
                                     //ボタン詳細情報取得
                                     SendMessage(
                                         toolWin,
-                                        (int)Sm_Message.TB_GETBUTTONINFO,
+                                        SendMessageType.TB_GETBUTTONINFO,
                                         tbButtonLocal2.idCommand,
                                         ptbSysInfo);
                                     //共有メモリにボタン詳細情報を読み込む領域確保

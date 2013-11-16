@@ -39,7 +39,7 @@ using System.Net;
 
 namespace OpenTween
 {
-    public partial class ShowUserInfo : Form
+    public partial class ShowUserInfo : OTBaseForm
     {
         public ShowUserInfo()
         {
@@ -218,6 +218,9 @@ namespace OpenTween
                 ButtonReportSpam.Enabled = true;
                 ButtonBlockDestroy.Enabled = true;
             }
+
+            // LabelScreenName のフォントを OTBaseForm.GlobalFont に変更
+            this.LabelScreenName.Font = this.ReplaceToGlobalFont(this.LabelScreenName.Font);
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
