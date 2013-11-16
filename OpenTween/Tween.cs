@@ -4729,7 +4729,10 @@ namespace OpenTween
             _listCustom.SmallImageList = new ImageList();
             if (_iconSz > 0)
             {
-                _listCustom.SmallImageList.ImageSize = new Size(_iconSz, _iconSz);
+                // ディスプレイの DPI 設定を考慮したサイズを設定する
+                _listCustom.SmallImageList.ImageSize = new Size(
+                    (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Width),
+                    (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Height));
             }
             else
             {
@@ -5589,6 +5592,7 @@ namespace OpenTween
 
             // ディスプレイの DPI 設定を考慮したアイコンサイズ
             var realIconSize = new SizeF(this._iconSz * this.currentScaleFactor.Width, this._iconSz * this.currentScaleFactor.Height);
+            var realStateSize = new SizeF(16 * this.currentScaleFactor.Width, 16 * this.currentScaleFactor.Height);
 
             RectangleF iconRect;
             var img = item.Image;
@@ -5619,7 +5623,7 @@ namespace OpenTween
 
             if (item.StateImageIndex > -1)
             {
-                RectangleF stateRect = RectangleF.Intersect(new RectangleF(iconRect.Location.X + _iconSz + 2, iconRect.Location.Y, 18, 16), itemRect);
+                RectangleF stateRect = RectangleF.Intersect(new RectangleF(new PointF(iconRect.X + iconRect.Width + 2, iconRect.Y), realStateSize), itemRect);
                 if (stateRect.Width > 0)
                 {
                     //e.Graphics.FillRectangle(Brushes.White, stateRect);
