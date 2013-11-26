@@ -721,8 +721,8 @@ namespace OpenTween
             MyCommon.TwitterApiInfo.AccessLimitUpdated += TwitterApiStatus_AccessLimitUpdated;
             Microsoft.Win32.SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
 
-            string[] cmdArgs = Environment.GetCommandLineArgs();
-            if (cmdArgs.Length != 0 && cmdArgs.Contains("/d")) MyCommon.TraceFlag = true;
+            if (MyApplication.StartupOptions.ContainsKey("d"))
+                MyCommon.TraceFlag = true;
 
             this._webBrowserKeyCanceler = new WebBrowserKeyCanceler(this.PostBrowser);
             this._webBrowserKeyCanceler.SpaceCancel += webBrowserKeyCanceler_SpaceCancel;
@@ -830,7 +830,7 @@ namespace OpenTween
             SettingDialog.UserTimelinePeriodInt = _cfgCommon.UserTimelinePeriod;
             SettingDialog.ListsPeriodInt = _cfgCommon.ListsPeriod;
             //不正値チェック
-            if (!cmdArgs.Contains("nolimit"))
+            if (!MyApplication.StartupOptions.ContainsKey("nolimit"))
             {
                 if (SettingDialog.TimelinePeriodInt < 15 && SettingDialog.TimelinePeriodInt > 0) SettingDialog.TimelinePeriodInt = 15;
                 if (SettingDialog.ReplyPeriodInt < 15 && SettingDialog.ReplyPeriodInt > 0) SettingDialog.ReplyPeriodInt = 15;
