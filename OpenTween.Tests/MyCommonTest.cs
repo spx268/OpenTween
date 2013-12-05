@@ -52,9 +52,27 @@ namespace OpenTween
         [Theory]
         [InlineData("http://日本語.idn.icann.org/", "http://xn--wgv71a119e.idn.icann.org/")]
         [InlineData("http://例え.テスト/", "http://xn--r8jz45g.xn--zckzah/")]
+        public void IDNEncodeTest(string uri, string expected)
+        {
+            Assert.Equal(expected, MyCommon.IDNEncode(uri));
+        }
+
+        [Theory]
+        [InlineData("http://xn--wgv71a119e.idn.icann.org/", "http://日本語.idn.icann.org/")]
+        [InlineData("http://xn--r8jz45g.xn--zckzah/", "http://例え.テスト/")]
         public void IDNDecodeTest(string uri, string expected)
         {
             Assert.Equal(expected, MyCommon.IDNDecode(uri));
+        }
+
+        [Theory]
+        [InlineData("http://xn--r8jz45g.xn--zckzah/", "http://例え.テスト/")]
+        [InlineData("http://ja.wikipedia.org/wiki/%3F", "http://ja.wikipedia.org/wiki/%3F")] // "?" に変換しない
+        [InlineData("http://ja.wikipedia.org/wiki/%E3%83%9E%E3%82%B8LOVE1000%25",
+            "http://ja.wikipedia.org/wiki/マジLOVE1000%25")] // "%" も変換しない
+        public void ConvertToReadableUrl(string url, string expected)
+        {
+            Assert.Equal(expected, MyCommon.ConvertToReadableUrl(url));
         }
 
         [Theory]
@@ -160,7 +178,7 @@ namespace OpenTween
             Assert.Equal(expected, MyCommon.IsValidEmail(email));
         }
 
-        [Theory(Skip = "Travis CI (Mono 2.10) で `mono_class_from_mono_type: implement me 0x55' エラーが発生する")]
+        [Theory]
         [InlineData(Keys.Shift, new[] { Keys.Shift }, true)]
         [InlineData(Keys.Shift, new[] { Keys.Control }, false)]
         [InlineData(Keys.Control | Keys.Alt, new[] { Keys.Control }, true)]

@@ -485,37 +485,68 @@ namespace OpenTween
             return result;
         }
 
-        ////// <summary>
-        ////// URLのドメイン名をPunycode展開します。
-        ////// <para>
-        ////// ドメイン名がIDNでない場合はそのまま返します。
-        ////// ドメインラベルの区切り文字はFULLSTOP(.、U002E)に置き換えられます。
-        ////// </para>
-        ////// </summary>
-        ////// <param name="input">展開対象のURL</param>
-        ////// <returns>IDNが含まれていた場合はPunycodeに展開したURLをを返します。Punycode展開時にエラーが発生した場合はnullを返します。</returns>
-
-        public static string IDNDecode(string input)
+        /// <summary>
+        /// URLのドメイン名をPunycode展開します。
+        /// <para>
+        /// ドメイン名がIDNでない場合はそのまま返します。
+        /// ドメインラベルの区切り文字はFULLSTOP(.、U002E)に置き換えられます。
+        /// </para>
+        /// </summary>
+        /// <param name="input">展開対象のURL</param>
+        /// <returns>IDNが含まれていた場合はPunycodeに展開したURLをを返します。Punycode展開時にエラーが発生した場合はnullを返します。</returns>
+        public static string IDNEncode(string inputUrl)
         {
-            var IDNConverter = new IdnMapping();
-
-            if (!input.Contains("://")) return null;
-
-            // ドメイン名をPunycode展開
-            string Domain;
-            string AsciiDomain;
-
             try
             {
-                Domain = input.Split('/')[2];
-                AsciiDomain = IDNConverter.GetAscii(Domain);
+                var uriBuilder = new UriBuilder(inputUrl);
+
+                var idnConverter = new IdnMapping();
+                uriBuilder.Host = idnConverter.GetAscii(uriBuilder.Host);
+
+                return uriBuilder.Uri.ToString();
             }
             catch (Exception)
             {
                 return null;
             }
+        }
 
-            return input.Replace("://" + Domain, "://" + AsciiDomain);
+        public static string IDNDecode(string inputUrl)
+        {
+            try
+            {
+                var uriBuilder = new UriBuilder(inputUrl);
+
+                var idnConverter = new IdnMapping();
+                uriBuilder.Host = idnConverter.GetUnicode(uriBuilder.Host);
+
+                return uriBuilder.Uri.ToString();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// URL を画面上で人間に読みやすい文字列に変換する（エスケープ解除など）
+        /// </summary>
+        public static string ConvertToReadableUrl(string inputUrl)
+        {
+            var outputUrl = inputUrl;
+
+            // Punycodeをデコードする
+            outputUrl = MyCommon.IDNDecode(outputUrl);
+
+            // URL内で特殊な意味を持つ記号は元の文字に変換されることを避けるために二重エスケープする
+            // 参考: Firefoxの losslessDecodeURI() 関数
+            //   http://hg.mozilla.org/mozilla-central/annotate/FIREFOX_AURORA_27_BASE/browser/base/content/browser.js#l2128
+            outputUrl = Regex.Replace(outputUrl, @"%(2[3456BCF]|3[ABDF]|40)", @"%25$1", RegexOptions.IgnoreCase);
+
+            // エスケープを解除する
+            outputUrl = Uri.UnescapeDataString(outputUrl);
+
+            return outputUrl;
         }
 
         public static void MoveArrayItem(int[] values, int idx_fr, int idx_to)

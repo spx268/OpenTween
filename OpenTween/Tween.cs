@@ -9332,7 +9332,7 @@ namespace OpenTween
                     string urlStr = "";
                     try
                     {
-                        urlStr = MyCommon.IDNDecode(PostBrowser.Document.Links[0].GetAttribute("href"));
+                        urlStr = MyCommon.IDNEncode(PostBrowser.Document.Links[0].GetAttribute("href"));
                     }
                     catch (ArgumentException)
                     {
@@ -9356,7 +9356,7 @@ namespace OpenTween
                         try
                         {
                             urlStr = linkElm.GetAttribute("title");
-                            href = MyCommon.IDNDecode(linkElm.GetAttribute("href"));
+                            href = MyCommon.IDNEncode(linkElm.GetAttribute("href"));
                             if (string.IsNullOrEmpty(urlStr)) urlStr = href;
                             linkText = linkElm.InnerText;
                             if (!linkText.StartsWith("http") && !linkText.StartsWith("#") && !linkText.Contains("."))
@@ -12668,7 +12668,7 @@ namespace OpenTween
             string link = (string)SourceLinkLabel.Tag;
             if (!string.IsNullOrEmpty(link))
             {
-                StatusLabelUrl.Text = link;
+                StatusLabelUrl.Text = MyCommon.ConvertToReadableUrl(link);
             }
         }
 
