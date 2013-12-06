@@ -54,10 +54,13 @@ namespace OpenTween
         {
             StartupOptions = ParseArguments(args);
 
-            CheckSettingFilePath();
+            if (!SetConfigDirectoryPath())
+                return 1;
+
             InitCulture();
 
-            string pt = Application.ExecutablePath.Replace("\\", "/") + "/" + Application.ProductName;
+            // 同じ設定ファイルを使用する OpenTween プロセスの二重起動を防止する
+            string pt = MyCommon.settingPath.Replace("\\", "/") + "/" + Application.ProductName;
             using (Mutex mt = new Mutex(false, pt))
             {
                 if (!mt.WaitOne(0, false))
@@ -87,13 +90,21 @@ namespace OpenTween
             }
         }
 
+        /// <summary>
+        /// “/key:value”形式の起動オプションを解釈し IDictionary に変換する
+        /// </summary>
+        /// <remarks>
+        /// 不正な形式のオプションは除外されます。
+        /// また、重複したキーのオプションが入力された場合は末尾に書かれたオプションが採用されます。
+        /// </remarks>
         internal static IDictionary<string, string> ParseArguments(IEnumerable<string> arguments)
         {
             var optionPattern = new Regex(@"^/(.+?)(?::(.*))?$");
 
             return arguments.Select(x => optionPattern.Match(x))
                 .Where(x => x.Success)
-                .ToDictionary(x => x.Groups[1].Value, x => x.Groups[2].Value);
+                .GroupBy(x => x.Groups[1].Value)
+                .ToDictionary(x => x.Key, x => x.Last().Groups[2].Value);
         }
 
         private static void ShowPreviousWindow()
@@ -173,16 +184,34 @@ namespace OpenTween
             }
         }
 
-        private static void CheckSettingFilePath()
+        private static bool SetConfigDirectoryPath()
         {
-            if (File.Exists(Path.Combine(Application.StartupPath, "roaming")))
+            string configDir;
+            if (StartupOptions.TryGetValue("configDir", out configDir) && !string.IsNullOrEmpty(configDir))
             {
-                MyCommon.settingPath = MySpecialPath.UserAppDataPath();
+                // 起動オプション /configDir で設定ファイルの参照先を変更できます
+                if (!Directory.Exists(configDir))
+                {
+                    var text = string.Format(Properties.Resources.ConfigDirectoryNotExist, configDir);
+                    MessageBox.Show(text, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                MyCommon.settingPath = Path.GetFullPath(configDir);
             }
             else
             {
-                MyCommon.settingPath = Application.StartupPath;
+                if (File.Exists(Path.Combine(Application.StartupPath, "roaming")))
+                {
+                    MyCommon.settingPath = MySpecialPath.UserAppDataPath();
+                }
+                else
+                {
+                    MyCommon.settingPath = Application.StartupPath;
+                }
             }
+
+            return true;
         }
     }
 }

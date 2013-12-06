@@ -518,7 +518,7 @@
     <value>読み込みページ数には数値（0～999）を指定してください。</value>
   </data>
   <data name="StartupText1" xml:space="preserve">
-    <value>%AppName%は既に起動されています。2重起動する場合は、別フォルダの{0}.exeを実行してください。</value>
+    <value>%AppName%は既に起動されています。2重起動する場合は /configDir オプションを使用して設定ファイルを分離するか、別フォルダの{0}.exeを実行してください。</value>
   </data>
   <data name="StartupText2" xml:space="preserve">
     <value>%AppName%二重起動チェック</value>
@@ -1131,5 +1131,8 @@
   </data>
   <data name="SearchSimilarImageText" xml:space="preserve">
     <value>類似画像を検索</value>
+  </data>
+  <data name="ConfigDirectoryNotExist" xml:space="preserve">
+    <value>"/configDir" で指定されたディレクトリ ({0}) は存在しないかアクセスできません。</value>
   </data>
 </root>
