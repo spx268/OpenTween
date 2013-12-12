@@ -1453,7 +1453,8 @@ namespace OpenTween
                 {"img.ly", new imgly(tw)},
                 {"yfrog", new yfrog(tw)},
                 {"Twitter", new TwitterPhoto(tw)},
-                {"ついっぷるフォト", new TwipplePhoto(tw)}
+                {"ついっぷるフォト", new TwipplePhoto(tw)},
+                {"Imgur", new Imgur(tw)},
             };
         }
 
@@ -12331,7 +12332,7 @@ namespace OpenTween
             this.gh.NotifyClicked += GrowlHelper_Callback;
 
             // メイリオフォント指定時にタブの最小幅が広くなる問題の対策
-            this.ListTab.HandleCreated += (s, e) => Win32Api.SetMinTabWidth((TabControl)s, 10);
+            this.ListTab.HandleCreated += (s, e) => Win32Api.SetMinTabWidth((TabControl)s, 40);
 
             this._apiGauge = new ToolStripAPIGauge();
             this.StatusStrip1.Items.Insert(2, this._apiGauge);
