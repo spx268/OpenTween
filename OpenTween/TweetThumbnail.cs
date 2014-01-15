@@ -121,8 +121,6 @@ namespace OpenTween
                             cancelToken.ThrowIfCancellationRequested();
                         }
 
-                        this.scrollBar.Maximum = thumbnails.Count - 1;
-
                         if (thumbnails.Count > 1)
                             this.scrollBar.Enabled = true;
 
@@ -227,7 +225,7 @@ namespace OpenTween
             }
             this.pictureBox.Clear();
 
-            this.scrollBar.Maximum = count;
+            this.scrollBar.Maximum = (count > 0) ? count - 1 : 0;
             this.scrollBar.Value = 0;
 
             for (int i = 0; i < count; i++)
