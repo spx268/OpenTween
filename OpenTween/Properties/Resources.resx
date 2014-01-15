@@ -613,9 +613,6 @@
   <data name="UpdateFollowersMenuItem1_ClickText3" xml:space="preserve">
     <value>Followers取得完了</value>
   </data>
-  <data name="TextBoxOutputzKey_Validating" xml:space="preserve">
-    <value>復活の呪文を指定してください。</value>
-  </data>
   <data name="CmbDateTimeFormat_Validating" xml:space="preserve">
     <value>無効な日時書式指定文字列です</value>
   </data>
@@ -1007,10 +1004,10 @@
     <value>取得発言数は20～100件を指定してください。</value>
   </data>
   <data name="KeitaiMailSourceString" xml:space="preserve">
-    <value>&lt;a href="http://twitter.com/" rel="nofollow"&gt;Keitai Mail&lt;/a&gt;</value>
+    <value>&lt;a href="https://twitter.com/" rel="nofollow"&gt;Keitai Mail&lt;/a&gt;</value>
   </data>
   <data name="WebSourceString" xml:space="preserve">
-    <value>&lt;a href="http://twitter.com/" rel="nofollow"&gt;web&lt;/a&gt;</value>
+    <value>&lt;a href="https://twitter.com/" rel="nofollow"&gt;web&lt;/a&gt;</value>
   </data>
   <data name="RetweetLimitText" xml:space="preserve">
     <value>一度にRetweetできるのは15件までです</value>

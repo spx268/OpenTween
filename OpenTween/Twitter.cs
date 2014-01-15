@@ -146,7 +146,6 @@ namespace OpenTween
         private int _statusesCount = 0;
         private string _location = "";
         private string _bio = "";
-        private string _protocol = "https://";
 
         //プロパティからアクセスされる共通情報
         private string _uname;
@@ -159,7 +158,6 @@ namespace OpenTween
         private bool _readOwnPost;
         private List<string> _hashList = new List<string>();
 
-        private Outputz op = new Outputz();
         //max_idで古い発言を取得するために保持（lists分は個別タブで管理）
         private long minHomeTimeline = long.MaxValue;
         private long minMentions = long.MaxValue;
@@ -515,14 +513,7 @@ namespace OpenTween
             {
                 return "OK:Delaying?";
             }
-            if (op.Post(postStr.Length))
-            {
-                return "";
-            }
-            else
-            {
-                return "Outputz:Failed";
-            }
+            return "";
         }
 
         public string PostStatusWithMedia(string postStr, long? reply_to, FileInfo mediaFile)
@@ -575,14 +566,7 @@ namespace OpenTween
             {
                 return "OK:Delaying?";
             }
-            if (op.Post(postStr.Length))
-            {
-                return "";
-            }
-            else
-            {
-                return "Outputz:Failed";
-            }
+            return "";
         }
 
         public string SendDirectMessage(string postStr)
@@ -635,14 +619,7 @@ namespace OpenTween
             _location = status.Sender.Location;
             _bio = status.Sender.Description;
 
-            if (op.Post(postStr.Length))
-            {
-                return "";
-            }
-            else
-            {
-                return "Outputz:Failed";
-            }
+            return "";
         }
 
         public string RemoveStatus(long id)
@@ -1346,22 +1323,6 @@ namespace OpenTween
             get
             {
                 return _bio;
-            }
-        }
-
-        public bool UseSsl
-        {
-            set
-            {
-                HttpTwitter.UseSsl = value;
-                if (value)
-                {
-                    _protocol = "https://";
-                }
-                else
-                {
-                    _protocol = "http://";
-                }
             }
         }
 
@@ -2949,7 +2910,7 @@ namespace OpenTween
                                                           {
                                                               _hashList.Add("#" + mh.Result("$3"));
                                                           }
-                                                          return mh.Result("$1") + "<a href=\"" + _protocol + "twitter.com/search?q=%23" + mh.Result("$3") + "\">" + mh.Result("$2$3") + "</a>";
+                                                          return mh.Result("$1") + "<a href=\"https://twitter.com/search?q=%23" + mh.Result("$3") + "\">" + mh.Result("$2$3") + "</a>";
                                                       }),
                                                   RegexOptions.IgnoreCase);
 
@@ -3013,7 +2974,7 @@ namespace OpenTween
                                    new EntityInfo {StartIndex = ent.Indices[0],
                                                    EndIndex = ent.Indices[1],
                                                    Text = hash,
-                                                   Html = "<a href=\"" + _protocol + "twitter.com/search?q=%23" + ent.Text + "\">" + hash + "</a>"});
+                                                   Html = "<a href=\"https://twitter.com/search?q=%23" + ent.Text + "\">" + hash + "</a>"});
                         lock (LockObj)
                         {
                             _hashList.Add("#" + ent.Text);
@@ -3366,6 +3327,7 @@ namespace OpenTween
             new EventTypeTableElement("user_update", MyCommon.EVENTTYPE.UserUpdate),
             new EventTypeTableElement("deleted", MyCommon.EVENTTYPE.Deleted),
             new EventTypeTableElement("list_created", MyCommon.EVENTTYPE.ListCreated),
+            new EventTypeTableElement("list_destroyed", MyCommon.EVENTTYPE.ListDestroyed), 
             new EventTypeTableElement("list_updated", MyCommon.EVENTTYPE.ListUpdated),
             new EventTypeTableElement("unfollow", MyCommon.EVENTTYPE.Unfollow),
             new EventTypeTableElement("list_user_subscribed", MyCommon.EVENTTYPE.ListUserSubscribed),
@@ -3604,6 +3566,7 @@ namespace OpenTween
                     break;
                 case "list_member_added":
                 case "list_member_removed":
+                case "list_destroyed":
                 case "list_updated":
                 case "list_user_subscribed":
                 case "list_user_unsubscribed":

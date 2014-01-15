@@ -916,10 +916,6 @@ namespace OpenTween
             SettingDialog.UrlConvertAuto = false;
             //SettingDialog.UrlConvertAuto = _cfgCommon.UrlConvertAuto;
 
-            SettingDialog.OutputzEnabled = _cfgCommon.Outputz;
-            SettingDialog.OutputzKey = _cfgCommon.OutputzKey;
-            SettingDialog.OutputzUrlmode = _cfgCommon.OutputzUrlMode;
-
             SettingDialog.UseUnreadStyle = _cfgCommon.UseUnreadStyle;
             SettingDialog.DefaultTimeOut = _cfgCommon.DefaultTimeOut;
             SettingDialog.RetweetNoConfirm = _cfgCommon.RetweetNoConfirm;
@@ -944,7 +940,6 @@ namespace OpenTween
             SettingDialog.ReadOwnPost = _cfgCommon.ReadOwnPost;
             SettingDialog.GetFav = _cfgCommon.GetFav;
             SettingDialog.ReadOldPosts = _cfgCommon.ReadOldPosts;
-            SettingDialog.UseSsl = _cfgCommon.UseSsl;
             SettingDialog.BitlyUser = _cfgCommon.BilyUser;
             SettingDialog.BitlyPwd = _cfgCommon.BitlyPwd;
             SettingDialog.ShowGrid = _cfgCommon.ShowGrid;
@@ -1149,7 +1144,6 @@ namespace OpenTween
 
             tw.RestrictFavCheck = SettingDialog.RestrictFavCheck;
             tw.ReadOwnPost = SettingDialog.ReadOwnPost;
-            tw.UseSsl = SettingDialog.UseSsl;
             ShortUrl.IsResolve = SettingDialog.TinyUrlResolve;
             ShortUrl.BitlyId = SettingDialog.BitlyUser;
             ShortUrl.BitlyKey = SettingDialog.BitlyPwd;
@@ -1158,18 +1152,6 @@ namespace OpenTween
             TrackToolStripMenuItem.Checked = !String.IsNullOrEmpty(tw.TrackWord);
             tw.AllAtReply = _cfgCommon.AllAtReply;
             AllrepliesToolStripMenuItem.Checked = tw.AllAtReply;
-
-            Outputz.Key = SettingDialog.OutputzKey;
-            Outputz.Enabled = SettingDialog.OutputzEnabled;
-            switch (SettingDialog.OutputzUrlmode)
-            {
-                case MyCommon.OutputzUrlmode.twittercom:
-                    Outputz.OutUrl = "http://twitter.com/";
-                    break;
-                case MyCommon.OutputzUrlmode.twittercomWithUsername:
-                    Outputz.OutUrl = "http://twitter.com/" + tw.Username;
-                    break;
-            }
 
             //画像投稿サービス
             this.CreatePictureServices();
@@ -3182,7 +3164,6 @@ namespace OpenTween
                     break;
                 case MyCommon.WORKERTYPE.PostMessage:
                     if (string.IsNullOrEmpty(rslt.retMsg) ||
-                        rslt.retMsg.StartsWith("Outputz") ||
                         rslt.retMsg.StartsWith("OK:") ||
                         rslt.retMsg == "Warn:Status is a duplicate.")
                     {
@@ -4104,7 +4085,6 @@ namespace OpenTween
                     tw.TinyUrlResolve = SettingDialog.TinyUrlResolve;
                     tw.RestrictFavCheck = SettingDialog.RestrictFavCheck;
                     tw.ReadOwnPost = SettingDialog.ReadOwnPost;
-                    tw.UseSsl = SettingDialog.UseSsl;
                     ShortUrl.IsResolve = SettingDialog.TinyUrlResolve;
                     ShortUrl.BitlyId = SettingDialog.BitlyUser;
                     ShortUrl.BitlyKey = SettingDialog.BitlyPwd;
@@ -4303,18 +4283,6 @@ namespace OpenTween
                     this.PurgeListViewItemCache();
                     if (_curList != null) _curList.Refresh();
                     ListTab.Refresh();
-
-                    Outputz.Key = SettingDialog.OutputzKey;
-                    Outputz.Enabled = SettingDialog.OutputzEnabled;
-                    switch (SettingDialog.OutputzUrlmode)
-                    {
-                        case MyCommon.OutputzUrlmode.twittercom:
-                            Outputz.OutUrl = "http://twitter.com/";
-                            break;
-                        case MyCommon.OutputzUrlmode.twittercomWithUsername:
-                            Outputz.OutUrl = "http://twitter.com/" + tw.Username;
-                            break;
-                    }
 
                     _hookGlobalHotkey.UnregisterAllOriginalHotkey();
                     if (SettingDialog.HotkeyEnabled)
@@ -6198,7 +6166,7 @@ namespace OpenTween
                     mc = Regex.Match(src, "^https?://");
                     if (!mc.Success)
                     {
-                        src = src.Insert(0, "http://twitter.com");
+                        src = src.Insert(0, "https://twitter.com");
                     }
                     SourceLinkLabel.Tag = src;
                 }
@@ -7118,9 +7086,9 @@ namespace OpenTween
                 if (!isDm)
                 {
                     if (post.RetweetedId != null)
-                        sb.AppendFormat("{0}:{1} [http://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.RetweetedId, Environment.NewLine);
+                        sb.AppendFormat("{0}:{1} [https://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.RetweetedId, Environment.NewLine);
                     else
-                        sb.AppendFormat("{0}:{1} [http://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.StatusId, Environment.NewLine);
+                        sb.AppendFormat("{0}:{1} [https://twitter.com/{0}/status/{2}]{3}", post.ScreenName, post.TextSingleLine, post.StatusId, Environment.NewLine);
                 }
                 else
                 {
@@ -7559,14 +7527,14 @@ namespace OpenTween
                     }
                     catch (InvalidOperationException)
                     {
-                        OpenUriAsync("http://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
+                        OpenUriAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
                         return;
                     }
                 }
                 else
                 {
                     this.StatusLabel.Text = r;
-                    OpenUriAsync("http://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
+                    OpenUriAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
                     return;
                 }
             }
@@ -7883,9 +7851,6 @@ namespace OpenTween
                 _cfgCommon.RestrictFavCheck = SettingDialog.RestrictFavCheck;
                 _cfgCommon.AlwaysTop = SettingDialog.AlwaysTop;
                 _cfgCommon.UrlConvertAuto = SettingDialog.UrlConvertAuto;
-                _cfgCommon.Outputz = SettingDialog.OutputzEnabled;
-                _cfgCommon.OutputzKey = SettingDialog.OutputzKey;
-                _cfgCommon.OutputzUrlMode = SettingDialog.OutputzUrlmode;
                 _cfgCommon.UseUnreadStyle = SettingDialog.UseUnreadStyle;
                 _cfgCommon.DateTimeFormat = SettingDialog.DateTimeFormat;
                 _cfgCommon.DefaultTimeOut = SettingDialog.DefaultTimeOut;
@@ -7910,7 +7875,6 @@ namespace OpenTween
                     _cfgCommon.WideSpaceConvert = this.IdeographicSpaceToSpaceToolStripMenuItem.Checked;
                 }
                 _cfgCommon.ReadOldPosts = SettingDialog.ReadOldPosts;
-                _cfgCommon.UseSsl = SettingDialog.UseSsl;
                 _cfgCommon.BilyUser = SettingDialog.BitlyUser;
                 _cfgCommon.BitlyPwd = SettingDialog.BitlyPwd;
                 _cfgCommon.ShowGrid = SettingDialog.ShowGrid;
@@ -11718,7 +11682,7 @@ namespace OpenTween
                 PostClass post = GetCurTabPost(_curList.SelectedIndices[0]);
                 if (post.RetweetedId != null)
                 {
-                    OpenUriAsync("http://twitter.com/" + GetCurTabPost(_curList.SelectedIndices[0]).RetweetedBy);
+                    OpenUriAsync("https://twitter.com/" + GetCurTabPost(_curList.SelectedIndices[0]).RetweetedBy);
                 }
             }
         }

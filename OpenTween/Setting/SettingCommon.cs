@@ -149,12 +149,10 @@ namespace OpenTween
         public bool AlwaysTop = false;
         public string CultureCode = "";
         public bool UrlConvertAuto = false;
-        public bool Outputz = false;
         public int SortColumn = 3;
         public int SortOrder = 1;
         public bool IsMonospace = false;
         public bool ReadOldPosts = false;
-        public bool UseSsl = true;
         public string Language = "OS";
         public bool Nicoms = false;
         public List<string> HashTags = new List<string>();
@@ -164,15 +162,6 @@ namespace OpenTween
         public bool HashIsNotAddToAtReply = true;
         public bool PreviewEnable = true;
 
-        [XmlIgnore]
-        public string OutputzKey = "";
-        public string EncryptOutputzKey
-        {
-            get { return Encrypt(OutputzKey); }
-            set { OutputzKey = Decrypt(value); }
-        }
-
-        public MyCommon.OutputzUrlmode OutputzUrlMode = MyCommon.OutputzUrlmode.twittercom;
         public MyCommon.UrlConverter AutoShortUrlFirst = MyCommon.UrlConverter.Uxnu;
         public bool UseUnreadStyle = true;
         public string DateTimeFormat = "yyyy/MM/dd H:mm:ss";
