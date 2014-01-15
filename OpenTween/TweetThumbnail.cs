@@ -43,7 +43,7 @@ namespace OpenTween
         private CancellationTokenSource cancelTokenSource;
 
         public event EventHandler ThumbnailLoading;
-        public event EventHandler<AsyncCompletedEventArgs> ThumbnailLoadCompleted;
+        public event EventHandler ThumbnailLoadCompleted;
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
         public event EventHandler<ThumbnailImageSearchEventArgs> ThumbnailImageSearchClick;
 
@@ -101,7 +101,16 @@ namespace OpenTween
 
                                     picbox.Image = t2.Result;
                                 },
-                                CancellationToken.None, TaskContinuationOptions.AttachedToParent, uiScheduler);
+                                CancellationToken.None, TaskContinuationOptions.AttachedToParent, uiScheduler)
+                                .ContinueWith(t2 =>
+                                {
+                                    if (picbox.Image != null)  // 画像読み込みの成否をチェック
+                                    {
+                                        if (this.ThumbnailLoadCompleted != null)
+                                            this.ThumbnailLoadCompleted(picbox, new EventArgs());
+                                    }
+                                },
+                                cancelToken, TaskContinuationOptions.OnlyOnRanToCompletion, uiScheduler);
 
                             var tooltipText = thumb.TooltipText;
                             if (!string.IsNullOrEmpty(tooltipText))
@@ -177,11 +186,6 @@ namespace OpenTween
 
         public void CancelAsync()
         {
-            foreach (var picbox in this.pictureBox)
-            {
-                picbox.LoadCompleted -= this.pictureBox_LoadCompleted;
-            }
-
             if (this.task == null || this.task.IsCompleted) return;
 
             this.cancelTokenSource.Cancel();
@@ -230,7 +234,6 @@ namespace OpenTween
             {
                 var picbox = CreatePictureBox("pictureBox" + i);
                 picbox.Visible = (i == 0);
-                picbox.LoadCompleted += this.pictureBox_LoadCompleted;
                 picbox.DoubleClick += this.pictureBox_DoubleClick;
 
                 this.panelPictureBox.Controls.Add(picbox);
@@ -282,14 +285,6 @@ namespace OpenTween
             }
 
             this.ResumeLayout(false);
-        }
-
-        private void pictureBox_LoadCompleted(object sender, AsyncCompletedEventArgs e)
-        {
-            if (this.ThumbnailLoadCompleted != null)
-            {
-                this.ThumbnailLoadCompleted(this, e);
-            }
         }
 
         private void pictureBox_DoubleClick(object sender, EventArgs e)
