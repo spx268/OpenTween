@@ -1158,7 +1158,7 @@ namespace OpenTween
             SetImageServiceCombo();
             ImageSelectionPanel.Enabled = false;
 
-            ImageServiceCombo.SelectedIndex = _cfgCommon.UseImageService;
+            SelectImageServiceComboItem(_cfgCommon.UseImageServiceName, _cfgCommon.UseImageService);
 
             //ウィンドウ設定
             this.ClientSize = _cfgLocal.FormSize;
@@ -7938,6 +7938,7 @@ namespace OpenTween
                 _cfgCommon.OpenUserTimeline = SettingDialog.OpenUserTimeline;
                 _cfgCommon.ListCountApi = SettingDialog.ListCountApi;
                 _cfgCommon.UseImageService = ImageServiceCombo.SelectedIndex;
+                _cfgCommon.UseImageServiceName = this.ImageService;
                 _cfgCommon.ListDoubleClickAction = SettingDialog.ListDoubleClickAction;
                 _cfgCommon.UserAppointUrl = SettingDialog.UserAppointUrl;
                 _cfgCommon.HideDuplicatedRetweets = SettingDialog.HideDuplicatedRetweets;
@@ -12543,23 +12544,35 @@ namespace OpenTween
                 ImageServiceCombo.Items.Add(key);
             }
 
+            SelectImageServiceComboItem(svc);
+        }
+
+        private void SelectImageServiceComboItem(string svc, int? index = null)
+        {
+            int idx;
             if (string.IsNullOrEmpty(svc))
             {
-                ImageServiceCombo.SelectedIndex = 0;
+                idx = index ?? 0;
             }
             else
             {
-                int idx = ImageServiceCombo.Items.IndexOf(svc);
-                if (idx == -1)
-                    ImageServiceCombo.SelectedIndex = 0;
-                else
-                    ImageServiceCombo.SelectedIndex = idx;
+                idx = ImageServiceCombo.Items.IndexOf(svc);
+                if (idx == -1) idx = index ?? 0;
+            }
+
+            try
+            {
+                ImageServiceCombo.SelectedIndex = idx;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                ImageServiceCombo.SelectedIndex = 0;
             }
         }
 
         private string ImageService
         {
-            get { return (string)ImageServiceCombo.SelectedItem; }
+            get { return ImageServiceCombo.SelectedItem.ToString(); }
         }
 
         private void ImageCancelButton_Click(object sender, EventArgs e)
