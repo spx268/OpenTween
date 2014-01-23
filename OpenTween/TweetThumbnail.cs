@@ -55,6 +55,7 @@ namespace OpenTween
         public TweetThumbnail()
         {
             InitializeComponent();
+            this.BackColor = Color.FromArgb(32, 32, 32);
         }
 
         public Task ShowThumbnailAsync(PostClass post)
