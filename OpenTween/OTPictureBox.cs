@@ -42,9 +42,15 @@ namespace OpenTween
             set
             {
                 this.memoryImage = value;
-                base.Image = value.Image;
-
-                this.RestoreSizeMode();
+                if (value != null)
+                {
+                    base.Image = value.Image;
+                    this.RestoreSizeMode();
+                }
+                else
+                {
+                    ShowInitialImage();
+                }
             }
         }
         private MemoryImage memoryImage;
