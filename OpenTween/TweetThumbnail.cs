@@ -52,6 +52,8 @@ namespace OpenTween
             get { return this.pictureBox[this.scrollBar.Value].Tag as ThumbnailInfo; }
         }
 
+        private Point? popupMouseDownPos = null;
+
         public TweetThumbnail()
         {
             InitializeComponent();
@@ -101,6 +103,10 @@ namespace OpenTween
                                     }
 
                                     picbox.Image = t2.Result;
+
+                                    picbox.MouseDown += this.pictureBox_MouseDown;
+                                    picbox.MouseUp += this.pictureBox_MouseUp;
+                                    picbox.MouseMove += this.pictureBox_MouseMove;
                                 },
                                 CancellationToken.None, TaskContinuationOptions.AttachedToParent, uiScheduler)
                                 .ContinueWith(t2 =>
@@ -297,6 +303,44 @@ namespace OpenTween
                 this.ThumbnailDoubleClick(this, new ThumbnailDoubleClickEventArgs(thumb));
             }
         }
+
+        private void pictureBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger)
+            {
+                this.popupMouseDownPos = e.Location;
+            }
+        }
+
+        private void pictureBox_MouseUp(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger)
+            {
+                this.popupMouseDownPos = null;
+            }
+        }
+
+        private void pictureBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger &&
+                this.popupMouseDownPos.HasValue)
+            {
+                // ダブルクリック時の些細な移動で反応するのを阻止
+                if (Math.Abs(e.X - this.popupMouseDownPos.Value.X) < 3 ||
+                    Math.Abs(e.Y - this.popupMouseDownPos.Value.Y) < 3) return;
+
+                var originPos = this.popupMouseDownPos.Value;
+                this.popupMouseDownPos = null;
+
+                try
+                {
+                    ThumbnailWindow.Show((OTPictureBox)sender, originPos);
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
     }
 
     public class ThumbnailDoubleClickEventArgs : EventArgs
@@ -316,6 +360,139 @@ namespace OpenTween
         public ThumbnailImageSearchEventArgs(string url)
         {
             this.ImageUrl = url;
+        }
+    }
+
+    public class ThumbnailWindow : Form
+    {
+        public static MouseButtons Trigger = MouseButtons.Left;
+
+        private readonly Rectangle startupBounds;
+        private readonly Point originPos;
+
+        private bool disposed = false;
+
+        protected ThumbnailWindow(MemoryImage thumbnail, Rectangle startupBounds, Point originPos)
+        {
+            this.startupBounds = startupBounds;
+            this.originPos = originPos;
+
+            this.SuspendLayout();
+
+            this.DoubleBuffered = true;
+
+            this.TopMost = true;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar = false;
+
+            this.StartPosition = FormStartPosition.Manual;
+            this.Bounds = startupBounds;
+
+            this.Capture = true;
+
+            this.MouseMove += ThumbnailWindow_MouseMove;
+            this.MouseUp += ThumbnailWindow_MouseUp;
+
+            var picbox = new OTPictureBox()
+            {
+                Name = "picbox",
+                Image = thumbnail,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                WaitOnLoad = false,
+                Dock = DockStyle.Fill,
+            };
+            this.Controls.Add(picbox);
+
+            picbox.MouseMove += ThumbnailWindow_MouseMove;
+            picbox.MouseUp += ThumbnailWindow_MouseUp;
+
+            this.ResumeLayout(false);
+        }
+
+        private void ThumbnailWindow_MouseMove(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & Trigger) == Trigger)
+            {
+                var movepos = this.PointToScreen(e.Location);
+                var xmove = (int)((movepos.X - this.originPos.X) * 1.5);
+                var ymove = (int)((movepos.Y - this.originPos.Y) * 1.5);
+
+                var left = this.startupBounds.X + ((xmove <= 0) ? xmove : 0);
+                var width = this.startupBounds.Width + xmove * ((xmove <= 0) ? -1 : 1);
+                if (left < SystemInformation.VirtualScreen.Left)  // upper-left 方向へは仮想スクリーン座標で制限
+                {
+                    width += left - SystemInformation.VirtualScreen.Left;
+                    left = SystemInformation.VirtualScreen.Left;
+                }
+
+                var top = this.startupBounds.Y + ((ymove <= 0) ? ymove : 0);
+                var height = this.startupBounds.Height + ymove * ((ymove <= 0) ? -1 : 1);
+                if (top < SystemInformation.VirtualScreen.Top)  // upper-left 方向へは仮想スクリーン座標で制限
+                {
+                    height += top - SystemInformation.VirtualScreen.Top;
+                    top = SystemInformation.VirtualScreen.Top;
+                }
+
+                this.SetBounds(left, top, width, height);
+            }
+        }
+
+        private void ThumbnailWindow_MouseUp(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & Trigger) == Trigger)
+            {
+                this.Close();
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed) return;
+
+            try
+            {
+                if (disposing)
+                {
+                    var picbox = (OTPictureBox)this.Controls["picbox"];
+                    this.Controls.Remove(picbox);
+                    picbox.Dispose();
+                }
+
+                this.disposed = true;
+            }
+            finally
+            {
+                base.Dispose(disposing);
+            }
+        }
+
+        public static void Show(OTPictureBox picbox, Point originPos)
+        {
+            if (picbox == null || picbox.Image == null)
+                throw new ArgumentNullException("picbox");
+
+            if (picbox.IsDisposed)
+                throw new ObjectDisposedException("picbox");
+
+            // ポップアップ表示中は、サムネイル枠の画像を乗っ取ってダミーとすり替えておく
+            var thumbnail = picbox.Image;
+            picbox.Image = null;
+
+            var popup = new ThumbnailWindow(thumbnail, picbox.RectangleToScreen(picbox.Bounds), picbox.PointToScreen(originPos))
+            {
+                BackColor = picbox.BackColor,
+            };
+            popup.Disposed += (s, e) =>
+            {
+                // 乗っ取った画像は、サムネイル枠に戻せるなら戻し、戻せないなら破棄する
+                if (!picbox.IsDisposed)
+                    picbox.Image = thumbnail;
+                else
+                    thumbnail.Dispose();
+            };
+
+            popup.Show();
+            picbox.Update();
         }
     }
 }
