@@ -102,5 +102,18 @@ namespace OpenTween
         {
             throw new NotImplementedException();
         }
+
+        protected override void WndProc(ref Message m)
+        {
+            try
+            {
+                base.WndProc(ref m);
+            }
+            catch (System.Runtime.InteropServices.ExternalException)
+            {
+                // XP: アニメーション GIF の再生中に GDI+ 汎用エラーが発生することがある
+                this.ShowErrorImage();
+            }
+        }
     }
 }
