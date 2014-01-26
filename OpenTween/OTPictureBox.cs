@@ -103,11 +103,11 @@ namespace OpenTween
             throw new NotImplementedException();
         }
 
-        protected override void WndProc(ref Message m)
+        protected override void OnPaint(PaintEventArgs pe)
         {
             try
             {
-                base.WndProc(ref m);
+                base.OnPaint(pe);
             }
             catch (System.Runtime.InteropServices.ExternalException)
             {
