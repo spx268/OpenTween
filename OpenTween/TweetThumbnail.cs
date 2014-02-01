@@ -225,6 +225,7 @@ namespace OpenTween
             foreach (var picbox in this.pictureBox)
             {
                 var memoryImage = picbox.Image;
+                picbox.ContextMenu.Dispose();
                 picbox.Dispose();
 
                 if (memoryImage != null)
