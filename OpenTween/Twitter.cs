@@ -3216,19 +3216,26 @@ namespace OpenTween
             // 404エラーの挙動が変なので無視: https://dev.twitter.com/discussions/1213
             if (httpStatus == HttpStatusCode.NotFound) return null;
 
-            var callerMethod = new StackTrace(false).GetFrame(1).GetMethod().Name;
+            var callerMethod = new StackTrace(false).GetFrame(1).GetMethod();
+            var callerMethodName = callerMethod != null
+                ? callerMethod.Name
+                : "";
 
             if (string.IsNullOrWhiteSpace(responseText))
             {
                 if (httpStatus == HttpStatusCode.Unauthorized)
                     Twitter.AccountState = MyCommon.ACCOUNT_STATE.Invalid;
 
-                return "Err:" + httpStatus + "(" + callerMethod + ")";
+                return "Err:" + httpStatus + "(" + callerMethodName + ")";
             }
 
             try
             {
                 var errors = MyCommon.CreateDataFromJson<TwitterDataModel.ErrorResponse>(responseText).Errors;
+                if (errors == null || !errors.Any())
+                {
+                    return "Err:" + responseText + "(" + callerMethodName + ")";
+                }
 
                 foreach (var error in errors)
                 {
@@ -3239,11 +3246,11 @@ namespace OpenTween
                     }
                 }
 
-                return "Err:" + string.Join(",", errors.Select(x => x.ToString())) + "(" + callerMethod + ")";
+                return "Err:" + string.Join(",", errors.Select(x => x.ToString())) + "(" + callerMethodName + ")";
             }
             catch (SerializationException) { }
 
-            return "Err:" + responseText + "(" + callerMethod + ")";
+            return "Err:" + responseText + "(" + callerMethodName + ")";
         }
 
 #region "UserStream"
@@ -3858,21 +3865,16 @@ namespace OpenTween
                 {
                     if (disposing)
                     {
-                        // TODO: マネージ状態を破棄します (マネージ オブジェクト)。
                         _streamActive = false;
                         if (_streamThread != null && _streamThread.IsAlive)
                         {
                             _streamThread.Abort();
                         }
                     }
-
-                    // TODO: アンマネージ リソース (アンマネージ オブジェクト) を解放し、下の Finalize() をオーバーライドします。
-                    // TODO: 大きなフィールドを null に設定します。
                 }
                 this.disposedValue = true;
             }
 
-            // TODO: 上の Dispose(bool disposing) にアンマネージ リソースを解放するコードがある場合にのみ、Finalize() をオーバーライドします。
             //protected Overrides void Finalize()
             //{
             //    // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
@@ -3902,17 +3904,12 @@ namespace OpenTween
             {
                 if (disposing)
                 {
-                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。
                     this.StopUserStream();
                 }
-
-                // TODO: アンマネージ リソース (アンマネージ オブジェクト) を解放し、下の Finalize() をオーバーライドします。
-                // TODO: 大きなフィールドを null に設定します。
             }
             this.disposedValue = true;
         }
 
-        // TODO: 上の Dispose(bool disposing) にアンマネージ リソースを解放するコードがある場合にのみ、Finalize() をオーバーライドします。
         //protected Overrides void Finalize()
         //{
         //    // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
