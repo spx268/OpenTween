@@ -9507,7 +9507,7 @@ namespace OpenTween
                     var tab = _statuses.Tabs[key];
                     ur += tab.UnreadCount;
                     al += tab.AllCount;
-                    if (key.Equals(_curTab.Text))
+                    if (_curTab != null && key.Equals(_curTab.Text))
                     {
                         tur = tab.UnreadCount;
                         tal = tab.AllCount;
