@@ -29,6 +29,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Net;
 
 namespace OpenTween
 {
@@ -74,8 +75,10 @@ namespace OpenTween
                 .ContinueWith(t =>
                 {
                     if (t.IsFaulted)
+                        t.Exception.Flatten().Handle(x => x is WebException || x is InvalidImageException || x is TaskCanceledException);
+
+                    if (t.IsFaulted || t.IsCanceled)
                     {
-                        t.Exception.Handle(x => x is InvalidImageException);
                         return;
                     }
 

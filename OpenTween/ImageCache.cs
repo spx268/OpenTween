@@ -113,18 +113,10 @@ namespace OpenTween
 
                     var client = new OTWebClient() { Timeout = 10000 };
 
-                    var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken).ContinueWith(t =>
-                    {
-                        client.Dispose();
+                    var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken)
+                        .ContinueWith(t => MemoryImage.CopyFromBytes(t.Result), TaskScheduler.Default);
 
-                        if (t.IsFaulted)
-                        {
-                            t.Exception.Handle(e => e is WebException);
-                            return null;
-                        }
-
-                        return MemoryImage.CopyFromBytes(t.Result);
-                    }, cancelToken);
+                    imageTask.ContinueWith(_ => client.Dispose());
 
                     this.innerDictionary[address] = imageTask;
 
