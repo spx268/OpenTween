@@ -4547,7 +4547,6 @@ namespace OpenTween
                 {
                     label.Height = tmpComboBox.Height;
                 }
-                _tabPage.Controls.Add(label);
             }
 
             /// 検索関連の準備
@@ -4840,16 +4839,23 @@ namespace OpenTween
 
             _tabPage.SuspendLayout();
 
-            if (this.ListTab.SelectedTab == this.ListTab.TabPages[idx])
+            if (this.ListTab.SelectedTab == _tabPage)
             {
                 this.ListTab.SelectTab((this._beforeSelectedTab != null && this.ListTab.TabPages.Contains(this._beforeSelectedTab)) ? this._beforeSelectedTab : this.ListTab.TabPages[0]);
+                this._beforeSelectedTab = null;
             }
             this.ListTab.Controls.Remove(_tabPage);
 
-            Control pnl = null;
-            if (tabType == MyCommon.TabUsageType.PublicSearch)
+            // 後付けのコントロールを破棄
+            if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists)
             {
-                pnl = _tabPage.Controls["panelSearch"];
+                Control label = _tabPage.Controls["labelUser"];
+                _tabPage.Controls.Remove(label);
+                label.Dispose();
+            }
+            else if (tabType == MyCommon.TabUsageType.PublicSearch)
+            {
+                Control pnl = _tabPage.Controls["panelSearch"];
                 foreach (Control ctrl in pnl.Controls)
                 {
                     if (ctrl.Name == "buttonSearch")
@@ -4868,8 +4874,13 @@ namespace OpenTween
             }
 
             _tabPage.Controls.Remove(_listCustom);
+            foreach (ColumnHeader header in _listCustom.Columns)
+            {
+                header.Dispose();
+            }
             _listCustom.Columns.Clear();
             _listCustom.ContextMenuStrip = null;
+            _listCustom.Font = null;
 
             _listCustom.SelectedIndexChanged -= MyList_SelectedIndexChanged;
             _listCustom.MouseDoubleClick -= MyList_MouseDoubleClick;
@@ -4886,6 +4897,7 @@ namespace OpenTween
             _listCustom.DrawSubItem -= MyList_DrawSubItem;
             _listCustom.HScrolled -= MyList_HScrolled;
 
+            _listCustom.SmallImageList.Dispose();
             _listCustom.SmallImageList = null;
             _listCustom.ListViewItemSorter = null;
 
