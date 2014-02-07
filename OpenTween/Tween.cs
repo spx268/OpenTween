@@ -6104,8 +6104,6 @@ namespace OpenTween
         {
             if (sender.Equals(displayItem))
             {
-                if (UserPicture.Image != null) UserPicture.Image.Dispose();
-
                 var img = displayItem.Image;
                 if (img != null)
                 {
@@ -6223,7 +6221,6 @@ namespace OpenTween
                 NameLabel.Text += " (RT:" + _curPost.RetweetedBy + ")";
             }
 
-            if (UserPicture.Image != null) UserPicture.Image.Dispose();
             UserPicture.Image = null;
             if (!string.IsNullOrEmpty(_curPost.ImageUrl))
             {
