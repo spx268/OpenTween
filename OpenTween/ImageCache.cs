@@ -97,21 +97,22 @@ namespace OpenTween
                 Task<MemoryImage> cachedImageTask = null;
                 lock (this.lockObject)
                 {
-                    this.innerDictionary.TryGetValue(address, out cachedImageTask);
-
-                    if (force && cachedImageTask != null)
+                    if (this.innerDictionary.TryGetValue(address, out cachedImageTask) &&
+                        cachedImageTask != null)
                     {
-                        this.innerDictionary.Remove(address);
+                        if (force)
+                        {
+                            this.innerDictionary.Remove(address);
 
-                        if (cachedImageTask.Status == TaskStatus.RanToCompletion)
-                            cachedImageTask.Result.Dispose();
+                            if (cachedImageTask.Status == TaskStatus.RanToCompletion)
+                                cachedImageTask.Result.Dispose();
 
-                        cachedImageTask.Dispose();
-                        cachedImageTask = null;
+                            cachedImageTask.Dispose();
+                            cachedImageTask = null;
+                        }
+                        else
+                            return cachedImageTask;
                     }
-
-                    if (cachedImageTask != null)
-                        return cachedImageTask;
 
                     cancelToken.ThrowIfCancellationRequested();
 
