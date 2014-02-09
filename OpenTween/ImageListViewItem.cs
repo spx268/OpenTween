@@ -26,10 +26,10 @@
 
 using System;
 using System.Drawing;
+using System.Net;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Net;
 
 namespace OpenTween
 {
@@ -74,11 +74,9 @@ namespace OpenTween
             return this.imageCache.DownloadImageAsync(this.imageUrl, force)
                 .ContinueWith(t =>
                 {
-                    if (t.IsFaulted)
-                        t.Exception.Flatten().Handle(x => x is WebException || x is InvalidImageException || x is TaskCanceledException);
-
                     if (t.IsFaulted || t.IsCanceled)
                     {
+                        t.Exception.Flatten().Handle(x => x is WebException || x is InvalidImageException || x is TaskCanceledException);
                         return;
                     }
 
