@@ -1,10 +1,5 @@
 ﻿// OpenTween - Client of Twitter
-// Copyright (c) 2007-2011 kiri_feather (@kiri_feather) <kiri.feather@gmail.com>
-//           (c) 2008-2011 Moz (@syo68k)
-//           (c) 2008-2011 takeshik (@takeshik) <http://www.takeshik.org/>
-//           (c) 2010-2011 anis774 (@anis774) <http://d.hatena.ne.jp/anis774/>
-//           (c) 2010-2011 fantasticswallow (@f_swallow) <http://twitter.com/f_swallow>
-//           (c) 2014      kim_upsilon (@kim_upsilon) <https://upsilo.net/~upsilon/>
+// Copyright (c) 2014 kim_upsilon (@kim_upsilon) <https://upsilo.net/~upsilon/>
 // All rights reserved.
 //
 // This file is part of OpenTween.
@@ -26,20 +21,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 
-namespace OpenTween.Setting.Panel
+namespace OpenTween
 {
-    public partial class NotifyPanel : SettingPanelBase
+    /// <summary>
+    /// タブの操作時に問題が発生した場合にスローされる例外
+    /// </summary>
+    public class TabException : Exception
     {
-        public NotifyPanel()
-        {
-            InitializeComponent();
-        }
+        public TabException() : base() { }
+        public TabException(string message) : base(message) { }
+        public TabException(string message, Exception innerException) : base(message, innerException) { }
     }
 }
