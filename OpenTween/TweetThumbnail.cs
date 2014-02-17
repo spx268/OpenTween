@@ -47,6 +47,8 @@ namespace OpenTween
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
         public event EventHandler<ThumbnailImageSearchEventArgs> ThumbnailImageSearchClick;
 
+        private object uiLockObj = new object();
+
         public ThumbnailInfo Thumbnail
         {
             get { return this.pictureBox[this.scrollBar.Value].Tag as ThumbnailInfo; }
@@ -71,12 +73,13 @@ namespace OpenTween
 
             var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
-            this.task = Task.Factory.StartNew(() => this.GetThumbailInfo(post), cancelToken)
-                .ContinueWith( /* await使いたい */
-                    t =>
-                    {
-                        var thumbnails = t.Result;
+            this.task = Task.Factory.StartNew(() => this.GetThumbailInfo(post), cancelToken, TaskCreationOptions.None, TaskScheduler.Default)
+                .ContinueWith(t => /* await使いたい */
+                {
+                    var thumbnails = t.Result;
 
+                    lock (this.uiLockObj)
+                    {
                         this.SetThumbnailCount(thumbnails.Count);
                         if (thumbnails.Count == 0) return;
 
@@ -130,14 +133,14 @@ namespace OpenTween
 
                         if (thumbnails.Count > 1)
                             this.scrollBar.Enabled = true;
+                    }
 
-                        if (this.ThumbnailLoading != null)
-                            this.ThumbnailLoading(this, new EventArgs());
-                    },
-                    cancelToken,
-                    TaskContinuationOptions.OnlyOnRanToCompletion,
-                    uiScheduler
-                );
+                    if (this.ThumbnailLoading != null)
+                        this.ThumbnailLoading(this, EventArgs.Empty);
+                },
+                cancelToken,
+                TaskContinuationOptions.OnlyOnRanToCompletion,
+                uiScheduler);
 
             return this.task;
         }
@@ -153,12 +156,7 @@ namespace OpenTween
         {
             var item = new MenuItem();
             item.Text = Properties.Resources.SearchSimilarImageText;
-            string search_targe_url =
-                thumb.FullSizeImageUrl != null
-                    ? thumb.FullSizeImageUrl
-                    : thumb.ThumbnailUrl != null
-                        ? thumb.ThumbnailUrl
-                        : null;
+            var search_targe_url = thumb.FullSizeImageUrl ?? thumb.ThumbnailUrl ?? null;
 
             if (search_targe_url != null)
             {
@@ -194,23 +192,6 @@ namespace OpenTween
             if (this.task == null || this.task.IsCompleted) return;
 
             this.cancelTokenSource.Cancel();
-
-            // this.task.Status は、GetThumbailInfo() の実行中であれば TaskStatus.WaitingForActivation となる。
-            // ContinueWith の処理も含めて終了していれば RanToCompletion などになる。
-            // もしこれが Running である場合は、PictureBox に対する操作の途中である可能性が高いため
-            // 必ず Wait() を実行してタスクの終了を待つ。
-            // (ContinueWith のタスクは ThumbnailLoading イベントが足を引っ張らない限り20ms程で完了する)
-
-            if (this.task.Status != TaskStatus.Running) return;
-
-            try
-            {
-                this.task.Wait();
-            }
-            catch (AggregateException ae)
-            {
-                ae.Handle(e => e is TaskCanceledException);
-            }
         }
 
         /// <summary>

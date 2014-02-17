@@ -127,7 +127,7 @@ namespace OpenTween
 
                     return imageTask;
                 }
-            }, cancelToken).Unwrap();
+            }, cancelToken, TaskCreationOptions.None, TaskScheduler.Default).Unwrap();
         }
 
         public MemoryImage TryGetFromCache(string address)
