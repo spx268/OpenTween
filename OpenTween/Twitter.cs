@@ -2378,7 +2378,16 @@ namespace OpenTween
 
             try
             {
-                return MyCommon.CreateDataFromJson<TwitterDataModel.Ids>(content);
+                var ret = MyCommon.CreateDataFromJson<TwitterDataModel.Ids>(content);
+
+                if (ret.Id == null)
+                {
+                    var ex = new WebApiException("Err: ret.id == null (GetFollowerIdsApi)", content);
+                    MyCommon.ExceptionOut(ex);
+                    throw ex;
+                }
+
+                return ret;
             }
             catch(SerializationException e)
             {
@@ -3157,7 +3166,7 @@ namespace OpenTween
                 var errors = MyCommon.CreateDataFromJson<TwitterDataModel.ErrorResponse>(responseText).Errors;
                 if (errors == null || !errors.Any())
                 {
-                    return "Err:" + responseText + "(" + callerMethodName + ")";
+                    return "Err:" + httpStatus + "(" + callerMethodName + ")";
                 }
 
                 foreach (var error in errors)
@@ -3173,7 +3182,7 @@ namespace OpenTween
             }
             catch (SerializationException) { }
 
-            return "Err:" + responseText + "(" + callerMethodName + ")";
+            return "Err:" + httpStatus + "(" + callerMethodName + ")";
         }
 
 #region "UserStream"

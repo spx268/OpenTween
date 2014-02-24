@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("OpenTween")]
-[assembly: AssemblyCopyright("(C) OpenTween Project 2011-")]
+[assembly: AssemblyCopyright("(C) 2011 OpenTween contributors")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,6 +33,6 @@ using System.Runtime.InteropServices;
 // 既定値にすることができます:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.7.1")]
+[assembly: AssemblyFileVersion("1.1.8.1")]
 
 [assembly: InternalsVisibleTo("OpenTween.Tests")]
