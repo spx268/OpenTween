@@ -6544,13 +6544,12 @@ namespace OpenTween
                     }
                     else if (Focused == FocusedControl.PostBrowser)
                     {
+                        //フォーカスPostBrowser
                         switch (KeyCode)
                         {
                             case Keys.Up:
-                                ScrollDownPostBrowser(false);
-                                return true;
                             case Keys.Down:
-                                ScrollDownPostBrowser(true);
+                                //スクロールを発生させるため、true を返す
                                 return true;
                         }
                     }
@@ -7039,28 +7038,32 @@ namespace OpenTween
 
         private void ScrollDownPostBrowser(bool forward)
         {
-            HtmlDocument doc = PostBrowser.Document;
+            var doc = PostBrowser.Document;
             if (doc == null) return;
-            HtmlElementCollection htmlCol = doc.GetElementsByTagName("html");
-            if (htmlCol.Count < 1) return;
 
-            if (forward)
-                htmlCol[0].ScrollTop += SettingDialog.FontDetail.Height;
-            else
-                htmlCol[0].ScrollTop -= SettingDialog.FontDetail.Height;
+            var tags = doc.GetElementsByTagName("html");
+            if (tags.Count > 0)
+            {
+                if (forward)
+                    tags[0].ScrollTop += SettingDialog.FontDetail.Height;
+                else
+                    tags[0].ScrollTop -= SettingDialog.FontDetail.Height;
+            }
         }
 
         private void PageDownPostBrowser(bool forward)
         {
-            HtmlDocument doc = PostBrowser.Document;
+            var doc = PostBrowser.Document;
             if (doc == null) return;
-            HtmlElementCollection htmlCol = doc.GetElementsByTagName("html");
-            if (htmlCol.Count < 1) return;
 
-            if (forward)
-                htmlCol[0].ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
-            else
-                htmlCol[0].ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+            var tags = doc.GetElementsByTagName("html");
+            if (tags.Count > 0)
+            {
+                if (forward)
+                    tags[0].ScrollTop += PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+                else
+                    tags[0].ScrollTop -= PostBrowser.ClientRectangle.Height - SettingDialog.FontDetail.Height;
+            }
         }
 
         private void GoNextTab(bool forward)
