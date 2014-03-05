@@ -4816,11 +4816,8 @@ namespace OpenTween
                 }
             }
 
-            int idx = 0;
-            for (idx = 0; idx < ListTab.TabPages.Count; idx++)
-            {
-                if (ListTab.TabPages[idx].Text == TabName) break;
-            }
+            var _tabPage = ListTab.TabPages.Cast<TabPage>().FirstOrDefault<TabPage>(tp => tp.Text == TabName);
+            if (_tabPage == null) return false;
 
             SetListProperty();   //他のタブに列幅等を反映
 
@@ -4833,7 +4830,6 @@ namespace OpenTween
             this.ListTab.SuspendLayout();
             this.SuspendLayout();
 
-            TabPage _tabPage = ListTab.TabPages[idx];
             DetailsListView _listCustom = (DetailsListView)_tabPage.Tag;
             _tabPage.Tag = null;
 
@@ -4849,38 +4845,36 @@ namespace OpenTween
             // 後付けのコントロールを破棄
             if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists)
             {
-                Control label = _tabPage.Controls["labelUser"];
-                _tabPage.Controls.Remove(label);
-                label.Dispose();
+                using (Control label = _tabPage.Controls["labelUser"])
+                {
+                    _tabPage.Controls.Remove(label);
+                }
             }
             else if (tabType == MyCommon.TabUsageType.PublicSearch)
             {
-                Control pnl = _tabPage.Controls["panelSearch"];
-                foreach (Control ctrl in pnl.Controls)
+                using (Control pnl = _tabPage.Controls["panelSearch"])
                 {
-                    if (ctrl.Name == "buttonSearch")
+                    pnl.Enter -= SearchControls_Enter;
+                    pnl.Leave -= SearchControls_Leave;
+                    _tabPage.Controls.Remove(pnl);
+
+                    foreach (Control ctrl in pnl.Controls)
                     {
-                        ctrl.Click -= SearchButton_Click;
+                        if (ctrl.Name == "buttonSearch")
+                        {
+                            ctrl.Click -= SearchButton_Click;
+                        }
+                        else if (ctrl.Name == "comboSearch")
+                        {
+                            ctrl.KeyDown -= SearchComboBox_KeyDown;
+                        }
+                        pnl.Controls.Remove(ctrl);
+                        ctrl.Dispose();
                     }
-                    ctrl.Enter -= SearchControls_Enter;
-                    ctrl.Leave -= SearchControls_Leave;
-                    pnl.Controls.Remove(ctrl);
-                    ctrl.Dispose();
                 }
-                pnl.Enter -= SearchControls_Enter;
-                pnl.Leave -= SearchControls_Leave;
-                _tabPage.Controls.Remove(pnl);
-                pnl.Dispose();
             }
 
             _tabPage.Controls.Remove(_listCustom);
-            foreach (ColumnHeader header in _listCustom.Columns)
-            {
-                header.Dispose();
-            }
-            _listCustom.Columns.Clear();
-            _listCustom.ContextMenuStrip = null;
-            _listCustom.Font = null;
 
             _listCustom.SelectedIndexChanged -= MyList_SelectedIndexChanged;
             _listCustom.MouseDoubleClick -= MyList_MouseDoubleClick;
@@ -4896,6 +4890,14 @@ namespace OpenTween
             _listCustom.RetrieveVirtualItem -= MyList_RetrieveVirtualItem;
             _listCustom.DrawSubItem -= MyList_DrawSubItem;
             _listCustom.HScrolled -= MyList_HScrolled;
+
+            var cols = _listCustom.Columns.Cast<ColumnHeader>().ToList<ColumnHeader>();
+            _listCustom.Columns.Clear();
+            cols.ForEach(col => col.Dispose());
+            cols.Clear();
+
+            _listCustom.ContextMenuStrip = null;
+            _listCustom.Font = null;
 
             _listCustom.SmallImageList.Dispose();
             _listCustom.SmallImageList = null;
@@ -4927,9 +4929,10 @@ namespace OpenTween
             foreach (TabPage tp in ListTab.TabPages)
             {
                 DetailsListView lst = (DetailsListView)tp.Tag;
-                if (lst.VirtualListSize != _statuses.Tabs[tp.Text].AllCount)
+                var count = _statuses.Tabs[tp.Text].AllCount;
+                if (lst.VirtualListSize != count)
                 {
-                    lst.VirtualListSize = _statuses.Tabs[tp.Text].AllCount;
+                    lst.VirtualListSize = count;
                 }
             }
 
