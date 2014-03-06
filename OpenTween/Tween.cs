@@ -1759,8 +1759,8 @@ namespace OpenTween
                             //最下行が表示されていたら、最下行へ強制スクロール。最下行が表示されていなかったら制御しない
                             ListViewItem _item;
                             _item = _curList.GetItemAt(0, _curList.ClientSize.Height - 1);   //一番下
-                            if (_item == null) _item = _curList.Items[_curList.Items.Count - 1];
-                            if (_item.Index == _curList.Items.Count - 1)
+                            if (_item == null) _item = _curList.Items[_curList.VirtualListSize - 1];
+                            if (_item.Index == _curList.VirtualListSize - 1)
                             {
                                 smode = -2;
                             }
@@ -5813,7 +5813,7 @@ namespace OpenTween
                             break;
                         case SEARCHTYPE.PrevSearch:
                             toIdx = cidx;
-                            cidx = _curList.Items.Count - 1;
+                            cidx = _curList.VirtualListSize - 1;
                             break;
                     }
                     fnd = true;
@@ -6893,7 +6893,7 @@ namespace OpenTween
                         switch (KeyCode)
                         {
                             case Keys.Up:
-                                if (_curList != null && _curList.Items.Count != 0 &&
+                                if (_curList != null && _curList.VirtualListSize != 0 &&
                                             _curList.SelectedIndices.Count > 0 && _curList.SelectedIndices[0] > 0)
                                 {
                                     idx = _curList.SelectedIndices[0] - 1;
@@ -6903,8 +6903,8 @@ namespace OpenTween
                                 }
                                 break;
                             case Keys.Down:
-                                if (_curList != null && _curList.Items.Count != 0 && _curList.SelectedIndices.Count > 0
-                                            && _curList.SelectedIndices[0] < _curList.Items.Count - 1)
+                                if (_curList != null && _curList.VirtualListSize != 0 && _curList.SelectedIndices.Count > 0
+                                            && _curList.SelectedIndices[0] < _curList.VirtualListSize - 1)
                                 {
                                     idx = _curList.SelectedIndices[0] + 1;
                                     SelectListItem(_curList, idx);
@@ -12496,6 +12496,7 @@ namespace OpenTween
             this.ListTab.HandleCreated += (s, e) => Win32Api.SetMinTabWidth((TabControl)s, 40);
 
             this._apiGauge = new ToolStripAPIGauge();
+            this._apiGauge.BorderSides = ToolStripStatusLabelBorderSides.Right;
             this.StatusStrip1.Items.Insert(2, this._apiGauge);
 
             this.ReplaceAppName();
