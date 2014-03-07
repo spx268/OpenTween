@@ -2627,18 +2627,18 @@ namespace OpenTween
                     if (string.IsNullOrEmpty(ret)) ret = tw.GetDirectMessageApi(read, MyCommon.WORKERTYPE.DirectMessegeSnt, args.page == -1);
                     rslt.addCount = _statuses.DistributePosts();
                     break;
+
                 case MyCommon.WORKERTYPE.FavAdd:
+                {
                     //スレッド処理はしない
-                    if (_statuses.Tabs.ContainsKey(args.tName))
+                    TabClass tab;
+                    if (_statuses.Tabs.TryGetValue(args.tName, out tab))
                     {
-                        TabClass tbc = _statuses.Tabs[args.tName];
                         for (int i = 0; i <= args.ids.Count - 1; i++)
                         {
-                            PostClass post = null;
-                            if (tbc.IsInnerStorageTabType)
-                                post = tbc.Posts[args.ids[i]];
-                            else
-                                post = _statuses[args.ids[i]];
+                            var post = tab.IsInnerStorageTabType
+                                ? tab.Posts[args.ids[i]]
+                                : _statuses[args.ids[i]];
 
                             args.page = i + 1;
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
@@ -2680,18 +2680,19 @@ namespace OpenTween
                     }
                     rslt.sIds = args.sIds;
                     break;
+                }
+
                 case MyCommon.WORKERTYPE.FavRemove:
+                {
                     //スレッド処理はしない
-                    if (_statuses.Tabs.ContainsKey(args.tName))
+                    TabClass tab;
+                    if (_statuses.Tabs.TryGetValue(args.tName, out tab))
                     {
-                        TabClass tbc = _statuses.Tabs[args.tName];
                         for (int i = 0; i <= args.ids.Count - 1; i++)
                         {
-                            PostClass post = null;
-                            if (tbc.IsInnerStorageTabType)
-                                post = tbc.Posts[args.ids[i]];
-                            else
-                                post = _statuses[args.ids[i]];
+                            var post = tab.IsInnerStorageTabType
+                                ? tab.Posts[args.ids[i]]
+                                : _statuses[args.ids[i]];
 
                             args.page = i + 1;
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
@@ -2718,6 +2719,8 @@ namespace OpenTween
                     }
                     rslt.sIds = args.sIds;
                     break;
+                }
+
                 case MyCommon.WORKERTYPE.PostMessage:
                     bw.ReportProgress(200);
                     if (string.IsNullOrEmpty(args.status.imagePath))
@@ -2839,12 +2842,16 @@ namespace OpenTween
                     //振り分け
                     rslt.addCount = _statuses.DistributePosts();
                     break;
+
                 case MyCommon.WORKERTYPE.Related:
+                {
                     bw.ReportProgress(50, MakeStatusMessage(args, false));
                     TabClass tab = _statuses.GetTabByName(args.tName);
                     ret = tw.GetRelatedResult(read, tab);
                     rslt.addCount = _statuses.DistributePosts();
                     break;
+                }
+
                 case MyCommon.WORKERTYPE.BlockIds:
                     bw.ReportProgress(50, Properties.Resources.UpdateBlockUserText1);
                     try
