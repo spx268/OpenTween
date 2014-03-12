@@ -60,6 +60,8 @@ namespace OpenTween
         {
             InitializeComponent();
             this.BackColor = Color.FromArgb(32, 32, 32);
+
+            this.cancelTokenSource = new CancellationTokenSource();
         }
 
         public Task ShowThumbnailAsync(PostClass post)
@@ -68,9 +70,7 @@ namespace OpenTween
 
             this.scrollBar.Enabled = false;
 
-            this.cancelTokenSource = new CancellationTokenSource();
             var cancelToken = this.cancelTokenSource.Token;
-
             var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
             this.task = Task.Factory.StartNew(() => this.GetThumbailInfo(post), cancelToken, TaskCreationOptions.None, TaskScheduler.Default)
@@ -191,7 +191,11 @@ namespace OpenTween
         {
             if (this.task == null || this.task.IsCompleted) return;
 
-            this.cancelTokenSource.Cancel();
+            var oldTokenSource = this.cancelTokenSource;
+            this.cancelTokenSource = new CancellationTokenSource();
+
+            oldTokenSource.Cancel();
+            oldTokenSource.Dispose();
         }
 
         /// <summary>
@@ -200,36 +204,35 @@ namespace OpenTween
         /// <param name="count">表示するサムネイルの数</param>
         protected void SetThumbnailCount(int count)
         {
-            this.SuspendLayout();
-
-            this.panelPictureBox.Controls.Clear();
-            foreach (var picbox in this.pictureBox)
+            using (ControlTransaction.Layout(this, false))
             {
-                var memoryImage = picbox.Image;
-                var contextMenu = picbox.ContextMenu;
-                picbox.Dispose();
+                this.panelPictureBox.Controls.Clear();
+                foreach (var picbox in this.pictureBox)
+                {
+                    var memoryImage = picbox.Image;
+                    var contextMenu = picbox.ContextMenu;
+                    picbox.Dispose();
 
-                if (memoryImage != null)
-                    memoryImage.Dispose();
-                if (contextMenu != null)
-                    contextMenu.Dispose();
+                    if (memoryImage != null)
+                        memoryImage.Dispose();
+                    if (contextMenu != null)
+                        contextMenu.Dispose();
+                }
+                this.pictureBox.Clear();
+
+                this.scrollBar.Maximum = (count > 0) ? count - 1 : 0;
+                this.scrollBar.Value = 0;
+
+                for (int i = 0; i < count; i++)
+                {
+                    var picbox = CreatePictureBox("pictureBox" + i);
+                    picbox.Visible = (i == 0);
+                    picbox.DoubleClick += this.pictureBox_DoubleClick;
+
+                    this.panelPictureBox.Controls.Add(picbox);
+                    this.pictureBox.Add(picbox);
+                }
             }
-            this.pictureBox.Clear();
-
-            this.scrollBar.Maximum = (count > 0) ? count - 1 : 0;
-            this.scrollBar.Value = 0;
-
-            for (int i = 0; i < count; i++)
-            {
-                var picbox = CreatePictureBox("pictureBox" + i);
-                picbox.Visible = (i == 0);
-                picbox.DoubleClick += this.pictureBox_DoubleClick;
-
-                this.panelPictureBox.Controls.Add(picbox);
-                this.pictureBox.Add(picbox);
-            }
-
-            this.ResumeLayout(false);
         }
 
         protected virtual OTPictureBox CreatePictureBox(string name)
@@ -265,15 +268,14 @@ namespace OpenTween
 
         private void scrollBar_ValueChanged(object sender, EventArgs e)
         {
-            this.SuspendLayout();
-
-            var value = this.scrollBar.Value;
-            for (var i = 0; i < this.pictureBox.Count; i++)
+            using (ControlTransaction.Layout(this, false))
             {
-                this.pictureBox[i].Visible = (i == value);
+                var value = this.scrollBar.Value;
+                for (var i = 0; i < this.pictureBox.Count; i++)
+                {
+                    this.pictureBox[i].Visible = (i == value);
+                }
             }
-
-            this.ResumeLayout(false);
         }
 
         private void pictureBox_DoubleClick(object sender, EventArgs e)
