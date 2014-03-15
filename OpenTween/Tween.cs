@@ -1734,7 +1734,7 @@ namespace OpenTween
 
             //現在の選択状態を退避
             Dictionary<string, long[]> selId = new Dictionary<string, long[]>();
-            Dictionary<string, long> focusedId = new Dictionary<string, long>();
+            Dictionary<string, long[]> focusedId = new Dictionary<string, long[]>();
             SaveSelectedStatus(selId, focusedId);
 
             //mentionsの更新前件数を保持
@@ -1919,7 +1919,7 @@ namespace OpenTween
             return topId;
         }
 
-        private void SaveSelectedStatus(Dictionary<string, long[]> selId, Dictionary<string, long> focusedId)
+        private void SaveSelectedStatus(Dictionary<string, long[]> selId, Dictionary<string, long[]> focusedId)
         {
             if (MyCommon._endingFlag) return;
             foreach (TabPage tab in ListTab.TabPages)
@@ -1933,10 +1933,13 @@ namespace OpenTween
                 {
                     selId.Add(tab.Text, new long[1] {-2});
                 }
-                if (lst.FocusedItem != null)
-                    focusedId.Add(tab.Text, _statuses.GetId(tab.Text, lst.FocusedItem.Index));
-                else
-                    focusedId.Add(tab.Text, -2);
+
+                var fIds = new long[2];  // 0 = focus, 1 = selection mark
+                var item = lst.FocusedItem;
+                fIds[0] = (item != null) ? _statuses.GetId(tab.Text, item.Index) : -2;
+                var mIdx = lst.SelectionMark;
+                fIds[1] = (mIdx > -1) ? _statuses.GetId(tab.Text, mIdx) : -2;
+                focusedId.Add(tab.Text, fIds);
             }
 
         }
@@ -10944,7 +10947,7 @@ namespace OpenTween
             //単一
             Rectangle bnd = new Rectangle();
             bool flg = false;
-            ListViewItem item = LView.FocusedItem;
+            var item = LView.FocusedItem;
             if (item != null)
             {
                 bnd = item.Bounds;
@@ -10958,18 +10961,17 @@ namespace OpenTween
             while (LView.SelectedIndices.Count > 0);
             item = LView.Items[Index];
             item.Selected = true;
-            //LView.SelectedIndices.Add(Index);
             item.Focused = true;
 
             if (flg) LView.Invalidate(bnd);
         }
 
-        private void SelectListItem(DetailsListView LView , int[] Index, int FocusedIndex)
+        private void SelectListItem(DetailsListView LView , int[] Index, int[] FocusedIndex)
         {
             //複数
             Rectangle bnd = new Rectangle();
             bool flg = false;
-            ListViewItem item = LView.FocusedItem;
+            var item = LView.FocusedItem;
             if (item != null)
             {
                 bnd = item.Bounds;
@@ -10993,14 +10995,19 @@ namespace OpenTween
                     }
                 }
             }
-            if (FocusedIndex > -1 && LView.VirtualListSize > FocusedIndex)
+            if (FocusedIndex[1] > -1 && LView.VirtualListSize > FocusedIndex[1])
             {
-                LView.Items[FocusedIndex].Focused = true;
+                LView.SelectionMark = FocusedIndex[1];
+            }
+            if (FocusedIndex[0] > -1 && LView.VirtualListSize > FocusedIndex[0])
+            {
+                LView.Items[FocusedIndex[0]].Focused = true;
             }
             else if (fIdx > -1)
             {
                 LView.Items[fIdx].Focused = true;
             }
+
             if (flg) LView.Invalidate(bnd);
         }
 
