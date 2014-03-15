@@ -13754,7 +13754,7 @@ namespace OpenTween
 
             if (_curList != null) _curList.Refresh();
 
-            SaveConfigsCommon();
+            _modifySettingCommon = true;
         }
 
         private void LockListSortToolStripMenuItem_Click(object sender, EventArgs e)
@@ -13764,7 +13764,7 @@ namespace OpenTween
 
             SettingDialog.SortOrderLock = state;
 
-            SaveConfigsCommon();
+            _modifySettingCommon = true;
         }
     }
 }
