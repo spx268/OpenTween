@@ -151,6 +151,8 @@ namespace OpenTween
         private Icon ReplyIcon;               //5g
         private Icon ReplyIconBlink;          //6g
 
+        private ImageList _listViewImageList = new ImageList();    //ListViewItemの高さ変更用
+
         private PostClass _anchorPost;
         private bool _anchorFlag;        //true:関連発言移動中（関連移動以外のオペレーションをするとfalseへ。trueだとリスト背景色をアンカー発言選択中として描画）
 
@@ -533,6 +535,7 @@ namespace OpenTween
             if (MainIcon != null) MainIcon.Dispose();
             if (ReplyIcon != null) ReplyIcon.Dispose();
             if (ReplyIconBlink != null) ReplyIconBlink.Dispose();
+            _listViewImageList.Dispose();
             _brsHighLight.Dispose();
             if (_brsBackColorMine != null) _brsBackColorMine.Dispose();
             if (_brsBackColorAt != null) _brsBackColorAt.Dispose();
@@ -1377,42 +1380,9 @@ namespace OpenTween
             _statuses.SortMode = mode;
             ////////////////////////////////////////////////////////////////////////////////
 
-            switch (SettingDialog.IconSz)
-            {
-                case MyCommon.IconSizes.IconNone:
-                    _iconSz = 0;
-                    break;
-                case MyCommon.IconSizes.Icon16:
-                    _iconSz = 16;
-                    break;
-                case MyCommon.IconSizes.Icon24:
-                    _iconSz = 26;
-                    break;
-                case MyCommon.IconSizes.Icon48:
-                    _iconSz = 48;
-                    break;
-                case MyCommon.IconSizes.Icon48_2:
-                    _iconSz = 48;
-                    _iconCol = true;
-                    break;
-            }
-            if (_iconSz == 0)
-            {
-                tw.GetIcon = false;
-            }
-            else
-            {
-                tw.GetIcon = true;
-                tw.IconSize = _iconSz;
-            }
-            tw.TinyUrlResolve = SettingDialog.TinyUrlResolve;
+            ApplyListViewIconSize(SettingDialog.IconSz);
 
-            //発言詳細部アイコンをリストアイコンにサイズ変更
-            int sz = _iconSz;
-            if (_iconSz == 0)
-            {
-                sz = 16;
-            }
+            tw.TinyUrlResolve = SettingDialog.TinyUrlResolve;
 
             StatusLabel.Text = Properties.Resources.Form1_LoadText1;       //画面右下の状態表示を変更
             StatusLabelUrl.Text = "";            //画面左下のリンク先URL表示部を初期化
@@ -4392,6 +4362,9 @@ namespace OpenTween
 
                     try
                     {
+                        if (SettingDialog.IconSz != oldIconSz)
+                            ApplyListViewIconSize(SettingDialog.IconSz);
+
                         foreach (TabPage tp in ListTab.TabPages)
                         {
                             DetailsListView lst = (DetailsListView)tp.Tag;
@@ -4403,7 +4376,7 @@ namespace OpenTween
                                 lst.BackColor = _clListBackcolor;
 
                                 if (SettingDialog.IconSz != oldIconSz)
-                                    ApplyListViewIconSize(lst);
+                                    ResetColumns(lst);
                             }
                         }
                     }
@@ -4462,54 +4435,48 @@ namespace OpenTween
             ListTab.Alignment = (SettingDialog.ViewTabBottom ? TabAlignment.Bottom : TabAlignment.Top);
         }
 
-        private void ApplyListViewIconSize(DetailsListView list)
+        private void ApplyListViewIconSize(MyCommon.IconSizes iconSz)
+        {
+            // アイコンサイズの再設定
+            _iconCol = false;
+            switch (iconSz)
+            {
+                case MyCommon.IconSizes.IconNone:
+                    _iconSz = 0;
+                    break;
+                case MyCommon.IconSizes.Icon16:
+                    _iconSz = 16;
+                    break;
+                case MyCommon.IconSizes.Icon24:
+                    _iconSz = 26;
+                    break;
+                case MyCommon.IconSizes.Icon48:
+                    _iconSz = 48;
+                    break;
+                case MyCommon.IconSizes.Icon48_2:
+                    _iconSz = 48;
+                    _iconCol = true;
+                    break;
+            }
+
+            if (_iconSz > 0)
+            {
+                // ディスプレイの DPI 設定を考慮したサイズを設定する
+                _listViewImageList.ImageSize = new Size(
+                    1,
+                    (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Height));
+            }
+            else
+            {
+                _listViewImageList.ImageSize = new Size(1, 1);
+            }
+        }
+
+        private void ResetColumns(DetailsListView list)
         {
             using (ControlTransaction.Update(list))
             using (ControlTransaction.Layout(list, false))
             {
-                // アイコンサイズの再設定
-                _iconCol = false;
-                switch (SettingDialog.IconSz)
-                {
-                    case MyCommon.IconSizes.IconNone:
-                        _iconSz = 0;
-                        break;
-                    case MyCommon.IconSizes.Icon16:
-                        _iconSz = 16;
-                        break;
-                    case MyCommon.IconSizes.Icon24:
-                        _iconSz = 26;
-                        break;
-                    case MyCommon.IconSizes.Icon48:
-                        _iconSz = 48;
-                        break;
-                    case MyCommon.IconSizes.Icon48_2:
-                        _iconSz = 48;
-                        _iconCol = true;
-                        break;
-                }
-                if (_iconSz == 0)
-                {
-                    tw.GetIcon = false;
-                }
-                else
-                {
-                    tw.GetIcon = true;
-                    tw.IconSize = _iconSz;
-                }
-
-                if (_iconSz > 0)
-                {
-                    // ディスプレイの DPI 設定を考慮したサイズを設定する
-                    list.SmallImageList.ImageSize = new Size(
-                        (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Width),
-                        (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Height));
-                }
-                else
-                {
-                    list.SmallImageList.ImageSize = new Size(1, 1);
-                }
-
                 // カラムヘッダの再設定
                 list.ColumnClick -= MyList_ColumnClick;
                 list.DrawColumnHeader -= MyList_DrawColumnHeader;
@@ -4863,18 +4830,7 @@ namespace OpenTween
                 _listCustom.GridLines = SettingDialog.ShowGrid;
                 _listCustom.AllowDrop = true;
 
-                _listCustom.SmallImageList = new ImageList();
-                if (_iconSz > 0)
-                {
-                    // ディスプレイの DPI 設定を考慮したサイズを設定する
-                    _listCustom.SmallImageList.ImageSize = new Size(
-                        (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Width),
-                        (int)Math.Ceiling(this._iconSz * this.currentScaleFactor.Height));
-                }
-                else
-                {
-                    _listCustom.SmallImageList.ImageSize = new Size(1, 1);
-                }
+                _listCustom.SmallImageList = _listViewImageList;
 
                 InitColumns(_listCustom, startup);
 
@@ -5001,7 +4957,6 @@ namespace OpenTween
                 _listCustom.ColumnHeaderContextMenuStrip = null;
                 _listCustom.Font = null;
 
-                _listCustom.SmallImageList.Dispose();
                 _listCustom.SmallImageList = null;
                 _listCustom.ListViewItemSorter = null;
 
@@ -5720,7 +5675,7 @@ namespace OpenTween
 
             if (item.StateImageIndex > -1)
             {
-                Rectangle stateRect = Rectangle.Intersect(new Rectangle(new Point(iconRect.X + iconRect.Width + 2, iconRect.Y), realStateSize), itemRect);
+                Rectangle stateRect = Rectangle.Intersect(new Rectangle(new Point(iconRect.X + realIconSize.Width + 2, iconRect.Y), realStateSize), itemRect);
                 if (stateRect.Width > 0)
                 {
                     //e.Graphics.FillRectangle(Brushes.White, stateRect);
@@ -13758,10 +13713,11 @@ namespace OpenTween
             if (SettingDialog.IconSz == iconSize) return;
 
             SettingDialog.IconSz = iconSize;
+            ApplyListViewIconSize(iconSize);
 
             foreach (TabPage tp in ListTab.TabPages)
             {
-                ApplyListViewIconSize((DetailsListView)tp.Tag);
+                ResetColumns((DetailsListView)tp.Tag);
             }
 
             if (_curList != null) _curList.Refresh();
