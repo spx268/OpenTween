@@ -1788,10 +1788,13 @@ namespace OpenTween
                             //    break;
                             default:
                                 //表示位置キープ
-                                if (_statuses.IndexOf(_curTab.Text, topId) > -1)
                                 {
-                                    _curList.EnsureVisible(_curList.VirtualListSize - 1);
-                                    _curList.EnsureVisible(_statuses.IndexOf(_curTab.Text, topId));
+                                    var idx = _statuses.IndexOf(_curTab.Text, topId);
+                                    if (idx > -1)
+                                    {
+                                        _curList.EnsureVisible(_curList.VirtualListSize - 1);
+                                        _curList.EnsureVisible(idx);
+                                    }
                                 }
                                 break;
                         }
@@ -3715,8 +3718,9 @@ namespace OpenTween
 
         private void ContextMenuOperate_Opening(object sender, CancelEventArgs e)
         {
-            if (ListTab.SelectedTab == null) return;
-            if (_statuses == null || _statuses.Tabs == null || !_statuses.Tabs.ContainsKey(ListTab.SelectedTab.Text)) return;
+            var tp = ListTab.SelectedTab;
+            if (tp == null) return;
+            if (_statuses == null || _statuses.Tabs == null || !_statuses.Tabs.ContainsKey(tp.Text)) return;
             if (!this.ExistCurrentPost)
             {
                 ReplyStripMenuItem.Enabled = false;
@@ -3746,7 +3750,7 @@ namespace OpenTween
                 UnreadStripMenuItem.Enabled = true;
             }
             DeleteStripMenuItem.Text = Properties.Resources.DeleteMenuText1;
-            if (_statuses.Tabs[ListTab.SelectedTab.Text].TabType == MyCommon.TabUsageType.DirectMessage || !this.ExistCurrentPost || _curPost.IsDm)
+            if (_statuses.Tabs[tp.Text].TabType == MyCommon.TabUsageType.DirectMessage || !this.ExistCurrentPost || _curPost.IsDm)
             {
                 FavAddToolStripMenuItem.Enabled = false;
                 FavRemoveToolStripMenuItem.Enabled = false;
@@ -3815,7 +3819,7 @@ namespace OpenTween
                     }
                 }
             }
-            //if (_statuses.Tabs[ListTab.SelectedTab.Text].TabType != MyCommon.TabUsageType.Favorites)
+            //if (_statuses.Tabs[tp.Text].TabType != MyCommon.TabUsageType.Favorites)
             //{
             //    RefreshMoreStripMenuItem.Enabled = true;
             //}
@@ -4558,12 +4562,13 @@ namespace OpenTween
             //追加したタブをアクティブに
             ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
             //検索条件の設定
-            ComboBox cmb = (ComboBox)ListTab.SelectedTab.Controls["panelSearch"].Controls["comboSearch"];
+            var tabPage = ListTab.SelectedTab;
+            ComboBox cmb = (ComboBox)tabPage.Controls["panelSearch"].Controls["comboSearch"];
             cmb.Items.Add(searchWord);
             cmb.Text = searchWord;
             SaveConfigsTabs();
             //検索実行
-            this.SearchButton_Click(ListTab.SelectedTab.Controls["panelSearch"].Controls["comboSearch"], null);
+            this.SearchButton_Click(tabPage.Controls["panelSearch"].Controls["comboSearch"], null);
         }
 
         private void ShowUserTimeline()
@@ -4659,6 +4664,7 @@ namespace OpenTween
             {
                 /// UserTimeline関連
                 Label label = null;
+                Panel pnl = null;
                 if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists)
                 {
                     label = new Label();
@@ -4679,10 +4685,8 @@ namespace OpenTween
                     }
                     _tabPage.Controls.Add(label);
                 }
-
                 /// 検索関連の準備
-                Panel pnl = null;
-                if (tabType == MyCommon.TabUsageType.PublicSearch)
+                else if (tabType == MyCommon.TabUsageType.PublicSearch)
                 {
                     pnl = new Panel();
 
@@ -4767,7 +4771,7 @@ namespace OpenTween
                 _tabPage.Controls.Add(_listCustom);
 
                 if (tabType == MyCommon.TabUsageType.PublicSearch) _tabPage.Controls.Add(pnl);
-                if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists) _tabPage.Controls.Add(label);
+                else if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists) _tabPage.Controls.Add(label);
 
                 _tabPage.Location = new Point(4, 4);
                 _tabPage.Name = "CTab" + cnt.ToString();
@@ -5060,14 +5064,15 @@ namespace OpenTween
         {
             try
             {
-                if (PostBrowser.StatusText.StartsWith("http") || PostBrowser.StatusText.StartsWith("ftp")
-                        || PostBrowser.StatusText.StartsWith("data"))
-                {
-                    StatusLabelUrl.Text = PostBrowser.StatusText.Replace("&", "&&");
-                }
-                if (string.IsNullOrEmpty(PostBrowser.StatusText))
+                var statusText = PostBrowser.StatusText;
+                if (string.IsNullOrEmpty(statusText))
                 {
                     SetStatusLabelUrl();
+                }
+                else if (statusText.StartsWith("http") || statusText.StartsWith("ftp")
+                        || statusText.StartsWith("data"))
+                {
+                    StatusLabelUrl.Text = statusText.Replace("&", "&&");
                 }
             }
             catch (Exception)
@@ -5344,11 +5349,13 @@ namespace OpenTween
             this.itemCacheLock.EnterWriteLock();
             try
             {
+                int bottomIndex = _statuses.Tabs[_curTab.Text].AllCount - 1;
+
                 //キャッシュ要求（要求範囲±30を作成）
                 StartIndex -= 30;
                 if (StartIndex < 0) StartIndex = 0;
                 EndIndex += 30;
-                if (EndIndex >= _statuses.Tabs[_curTab.Text].AllCount) EndIndex = _statuses.Tabs[_curTab.Text].AllCount - 1;
+                if (EndIndex > bottomIndex) EndIndex = bottomIndex;
                 _postCache = _statuses[_curTab.Text, StartIndex, EndIndex]; //配列で取得
                 _itemCacheIndex = StartIndex;
 
@@ -5448,10 +5455,10 @@ namespace OpenTween
         {
             if (e.State == 0) return;
             e.DrawDefault = false;
+
+            SolidBrush brs2 = null;
             if (!e.Item.Selected)     //e.ItemStateでうまく判定できない？？？
             {
-                SolidBrush brs2 = null;
-
                 if (e.Item.BackColor == _clSelf)
                     brs2 = _brsBackColorMine;
                 else if (e.Item.BackColor == _clAtSelf)
@@ -5466,18 +5473,17 @@ namespace OpenTween
                     brs2 = _brsBackColorAtTo;
                 else
                     brs2 = _brsBackColorNone;
-
-                e.Graphics.FillRectangle(brs2, e.Bounds);
             }
             else
             {
                 //選択中の行
                 if (((Control)sender).Focused)
-                    e.Graphics.FillRectangle(_brsHighLight, e.Bounds);
+                    brs2 = _brsHighLight;
                 else
-                    e.Graphics.FillRectangle(_brsDeactiveSelection, e.Bounds);
+                    brs2 = _brsDeactiveSelection;
             }
-            if ((e.State & ListViewItemStates.Focused) == ListViewItemStates.Focused) e.DrawFocusRectangle();
+            e.Graphics.FillRectangle(brs2, e.Bounds);
+            e.DrawFocusRectangle();
             this.DrawListViewItemIcon(e);
         }
 
@@ -5537,7 +5543,7 @@ namespace OpenTween
 
                     if (_iconCol)
                     {
-                        RectangleF rctB = e.Bounds;
+                        Rectangle rctB = e.Bounds;
                         rctB.Width = e.Header.Width;
                         rctB.Height = fontHeight;
 
@@ -5555,7 +5561,7 @@ namespace OpenTween
                             TextRenderer.DrawText(e.Graphics,
                                                     e.Item.SubItems[4].Text + " / " + e.Item.SubItems[1].Text + " (" + e.Item.SubItems[3].Text + ") " + e.Item.SubItems[5].Text + e.Item.SubItems[6].Text + " [" + e.Item.SubItems[7].Text + "]",
                                                     fnt,
-                                                    Rectangle.Round(rctB),
+                                                    rctB,
                                                     color,
                                                     TextFormatFlags.SingleLine |
                                                     TextFormatFlags.EndEllipsis |
@@ -5922,23 +5928,23 @@ namespace OpenTween
 
         private void JumpUnreadMenuItem_Click(object sender, EventArgs e)
         {
+            if (ImageSelectionPanel.Enabled) return;
+
             int bgnIdx = ListTab.TabPages.IndexOf(_curTab);
             int idx = -1;
             DetailsListView lst = null;
-
-            if (ImageSelectionPanel.Enabled)
-                return;
 
             //現在タブから最終タブまで探索
             for (int i = bgnIdx; i < ListTab.TabPages.Count; i++)
             {
                 //未読Index取得
-                idx = _statuses.GetOldestUnreadIndex(ListTab.TabPages[i].Text);
+                var tp = ListTab.TabPages[i];
+                idx = _statuses.GetOldestUnreadIndex(tp.Text);
                 if (idx > -1)
                 {
                     ListTab.SelectedIndex = i;
-                    lst = (DetailsListView)ListTab.TabPages[i].Tag;
-                    //_curTab = ListTab.TabPages[i];
+                    lst = (DetailsListView)tp.Tag;
+                    //_curTab = tp;
                     break;
                 }
             }
@@ -5948,12 +5954,13 @@ namespace OpenTween
             {
                 for (int i = 0; i < bgnIdx; i++)
                 {
-                    idx = _statuses.GetOldestUnreadIndex(ListTab.TabPages[i].Text);
+                    var tp = ListTab.TabPages[i];
+                    idx = _statuses.GetOldestUnreadIndex(tp.Text);
                     if (idx > -1)
                     {
                         ListTab.SelectedIndex = i;
-                        lst = (DetailsListView)ListTab.TabPages[i].Tag;
-                        //_curTab = ListTab.TabPages[i];
+                        lst = (DetailsListView)tp.Tag;
+                        //_curTab = tp;
                         break;
                     }
                 }
@@ -6361,11 +6368,12 @@ namespace OpenTween
 
         private void ListTab_KeyDown(object sender, KeyEventArgs e)
         {
-            if (ListTab.SelectedTab != null)
+            var tp = ListTab.SelectedTab;
+            if (tp != null)
             {
-                if (_statuses.Tabs[ListTab.SelectedTab.Text].TabType == MyCommon.TabUsageType.PublicSearch)
+                if (_statuses.Tabs[tp.Text].TabType == MyCommon.TabUsageType.PublicSearch)
                 {
-                    Control pnl = ListTab.SelectedTab.Controls["panelSearch"];
+                    Control pnl = tp.Controls["panelSearch"];
                     if (pnl.Controls["comboSearch"].Focused ||
                         pnl.Controls["comboLang"].Focused ||
                         pnl.Controls["buttonSearch"].Focused) return;
@@ -7266,10 +7274,11 @@ namespace OpenTween
             bool found = false;
             for (int tabidx = fIdx; tabidx != toIdx; tabidx += stp)
             {
-                if (_statuses.Tabs[ListTab.TabPages[tabidx].Text].TabType == MyCommon.TabUsageType.DirectMessage) continue; // Directタブは対象外
-                for (int idx = 0; idx < ((DetailsListView)ListTab.TabPages[tabidx].Tag).VirtualListSize; idx++)
+                var tp = ListTab.TabPages[tabidx];
+                if (_statuses.Tabs[tp.Text].TabType == MyCommon.TabUsageType.DirectMessage) continue; // Directタブは対象外
+                for (int idx = 0; idx < ((DetailsListView)tp.Tag).VirtualListSize; idx++)
                 {
-                    if (_statuses[ListTab.TabPages[tabidx].Text, idx].StatusId == targetId)
+                    if (_statuses[tp.Text, idx].StatusId == targetId)
                     {
                         ListTab.SelectedIndex = tabidx;
                         ListTabSelect(ListTab.TabPages[tabidx]);
@@ -7745,11 +7754,13 @@ namespace OpenTween
             if (statusId == 0) return false;
             for (int tabidx = 0; tabidx < ListTab.TabCount; tabidx++)
             {
-                if (_statuses.Tabs[ListTab.TabPages[tabidx].Text].TabType != MyCommon.TabUsageType.DirectMessage && _statuses.Tabs[ListTab.TabPages[tabidx].Text].Contains(statusId))
+                var tp = ListTab.TabPages[tabidx];
+                var tc = _statuses.Tabs[tp.Text];
+                if (tc.TabType != MyCommon.TabUsageType.DirectMessage && tc.Contains(statusId))
                 {
-                    int idx = _statuses.Tabs[ListTab.TabPages[tabidx].Text].IndexOf(statusId);
+                    int idx = tc.IndexOf(statusId);
                     ListTab.SelectedIndex = tabidx;
-                    ListTabSelect(ListTab.TabPages[tabidx]);
+                    ListTabSelect(tp);
                     SelectListItem(_curList, idx);
                     _curList.EnsureVisible(idx);
                     return true;
@@ -7763,11 +7774,13 @@ namespace OpenTween
             if (statusId == 0) return false;
             for (int tabidx = 0; tabidx < ListTab.TabCount; tabidx++)
             {
-                if (_statuses.Tabs[ListTab.TabPages[tabidx].Text].TabType == MyCommon.TabUsageType.DirectMessage && _statuses.Tabs[ListTab.TabPages[tabidx].Text].Contains(statusId))
+                var tp = ListTab.TabPages[tabidx];
+                var tc = _statuses.Tabs[tp.Text];
+                if (tc.TabType == MyCommon.TabUsageType.DirectMessage && tc.Contains(statusId))
                 {
-                    int idx = _statuses.Tabs[ListTab.TabPages[tabidx].Text].IndexOf(statusId);
+                    int idx = tc.IndexOf(statusId);
                     ListTab.SelectedIndex = tabidx;
-                    ListTabSelect(ListTab.TabPages[tabidx]);
+                    ListTabSelect(tp);
                     SelectListItem(_curList, idx);
                     _curList.EnsureVisible(idx);
                     return true;
@@ -7797,7 +7810,8 @@ namespace OpenTween
         private void StatusText_Leave(object sender, EventArgs e)
         {
             // フォーカスがメニューに遷移しないならばフォーカスはタブに移ることを期待
-            if (ListTab.SelectedTab != null && MenuStrip1.Tag == null) this.Tag = ListTab.SelectedTab.Tag;
+            var tp = ListTab.SelectedTab;
+            if (tp != null && MenuStrip1.Tag == null) this.Tag = tp.Tag;
             StatusText.BackColor = Color.FromKnownColor(KnownColor.Window);
         }
 
@@ -8819,7 +8833,9 @@ namespace OpenTween
             this.FilterEditMenuItem.Enabled = true;
             this.EditRuleTbMenuItem.Enabled = true;
 
-            if (_statuses.IsDefaultTab(tabName))
+            bool isDefaultTab = _statuses.IsDefaultTab(tabName);
+
+            if (isDefaultTab)
             {
                 this.ProtectTabMenuItem.Enabled = false;
                 this.ProtectTbMenuItem.Enabled = false;
@@ -8830,7 +8846,7 @@ namespace OpenTween
                 this.ProtectTbMenuItem.Enabled = true;
             }
 
-            if (_statuses.IsDefaultTab(tabName) || _statuses.Tabs[tabName].Protected)
+            if (isDefaultTab || _statuses.Tabs[tabName].Protected)
             {
                 this.ProtectTabMenuItem.Checked = true;
                 this.ProtectTbMenuItem.Checked = true;
@@ -9011,7 +9027,7 @@ namespace OpenTween
                         ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
                         ListTab.SelectedTab.Controls["panelSearch"].Controls["comboSearch"].Focus();
                     }
-                    if (tabUsage == MyCommon.TabUsageType.Lists)
+                    else if (tabUsage == MyCommon.TabUsageType.Lists)
                     {
                         ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
                         ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
@@ -9759,7 +9775,7 @@ namespace OpenTween
             {
                 this.Visible = false;
             }
-            if (_initialLayout && _cfgLocal != null && this.WindowState == FormWindowState.Normal && this.Visible)
+            else if (_initialLayout && _cfgLocal != null && this.WindowState == FormWindowState.Normal && this.Visible)
             {
                 this.ClientSize = _cfgLocal.FormSize;
                 //_mySize = this.ClientSize;                     //サイズ保持（最小化・最大化されたまま終了した場合の対応用）
@@ -9780,20 +9796,23 @@ namespace OpenTween
                 if (StatusText.Multiline)
                 {
                     int dis = SplitContainer2.Height - _cfgLocal.StatusTextHeight - SplitContainer2.SplitterWidth;
-                    if (dis > SplitContainer2.Panel1MinSize && dis < SplitContainer2.Height - SplitContainer2.Panel2MinSize - SplitContainer2.SplitterWidth)
+                    if (dis > SplitContainer2.Panel1MinSize &&
+                        dis < SplitContainer2.Height - SplitContainer2.Panel2MinSize - SplitContainer2.SplitterWidth)
                     {
-                        SplitContainer2.SplitterDistance = SplitContainer2.Height - _cfgLocal.StatusTextHeight - SplitContainer2.SplitterWidth;
+                        SplitContainer2.SplitterDistance = dis;
                     }
                     StatusText.Height = _cfgLocal.StatusTextHeight;
                 }
                 else
                 {
-                    if (SplitContainer2.Height - SplitContainer2.Panel2MinSize - SplitContainer2.SplitterWidth > 0)
+                    int dis = SplitContainer2.Height - SplitContainer2.Panel2MinSize - SplitContainer2.SplitterWidth;
+                    if (dis > 0)
                     {
-                        SplitContainer2.SplitterDistance = SplitContainer2.Height - SplitContainer2.Panel2MinSize - SplitContainer2.SplitterWidth;
+                        SplitContainer2.SplitterDistance = dis;
                     }
                 }
-                if (_cfgLocal.PreviewDistance > this.SplitContainer3.Panel1MinSize && _cfgLocal.PreviewDistance < this.SplitContainer3.Width - this.SplitContainer3.Panel2MinSize - this.SplitContainer3.SplitterWidth)
+                if (_cfgLocal.PreviewDistance > this.SplitContainer3.Panel1MinSize &&
+                    _cfgLocal.PreviewDistance < this.SplitContainer3.Width - this.SplitContainer3.Panel2MinSize - this.SplitContainer3.SplitterWidth)
                 {
                     this.SplitContainer3.SplitterDistance = _cfgLocal.PreviewDistance;
                 }
@@ -10068,10 +10087,7 @@ namespace OpenTween
             _cfgLocal.StatusMultiline = MultiLineMenuItem.Checked;
             if (MultiLineMenuItem.Checked)
             {
-                if (SplitContainer2.Height - _mySpDis2 - SplitContainer2.SplitterWidth < 0)
-                    SplitContainer2.SplitterDistance = 0;
-                else
-                    SplitContainer2.SplitterDistance = SplitContainer2.Height - _mySpDis2 - SplitContainer2.SplitterWidth;
+                SplitContainer2.SplitterDistance = Math.Max(SplitContainer2.Height - _mySpDis2 - SplitContainer2.SplitterWidth, 0);
             }
             else
             {
@@ -10302,18 +10318,20 @@ namespace OpenTween
 
         private void MenuStrip1_MenuDeactivate(object sender, EventArgs e)
         {
+            var tp = this.ListTab.SelectedTab;
+
             if (this.Tag != null) // 設定された戻り先へ遷移
             {
-                if (this.Tag == this.ListTab.SelectedTab)
-                    ((Control)this.ListTab.SelectedTab.Tag).Select();
+                if (this.Tag == tp)
+                    ((Control)tp.Tag).Select();
                 else
                     ((Control)this.Tag).Select();
             }
             else // 戻り先が指定されていない (初期状態) 場合はタブに遷移
             {
-                if (ListTab.SelectedIndex > -1 && ListTab.SelectedTab.HasChildren)
+                if (tp != null && tp.HasChildren)
                 {
-                    this.Tag = ListTab.SelectedTab.Tag;
+                    this.Tag = tp.Tag;
                     ((Control)this.Tag).Select();
                 }
             }
@@ -13699,12 +13717,10 @@ namespace OpenTween
 
         private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, EventArgs e)
         {
-            if (this.SplitContainer3.Panel2Collapsed)
-            {
-                this.SplitContainer3.Panel2Collapsed = false;
-                if (this.SplitContainer3.FixedPanel == FixedPanel.None)
-                    this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
-            }
+            this.SplitContainer3.Panel2Collapsed = false;
+
+            if (this.SplitContainer3.FixedPanel == FixedPanel.None)
+                this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
         }
 
         private void tweetThumbnail1_ThumbnailDoubleClick(object sender, ThumbnailDoubleClickEventArgs e)

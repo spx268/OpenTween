@@ -97,8 +97,9 @@ namespace OpenTween
                 Task<MemoryImage> cachedImageTask = null;
                 lock (this.lockObject)
                 {
-                    if (this.innerDictionary.TryGetValue(address, out cachedImageTask) &&
-                        cachedImageTask != null)
+                    innerDictionary.TryGetValue(address, out cachedImageTask);
+
+                    if (cachedImageTask != null)
                     {
                         if (force)
                         {
@@ -121,7 +122,7 @@ namespace OpenTween
                     var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken)
                         .ContinueWith(t => MemoryImage.CopyFromBytes(t.Result), TaskScheduler.Default);
 
-                    imageTask.ContinueWith(_ => client.Dispose());
+                    imageTask.ContinueWith(_ => client.Dispose(), TaskScheduler.Default);
 
                     this.innerDictionary[address] = imageTask;
 
@@ -135,10 +136,10 @@ namespace OpenTween
             lock (this.lockObject)
             {
                 Task<MemoryImage> imageTask;
-                if (!this.innerDictionary.TryGetValue(address, out imageTask))
-                    return null;
+                this.innerDictionary.TryGetValue(address, out imageTask);
 
-                if (imageTask.Status != TaskStatus.RanToCompletion)
+                if (imageTask == null ||
+                    imageTask.Status != TaskStatus.RanToCompletion)
                     return null;
 
                 return imageTask.Result;
