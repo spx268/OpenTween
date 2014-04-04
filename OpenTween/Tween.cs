@@ -1440,14 +1440,13 @@ namespace OpenTween
                     tab.TabType = MyCommon.TabUsageType.Favorites;
                 }
             }
-            foreach (string tn in _statuses.Tabs.Keys)
+            foreach (var tab in _statuses.Tabs.Values)
             {
-                var tab = _statuses.Tabs[tn];
                 if (tab.TabType == MyCommon.TabUsageType.Undefined)
                 {
                     tab.TabType = MyCommon.TabUsageType.UserDefined;
                 }
-                if (!AddNewTab(tn, true, tab.TabType, tab.ListInfo)) throw new Exception(Properties.Resources.TweenMain_LoadText1);
+                if (!AddNewTab(tab.TabName, true, tab.TabType, tab.ListInfo)) throw new Exception(Properties.Resources.TweenMain_LoadText1);
             }
 
             this.JumpReadOpMenuItem.ShortcutKeyDisplayString = "Space";
@@ -4329,6 +4328,8 @@ namespace OpenTween
 
                     try
                     {
+                        var oldIconCol = _iconCol;
+
                         if (SettingDialog.IconSz != oldIconSz)
                             ApplyListViewIconSize(SettingDialog.IconSz);
 
@@ -4342,7 +4343,7 @@ namespace OpenTween
                                 lst.Font = _fntReaded;
                                 lst.BackColor = _clListBackcolor;
 
-                                if (SettingDialog.IconSz != oldIconSz)
+                                if (_iconCol != oldIconCol)
                                     ResetColumns(lst);
                             }
                         }
@@ -9597,12 +9598,11 @@ namespace OpenTween
             StringBuilder slbl = new StringBuilder(256);
             try
             {
-                foreach (string key in _statuses.Tabs.Keys)
+                foreach (var tab in _statuses.Tabs.Values)
                 {
-                    var tab = _statuses.Tabs[key];
                     ur += tab.UnreadCount;
                     al += tab.AllCount;
-                    if (_curTab != null && key.Equals(_curTab.Text))
+                    if (_curTab != null && tab.TabName.Equals(_curTab.Text))
                     {
                         tur = tab.UnreadCount;
                         tal = tab.AllCount;
@@ -13774,12 +13774,17 @@ namespace OpenTween
         {
             if (SettingDialog.IconSz == iconSize) return;
 
+            var oldIconCol = _iconCol;
+
             SettingDialog.IconSz = iconSize;
             ApplyListViewIconSize(iconSize);
 
-            foreach (TabPage tp in ListTab.TabPages)
+            if (_iconCol != oldIconCol)
             {
-                ResetColumns((DetailsListView)tp.Tag);
+                foreach (TabPage tp in ListTab.TabPages)
+                {
+                    ResetColumns((DetailsListView)tp.Tag);
+                }
             }
 
             if (_curList != null) _curList.Refresh();
