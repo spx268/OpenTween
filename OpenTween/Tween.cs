@@ -2690,9 +2690,7 @@ namespace OpenTween
                     {
                         for (int i = 0; i <= args.ids.Count - 1; i++)
                         {
-                            var post = tab.IsInnerStorageTabType
-                                ? tab.Posts[args.ids[i]]
-                                : _statuses[args.ids[i]];
+                            var post = tab.Posts[args.ids[i]];
 
                             args.page = i + 1;
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
@@ -2744,9 +2742,7 @@ namespace OpenTween
                     {
                         for (int i = 0; i <= args.ids.Count - 1; i++)
                         {
-                            var post = tab.IsInnerStorageTabType
-                                ? tab.Posts[args.ids[i]]
-                                : _statuses[args.ids[i]];
+                            var post = tab.Posts[args.ids[i]];
 
                             args.page = i + 1;
                             bw.ReportProgress(50, MakeStatusMessage(args, false));
@@ -7613,16 +7609,11 @@ namespace OpenTween
             string inReplyToTabName;
             long inReplyToId = _curPost.InReplyToStatusId.Value;
             string inReplyToUser = _curPost.InReplyToUser;
-            Dictionary<long, PostClass> curTabPosts;
-
-            if (_statuses.Tabs[_curTab.Text].IsInnerStorageTabType)
-                curTabPosts = curTabClass.Posts;
-            else
-                curTabPosts = _statuses.Posts;
+            //Dictionary<long, PostClass> curTabPosts = curTabClass.Posts;
 
             var inReplyToPosts = from tab in _statuses.Tabs.Values
                                  orderby tab != curTabClass
-                                 from post in ((Dictionary<long, PostClass>)(tab.IsInnerStorageTabType ? tab.Posts : _statuses.Posts)).Values
+                                 from post in tab.Posts.Values
                                  where post.StatusId == inReplyToId
                                  let index = tab.IndexOf(post.StatusId)
                                  where index != -1
@@ -7682,14 +7673,14 @@ namespace OpenTween
             if (_curPost == null) return;
 
             TabClass curTabClass = _statuses.Tabs[_curTab.Text];
-            Dictionary<long, PostClass> curTabPosts = curTabClass.IsInnerStorageTabType ? curTabClass.Posts : _statuses.Posts;
+            //Dictionary<long, PostClass> curTabPosts = curTabClass.Posts;
 
             if (parallel)
             {
                 if (_curPost.InReplyToStatusId != null)
                 {
                     var posts = from t in _statuses.Tabs
-                                from p in t.Value.IsInnerStorageTabType ? t.Value.Posts : _statuses.Posts
+                                from p in t.Value.Posts
                                 where p.Value.StatusId != _curPost.StatusId && p.Value.InReplyToStatusId == _curPost.InReplyToStatusId
                                 let indexOf = t.Value.IndexOf(p.Value.StatusId)
                                 where indexOf > -1
@@ -7726,7 +7717,7 @@ namespace OpenTween
                 if (replyChains == null || replyChains.Count < 1)
                 {
                     var posts = from t in _statuses.Tabs
-                                from p in t.Value.IsInnerStorageTabType ? t.Value.Posts : _statuses.Posts
+                                from p in t.Value.Posts
                                 where p.Value.InReplyToStatusId == _curPost.StatusId
                                 let indexOf = t.Value.IndexOf(p.Value.StatusId)
                                 where indexOf > -1
@@ -13695,6 +13686,12 @@ namespace OpenTween
         private void tweetThumbnail1_ThumbnailLoading(object sender, EventArgs e)
         {
             //this.SplitContainer3.Panel2Collapsed = false;
+
+            // PreviewDistance が起動のたびに広がっていく問題の回避策
+            // FixedPanel が Panel2 に設定された状態で Panel2 を開くと、初回だけ SplitterDistance が再計算されておかしくなるため、
+            // None で開いた後に設定するようにする
+            //if (this.SplitContainer3.FixedPanel == FixedPanel.None)
+            //    this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
         }
 
         private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, EventArgs e)

@@ -792,26 +792,12 @@ namespace OpenTween
                 {
                     if (tab.Contains(Id))
                     {
-                        if (!tab.IsInnerStorageTabType)
+                        if (tab.UnreadManage && !tab.Posts[Id].IsRead)    //未読管理
                         {
-                            if (tab.UnreadManage && !_statuses[Id].IsRead)    //未読管理
+                            lock (LockUnread)
                             {
-                                lock (LockUnread)
-                                {
-                                    tab.UnreadCount--;
-                                    this.SetNextUnreadId(Id, tab);
-                                }
-                            }
-                        }
-                        else //未読数がずれる可能性があるためtab.Postsの未読も確認する
-                        {
-                            if (tab.UnreadManage && !tab.Posts[Id].IsRead)    //未読管理
-                            {
-                                lock (LockUnread)
-                                {
-                                    tab.UnreadCount--;
-                                    this.SetNextUnreadId(Id, tab);
-                                }
+                                tab.UnreadCount--;
+                                this.SetNextUnreadId(Id, tab);
                             }
                         }
                         tab.Remove(Id);
@@ -849,15 +835,7 @@ namespace OpenTween
                 tb.UnreadCount > 0)
             {
                 //未読アイテムへ
-                bool isRead;
-                if (!tb.IsInnerStorageTabType)
-                {
-                    isRead = _statuses[tb.OldestUnreadId].IsRead;
-                }
-                else
-                {
-                    isRead = tb.Posts[tb.OldestUnreadId].IsRead;
-                }
+                bool isRead = tb.Posts[tb.OldestUnreadId].IsRead;
                 if (isRead)
                 {
                     //状態不整合（最古未読ＩＤが実は既読）
@@ -909,15 +887,7 @@ namespace OpenTween
             //最古未読が設定されていて、既読の場合（1発言以上存在）
             try
             {
-                Dictionary<long, PostClass> posts;
-                if (!Tab.IsInnerStorageTabType)
-                {
-                    posts = _statuses;
-                }
-                else
-                {
-                    posts = Tab.Posts;
-                }
+                Dictionary<long, PostClass> posts = Tab.Posts;
 
                 PostClass oldestUnreadPost;
                 if (Tab.OldestUnreadId > -1 &&
@@ -992,15 +962,7 @@ namespace OpenTween
                 stp = -1;
             }
 
-            Dictionary<long, PostClass> posts;
-            if (!Tab.IsInnerStorageTabType)
-            {
-                posts = _statuses;
-            }
-            else
-            {
-                posts = Tab.Posts;
-            }
+            Dictionary<long, PostClass> posts = Tab.Posts;
 
             for (int i = StartIdx; ; i+= stp)
             {
@@ -1341,15 +1303,7 @@ namespace OpenTween
 
             var Id = tb.GetId(Index);
             if (Id < 0) return;
-            PostClass post;
-            if (!tb.IsInnerStorageTabType)
-            {
-                post = _statuses[Id];
-            }
-            else
-            {
-                post = tb.Posts[Id];
-            }
+            PostClass post = tb.Posts[Id];
 
             if (post.IsRead == Read) return; //状態変更なければ終了
 
@@ -1488,15 +1442,7 @@ namespace OpenTween
 
             var Id = tb.GetId(Index);
             if (Id < 0) return;
-            PostClass post;
-            if (!tb.IsInnerStorageTabType)
-            {
-                post = _statuses[Id];
-            }
-            else
-            {
-                post = tb.Posts[Id];
-            }
+            PostClass post = tb.Posts[Id];
 
             if (post.IsRead == Read) return; //状態変更なければ終了
 
@@ -1598,14 +1544,7 @@ namespace OpenTween
                 if (id < 0) throw new ArgumentException("Index can't find. Index=" + Index.ToString() + "/TabName=" + TabName);
                 try
                 {
-                    if (tb.IsInnerStorageTabType)
-                    {
-                        return tb.Posts[tb.GetId(Index)];
-                    }
-                    else
-                    {
-                        return _statuses[tb.GetId(Index)];
-                    }
+                    return tb.Posts[tb.GetId(Index)];
                 }
                 catch (Exception ex)
                 {
@@ -1622,19 +1561,9 @@ namespace OpenTween
                 if (!_tabs.TryGetValue(TabName, out tb)) throw new ArgumentException("TabName=" + TabName + " is not contained.");
                 var length = EndIndex - StartIndex + 1;
                 var posts = new PostClass[length];
-                if (tb.IsInnerStorageTabType)
+                for (int i = 0; i < length; i++)
                 {
-                    for (int i = 0; i < length; i++)
-                    {
-                        posts[i] = tb.Posts[tb.GetId(StartIndex + i)];
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < length; i++)
-                    {
-                        posts[i] = _statuses[tb.GetId(StartIndex + i)];
-                    }
+                    posts[i] = tb.Posts[tb.GetId(StartIndex + i)];
                 }
                 return posts;
             }
@@ -1682,15 +1611,7 @@ namespace OpenTween
                         {
                             var cnt = 0;
                             var oldest = long.MaxValue;
-                            Dictionary<long, PostClass> posts;
-                            if (!tab.IsInnerStorageTabType)
-                            {
-                                posts = _statuses;
-                            }
-                            else
-                            {
-                                posts = tab.Posts;
-                            }
+                            Dictionary<long, PostClass> posts = tab.Posts;
                             foreach (var id in tab.BackupIds)
                             {
                                 if (!posts[id].IsRead)
@@ -1882,15 +1803,7 @@ namespace OpenTween
                 {
                     var cnt = 0;
                     var oldest = long.MaxValue;
-                    Dictionary<long, PostClass> posts;
-                    if (!tb.IsInnerStorageTabType)
-                    {
-                        posts = _statuses;
-                    }
-                    else
-                    {
-                        posts = tb.Posts;
-                    }
+                    Dictionary<long, PostClass> posts = tb.Posts;
                     foreach (var id in tb.BackupIds)
                     {
                         if (!posts[id].IsRead)
@@ -2181,7 +2094,9 @@ namespace OpenTween
         public long SinceId { get; set; }
 
         [XmlIgnore]
-        public Dictionary<long, PostClass> Posts { get; set; }
+        public Dictionary<long, PostClass> Posts { get; private set; }
+
+        private Dictionary<long, PostClass> _innerPosts;
 
         public PostClass[] GetTemporaryPosts()
         {
@@ -2213,7 +2128,8 @@ namespace OpenTween
 
         public TabClass()
         {
-            Posts = new Dictionary<long, PostClass>();
+            _innerPosts = new Dictionary<long, PostClass>();
+            Posts = _innerPosts;
             SoundFile = "";
             OldestUnreadId = -1;
             TabName = "";
@@ -2232,16 +2148,8 @@ namespace OpenTween
         public TabClass(string TabName, MyCommon.TabUsageType TabType, ListElement list) : this()
         {
             this.TabName = TabName;
-            _tabType = TabType;
+            this.TabType = TabType;
             this.ListInfo = list;
-            if (this.IsInnerStorageTabType)
-            {
-                _sorter.posts = Posts;
-            }
-            else
-            {
-                _sorter.posts = TabInformations.GetInstance().Posts;
-            }
         }
 
         public void Sort()
@@ -2400,7 +2308,7 @@ namespace OpenTween
         //検索結果の追加
         public void AddPostToInnerStorage(PostClass Post)
         {
-            if (Posts.ContainsKey(Post.StatusId)) return;
+            if (_innerPosts.ContainsKey(Post.StatusId)) return;
 
             if (_tabType == MyCommon.TabUsageType.UserTimeline ||
                 _tabType == MyCommon.TabUsageType.Lists)
@@ -2409,7 +2317,7 @@ namespace OpenTween
                 _recentIds.Add(Post.StatusId);
             }
 
-            Posts.Add(Post.StatusId, Post);
+            _innerPosts.Add(Post.StatusId, Post);
             _tmpIds.Add(new TemporaryId(Post.StatusId, Post.IsRead));
         }
 
@@ -2440,7 +2348,7 @@ namespace OpenTween
         {
             if (!this._ids.Contains(Id)) return;
             this._ids.Remove(Id);
-            if (this.IsInnerStorageTabType) Posts.Remove(Id);
+            if (this.IsInnerStorageTabType) _innerPosts.Remove(Id);
         }
 
         public void Remove(long Id, bool Read)
@@ -2454,7 +2362,7 @@ namespace OpenTween
             }
 
             this._ids.Remove(Id);
-            if (this.IsInnerStorageTabType) Posts.Remove(Id);
+            if (this.IsInnerStorageTabType) _innerPosts.Remove(Id);
         }
 
         public bool UnreadManage
@@ -2625,10 +2533,7 @@ namespace OpenTween
             _tmpIds.Clear();
             _unreadCount = 0;
             this.OldestUnreadId = -1;
-            if (Posts != null)
-            {
-                Posts.Clear();
-            }
+            _innerPosts.Clear();
         }
 
         public long GetId(int Index)
@@ -2665,12 +2570,13 @@ namespace OpenTween
                 _tabType = value;
                 if (this.IsInnerStorageTabType)
                 {
-                    _sorter.posts = Posts;
+                    Posts = _innerPosts;
                 }
                 else
                 {
-                    _sorter.posts = TabInformations.GetInstance().Posts;
+                    Posts = TabInformations.GetInstance().Posts;
                 }
+                _sorter.posts = Posts;
             }
         }
 
