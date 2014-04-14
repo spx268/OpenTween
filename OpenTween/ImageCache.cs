@@ -92,7 +92,7 @@ namespace OpenTween
         {
             var cancelToken = this.cancelTokenSource.Token;
 
-            return Task.Factory.StartNew(() =>
+            return Task.Run(() =>
             {
                 Task<MemoryImage> cachedImageTask = null;
                 lock (this.lockObject)
@@ -128,7 +128,7 @@ namespace OpenTween
 
                     return imageTask;
                 }
-            }, cancelToken, TaskCreationOptions.None, TaskScheduler.Default).Unwrap();
+            }, cancelToken);
         }
 
         public MemoryImage TryGetFromCache(string address)
