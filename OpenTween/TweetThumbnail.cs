@@ -118,16 +118,6 @@ namespace OpenTween
             {
                 picbox.ShowInitialImage();
                 picbox.Image = await thumbInfo.LoadThumbnailImageAsync(cancelToken);
-
-                if (picbox.Image != null)  // 画像読み込みの成否をチェック
-                {
-                    picbox.MouseDown += this.pictureBox_MouseDown;
-                    picbox.MouseUp += this.pictureBox_MouseUp;
-                    picbox.MouseMove += this.pictureBox_MouseMove;
-
-                    if (this.ThumbnailLoadCompleted != null)
-                        this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
-                }
             }
             catch (Exception)
             {
@@ -139,6 +129,17 @@ namespace OpenTween
                 catch (HttpRequestException) { }
                 catch (InvalidImageException) { }
                 catch (TaskCanceledException) { }
+                return;
+            }
+
+            if (picbox.Image != null)  // 画像読み込みの成否をチェック
+            {
+                picbox.MouseDown += this.pictureBox_MouseDown;
+                picbox.MouseUp += this.pictureBox_MouseUp;
+                picbox.MouseMove += this.pictureBox_MouseMove;
+
+                if (this.ThumbnailLoadCompleted != null)
+                    this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
             }
         }
 
