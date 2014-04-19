@@ -22,39 +22,53 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTween.Thumbnail.Services
 {
     class Foursquare : IThumbnailService
     {
+        protected readonly HttpClient http;
         protected Regex regex;
 
         public Foursquare(string pattern)
+            : this(null, pattern)
         {
+        }
+
+        public Foursquare(HttpClient http, string pattern)
+        {
+            this.http = http ?? MyCommon.CreateHttpClient();
             this.regex = new Regex(pattern);
         }
 
-        public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
+        public override Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
-            var match = this.regex.Match(url);
-
-            if (!match.Success) return null;
-            if (!AppendSettingDialog.Instance.IsPreviewFoursquare) return null;
-            if (post.PostGeo.Lat != 0 | post.PostGeo.Lng != 0) return null;
-
-            var tipsText = "";
-            var mapUrl = OpenTween.Foursquare.GetInstance.GetMapsUri(url, ref tipsText);
-
-            if (mapUrl == null) return null;
-
-            return new ThumbnailInfo()
+            return Task.Run(() =>
             {
-                ImageUrl = url,
-                ThumbnailUrl = mapUrl,
-                TooltipText = tipsText,
-            };
+                var match = this.regex.Match(url);
+
+                if (!match.Success) return null;
+                if (!AppendSettingDialog.Instance.IsPreviewFoursquare) return null;
+                if (post.PostGeo.Lat != 0 | post.PostGeo.Lng != 0) return null;
+
+                var tipsText = "";
+                var mapUrl = OpenTween.Foursquare.GetInstance.GetMapsUri(url, ref tipsText);
+
+                if (mapUrl == null)
+                    return null;
+
+                return new ThumbnailInfo(this.http)
+                {
+                    ImageUrl = url,
+                    ThumbnailUrl = mapUrl,
+                    TooltipText = tipsText,
+                };
+            }, token);
         }
     }
 }

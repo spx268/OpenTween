@@ -26,6 +26,7 @@ using System.Drawing;
 using System.Data;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
@@ -66,21 +67,21 @@ namespace OpenTween
 
         public async Task ShowThumbnailAsync(PostClass post, CancellationToken cancelToken)
         {
-            var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             var loadTasks = new List<Task>();
 
             this.scrollBar.Enabled = false;
 
-            var thumbnails = await Task.Run(() => this.GetThumbailInfo(post), cancelToken);
+            var thumbnails = (await this.GetThumbailInfoAsync(post, cancelToken))
+                .ToArray();
 
             cancelToken.ThrowIfCancellationRequested();
 
             lock (this.uiLockObj)
             {
-                this.SetThumbnailCount(thumbnails.Count);
-                if (thumbnails.Count == 0) return;
+                this.SetThumbnailCount(thumbnails.Length);
+                if (thumbnails.Length == 0) return;
 
-                for (int i = 0; i < thumbnails.Count; i++)
+                for (int i = 0; i < thumbnails.Length; i++)
                 {
                     var thumb = thumbnails[i];
                     var picbox = this.pictureBox[i];
@@ -88,33 +89,7 @@ namespace OpenTween
                     picbox.Tag = thumb;
                     picbox.ContextMenu = CreateContextMenu(thumb);
 
-                    picbox.ShowInitialImage();
-
-                    var loadTask = thumb.LoadThumbnailImageAsync(cancelToken)
-                        .ContinueWith(t2 =>
-                        {
-                            if (t2.IsFaulted)
-                                t2.Exception.Flatten().Handle(x => x is WebException || x is InvalidImageException || x is TaskCanceledException);
-
-                            if (t2.IsFaulted || t2.IsCanceled)
-                            {
-                                picbox.ShowErrorImage();
-                                return;
-                            }
-
-                            picbox.Image = t2.Result;
-
-                            picbox.MouseDown += this.pictureBox_MouseDown;
-                            picbox.MouseUp += this.pictureBox_MouseUp;
-                            picbox.MouseMove += this.pictureBox_MouseMove;
-
-                            if (picbox.Image != null)  // 画像読み込みの成否をチェック
-                            {
-                                if (this.ThumbnailLoadCompleted != null)
-                                    this.ThumbnailLoadCompleted(picbox, new EventArgs());
-                            }
-                        }, uiScheduler);
-
+                    var loadTask = this.SetThumbnailImageAsync(picbox, thumb, cancelToken);
                     loadTasks.Add(loadTask);
 
                     var tooltipText = thumb.TooltipText;
@@ -126,7 +101,7 @@ namespace OpenTween
                     cancelToken.ThrowIfCancellationRequested();
                 }
 
-                if (thumbnails.Count > 1)
+                if (thumbnails.Length > 1)
                     this.scrollBar.Enabled = true;
             }
 
@@ -134,6 +109,37 @@ namespace OpenTween
                 this.ThumbnailLoading(this, EventArgs.Empty);
 
             await Task.WhenAll(loadTasks).ConfigureAwait(false);
+        }
+
+        private async Task SetThumbnailImageAsync(OTPictureBox picbox, ThumbnailInfo thumbInfo,
+            CancellationToken cancelToken)
+        {
+            try
+            {
+                picbox.ShowInitialImage();
+                picbox.Image = await thumbInfo.LoadThumbnailImageAsync(cancelToken);
+
+                if (picbox.Image != null)  // 画像読み込みの成否をチェック
+                {
+                    picbox.MouseDown += this.pictureBox_MouseDown;
+                    picbox.MouseUp += this.pictureBox_MouseUp;
+                    picbox.MouseMove += this.pictureBox_MouseMove;
+
+                    if (this.ThumbnailLoadCompleted != null)
+                        this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
+                }
+            }
+            catch (Exception)
+            {
+                picbox.ShowErrorImage();
+                try
+                {
+                    throw;
+                }
+                catch (HttpRequestException) { }
+                catch (InvalidImageException) { }
+                catch (TaskCanceledException) { }
+            }
         }
 
         private ContextMenu CreateContextMenu(ThumbnailInfo thumb)
@@ -173,9 +179,9 @@ namespace OpenTween
             return @"https://www.google.com/searchbyimage?image_url=" + Uri.EscapeDataString(image_uri);
         }
 
-        protected virtual List<ThumbnailInfo> GetThumbailInfo(PostClass post)
+        protected virtual Task<IEnumerable<ThumbnailInfo>> GetThumbailInfoAsync(PostClass post, CancellationToken token)
         {
-            return ThumbnailGenerator.GetThumbnails(post);
+            return ThumbnailGenerator.GetThumbnailsAsync(post, token);
         }
 
         /// <summary>

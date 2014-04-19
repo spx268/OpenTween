@@ -23,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -46,19 +48,20 @@ namespace OpenTween.Thumbnail.Services
         {
         }
 
-        public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
+        public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
             var pageUrl = this.ReplaceUrl(url);
             if (pageUrl == null) return null;
 
             try
             {
-                var content = this.FetchImageUrl(pageUrl);
+                var content = await this.FetchImageUrlAsync(pageUrl, token)
+                    .ConfigureAwait(false);
 
                 var thumbnailUrl = this.GetThumbnailUrl(content);
                 if (string.IsNullOrEmpty(thumbnailUrl)) return null;
 
-                return new ThumbnailInfo()
+                return new ThumbnailInfo(this.http)
                 {
                     ImageUrl = url,
                     ThumbnailUrl = thumbnailUrl,
@@ -87,11 +90,14 @@ namespace OpenTween.Thumbnail.Services
             return null;
         }
 
-        protected virtual string FetchImageUrl(string url)
+        protected virtual async Task<string> FetchImageUrlAsync(string url, CancellationToken token)
         {
-            using (var client = new OTWebClient())
+            using (var response = await this.http.GetAsync(url, token).ConfigureAwait(false))
             {
-                return client.DownloadString(url);
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadAsStringAsync()
+                    .ConfigureAwait(false);
             }
         }
     }

@@ -23,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 using System.Xml;
 using System.Xml.Linq;
@@ -38,12 +40,13 @@ namespace OpenTween.Thumbnail.Services
         {
         }
 
-        public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
+        public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
             var apiUrl = base.ReplaceUrl(url);
             if (apiUrl == null) return null;
 
-            var xdoc = this.FetchContentInfoApi(apiUrl);
+            var xdoc = await this.FetchContentInfoApiAsync(apiUrl, token)
+                .ConfigureAwait(false);
 
             if (xdoc.XPathSelectElement("/rsp").Attribute("stat").Value == "ok")
             {
@@ -52,7 +55,7 @@ namespace OpenTween.Thumbnail.Services
                 {
                     var descElm = xdoc.XPathSelectElement("/rsp/content/description");
 
-                    return new ThumbnailInfo()
+                    return new ThumbnailInfo(this.http)
                     {
                         ImageUrl = url,
                         ThumbnailUrl = thumbUrlElm.Attribute("url").Value,
@@ -64,9 +67,17 @@ namespace OpenTween.Thumbnail.Services
             return null;
         }
 
-        protected virtual XDocument FetchContentInfoApi(string url)
+        protected virtual async Task<XDocument> FetchContentInfoApiAsync(string url, CancellationToken token)
         {
-            return XDocument.Load(url);
+            using (var response = await this.http.GetAsync(url, token).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+
+                var xmlStr = await response.Content.ReadAsStringAsync()
+                    .ConfigureAwait(false);
+
+                return XDocument.Parse(xmlStr);
+            }
         }
     }
 }

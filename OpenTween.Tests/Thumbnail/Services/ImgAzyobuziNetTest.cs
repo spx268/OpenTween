@@ -23,7 +23,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using NSubstitute;
 using Xunit;
 using Xunit.Extensions;
 
@@ -65,6 +70,20 @@ namespace OpenTween.Thumbnail.Services
             }
         }
 
+        public ImgAzyobuziNetTest()
+        {
+            this.MyCommonSetup();
+        }
+
+        public void MyCommonSetup()
+        {
+            var mockAssembly = Substitute.For<_Assembly>();
+            mockAssembly.GetName().Returns(new AssemblyName("OpenTween"));
+            MyCommon.EntryAssembly = mockAssembly;
+
+            MyCommon.fileVersion = "1.0.0.0";
+        }
+
         [Fact]
         public void HostFallbackTest()
         {
@@ -90,22 +109,22 @@ namespace OpenTween.Thumbnail.Services
         }
 
         [Fact]
-        public void ServerOutageTest()
+        public async Task ServerOutageTest()
         {
             var service = new TestImgAzyobuziNet(new[] { "http://down.example.com/api/" });
 
             service.LoadRegex();
             Assert.Null(service.GetApiBase());
 
-            var thumbinfo = service.GetThumbnailInfo("http://example.com/abcd", null);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
             Assert.Null(thumbinfo);
         }
 
         [Fact]
-        public void MatchTest()
+        public async Task MatchTest()
         {
             var service = new TestImgAzyobuziNet();
-            var thumbinfo = service.GetThumbnailInfo("http://example.com/abcd", null);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
             Assert.Equal("http://example.com/abcd", thumbinfo.ImageUrl);
@@ -114,16 +133,16 @@ namespace OpenTween.Thumbnail.Services
         }
 
         [Fact]
-        public void NotMatchTest()
+        public async Task NotMatchTest()
         {
             var service = new TestImgAzyobuziNet();
-            var thumbinfo = service.GetThumbnailInfo("http://hogehoge.com/abcd", null);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://hogehoge.com/abcd", null, CancellationToken.None);
 
             Assert.Null(thumbinfo);
         }
 
         [Fact]
-        public void DisabledInDM_Test()
+        public async Task DisabledInDM_Test()
         {
             var service = new TestImgAzyobuziNet();
             service.DisabledInDM = true;
@@ -134,18 +153,18 @@ namespace OpenTween.Thumbnail.Services
                 IsDm = true,
             };
 
-            var thumbinfo = service.GetThumbnailInfo("http://example.com/abcd", post);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", post, CancellationToken.None);
 
             Assert.Null(thumbinfo);
         }
 
         [Fact]
-        public void Enabled_FalseTest()
+        public async Task Enabled_FalseTest()
         {
             var service = new TestImgAzyobuziNet();
             service.Enabled = false;
 
-            var thumbinfo = service.GetThumbnailInfo("http://example.com/abcd", null);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
 
             Assert.Null(thumbinfo);
         }

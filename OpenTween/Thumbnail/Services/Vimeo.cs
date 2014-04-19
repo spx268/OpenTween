@@ -23,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 using System.Xml;
 using System.Xml.Linq;
@@ -38,12 +40,15 @@ namespace OpenTween.Thumbnail.Services
         {
         }
 
-        public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
+        public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
             var apiUrl = base.ReplaceUrl(url);
             if (apiUrl == null) return null;
 
-            var xdoc = XDocument.Load(apiUrl);
+            var xmlStr = await this.http.GetStringAsync(apiUrl)
+                .ConfigureAwait(false);
+
+            var xdoc = XDocument.Parse(xmlStr);
 
             var thumbUrlElm = xdoc.XPathSelectElement("/oembed/thumbnail_url");
             if (thumbUrlElm != null)
@@ -60,7 +65,7 @@ namespace OpenTween.Thumbnail.Services
                     tooltipText = string.Format("{0} ({1:00}:{2:00})", titleElm.Value, minute, second);
                 }
 
-                return new ThumbnailInfo()
+                return new ThumbnailInfo(this.http)
                 {
                     ImageUrl = url,
                     ThumbnailUrl = thumbUrlElm.Value,

@@ -117,18 +117,23 @@ namespace OpenTween
 
                     cancelToken.ThrowIfCancellationRequested();
 
-                    var client = new OTWebClient() { Timeout = 10000 };
-
-                    var imageTask = client.DownloadDataAsync(new Uri(address), cancelToken)
-                        .ContinueWith(t => MemoryImage.CopyFromBytes(t.Result), TaskScheduler.Default);
-
-                    imageTask.ContinueWith(_ => client.Dispose(), TaskScheduler.Default);
-
+                    var imageTask = this.FetchImageAsync(address, cancelToken);
                     this.innerDictionary[address] = imageTask;
 
                     return imageTask;
                 }
             }, cancelToken);
+        }
+
+        private async Task<MemoryImage> FetchImageAsync(string uri, CancellationToken cancelToken)
+        {
+            using (var client = new OTWebClient { Timeout = 10000 })
+            {
+                var imageData = await client.DownloadDataAsync(new Uri(uri), cancelToken)
+                    .ConfigureAwait(false);
+
+                return MemoryImage.CopyFromBytes(imageData);
+            }
         }
 
         public MemoryImage TryGetFromCache(string address)

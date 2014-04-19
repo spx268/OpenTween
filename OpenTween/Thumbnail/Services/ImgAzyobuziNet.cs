@@ -23,11 +23,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Xml;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -42,15 +44,34 @@ namespace OpenTween.Thumbnail.Services
         protected IEnumerable<Regex> UrlRegex = null;
         protected Timer UpdateTimer;
 
+        protected readonly HttpClient http;
+
         private object LockObj = new object();
 
-        public ImgAzyobuziNet(bool autoupdate = false)
+        public ImgAzyobuziNet()
+            : this(autoupdate: false)
+        {
+        }
+
+        public ImgAzyobuziNet(bool autoupdate)
+            : this(null, autoupdate)
+        {
+        }
+
+        public ImgAzyobuziNet(HttpClient http)
+            : this(http, autoupdate: false)
+        {
+        }
+
+        public ImgAzyobuziNet(HttpClient http, bool autoupdate)
         {
             this.UpdateTimer = new Timer(_ => this.LoadRegex());
             this.AutoUpdate = autoupdate;
 
             this.Enabled = true;
             this.DisabledInDM = true;
+
+            this.http = http ?? MyCommon.CreateHttpClient();
         }
 
         public bool AutoUpdate
@@ -150,34 +171,37 @@ namespace OpenTween.Thumbnail.Services
             }
         }
 
-        public override ThumbnailInfo GetThumbnailInfo(string url, PostClass post)
+        public override Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
-            if (!this.Enabled)
-                return null;
-
-            if (this.DisabledInDM && post != null && post.IsDm)
-                return null;
-
-            lock (this.LockObj)
+            return Task.Run(() =>
             {
-                if (this.UrlRegex == null)
+                if (!this.Enabled)
                     return null;
 
-                foreach (var regex in this.UrlRegex)
+                if (this.DisabledInDM && post != null && post.IsDm)
+                    return null;
+
+                lock (this.LockObj)
                 {
-                    if (regex.IsMatch(url))
+                    if (this.UrlRegex == null)
+                        return null;
+
+                    foreach (var regex in this.UrlRegex)
                     {
-                        return new ThumbnailInfo()
+                        if (regex.IsMatch(url))
                         {
-                            ImageUrl = url,
-                            ThumbnailUrl = this.ApiBase + "redirect?size=large&uri=" + Uri.EscapeDataString(url),
-                            TooltipText = null,
-                        };
+                            return new ThumbnailInfo(this.http)
+                            {
+                                ImageUrl = url,
+                                ThumbnailUrl = this.ApiBase + "redirect?size=large&uri=" + Uri.EscapeDataString(url),
+                                TooltipText = null,
+                            };
+                        }
                     }
                 }
-            }
 
-            return null;
+                return null;
+            }, token);
         }
 
         public virtual void Dispose()
