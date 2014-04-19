@@ -1,5 +1,5 @@
 ﻿// OpenTween - Client of Twitter
-// Copyright (c) 2012 the40san <http://sourceforge.jp/users/the40san/>
+// Copyright (c) 2014 kim_upsilon (@kim_upsilon) <https://upsilo.net/~upsilon/>
 // All rights reserved.
 //
 // This file is part of OpenTween.
@@ -22,32 +22,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
-using OpenTween;
-using Xunit;
-using Xunit.Extensions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OpenTween
 {
-    /// <summary>
-    /// OpenTween.Foursquareクラステスト用
-    /// </summary>
-    class FoursquareTest
+    public class HttpMessageHandlerMock : HttpMessageHandler
     {
-        [Fact]
-        public void Test_GetInstance()
-        {
-            Assert.IsType<Foursquare>(Foursquare.GetInstance);
-            Assert.NotNull(Foursquare.GetInstance);
-        }
+        public readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> Queue =
+            new Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>>();
 
-        //[InlineData("https://ja.foursquare.com/v/starbucks-coffee-jr%E6%9D%B1%E6%B5%B7-%E5%93%81%E5%B7%9D%E9%A7%85%E5%BA%97/4b5fd527f964a52036ce29e3", Result = "")]
-        public string Test_GetMapsUri(string url)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            AppendSettingDialog.Instance.IsPreviewFoursquare = true;
-            string refText ="";
-            return Foursquare.GetInstance.GetMapsUri(url, ref refText);
+            var handler = this.Queue.Dequeue();
+            return handler(request);
         }
-        
     }
 }

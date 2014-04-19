@@ -15,7 +15,7 @@
 // for more details.
 //
 // You should have received a copy of the GNU General public License along
-// with this program. if (not, see <http://www.gnu.org/licenses/>, or write to
+// with this program. If not, see <http://www.gnu.org/licenses/>, or write to
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
@@ -30,24 +30,12 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Extensions;
 
+#pragma warning disable 1998 // awaitが無いasyncラムダ式に対する警告を抑制
+
 namespace OpenTween
 {
     public class ShortUrlTest
     {
-        class HttpMessageHandlerMock : HttpMessageHandler
-        {
-            public readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> Queue =
-                new Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>>();
-
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                var handler = this.Queue.Dequeue();
-                return handler(request);
-            }
-        }
-
-#pragma warning disable 1998 // awaitが無いasyncラムダ式に対する警告を抑制
-
         [Fact]
         public async Task ExpandUrlAsync_Test()
         {

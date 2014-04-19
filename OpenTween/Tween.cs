@@ -20,7 +20,7 @@
 // for more details. 
 // 
 // You should have received a copy of the GNU General public License along
-// with this program. if (not, see <http://www.gnu.org/licenses/>, or write to
+// with this program. If not, see <http://www.gnu.org/licenses/>, or write to
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
@@ -1128,7 +1128,6 @@ namespace OpenTween
 
             SettingDialog.EnableImgAzyobuziNet = _cfgCommon.EnableImgAzyobuziNet;
             SettingDialog.ImgAzyobuziNetDisabledInDM = _cfgCommon.ImgAzyobuziNetDisabledInDM;
-            SettingDialog.IsPreviewFoursquare = _cfgCommon.IsPreviewFoursquare;
             SettingDialog.MapThumbnailProvider = _cfgCommon.MapThumbnailProvider;
             SettingDialog.MapThumbnailHeight = _cfgCommon.MapThumbnailHeight;
             SettingDialog.MapThumbnailWidth = _cfgCommon.MapThumbnailWidth;
@@ -8119,7 +8118,6 @@ namespace OpenTween
                 _cfgCommon.HideDuplicatedRetweets = SettingDialog.HideDuplicatedRetweets;
                 _cfgCommon.EnableImgAzyobuziNet = SettingDialog.EnableImgAzyobuziNet;
                 _cfgCommon.ImgAzyobuziNetDisabledInDM = SettingDialog.ImgAzyobuziNetDisabledInDM;
-                _cfgCommon.IsPreviewFoursquare = SettingDialog.IsPreviewFoursquare;
                 _cfgCommon.MapThumbnailProvider = SettingDialog.MapThumbnailProvider;
                 _cfgCommon.MapThumbnailHeight = SettingDialog.MapThumbnailHeight;
                 _cfgCommon.MapThumbnailWidth = SettingDialog.MapThumbnailWidth;
