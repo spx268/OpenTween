@@ -34,33 +34,17 @@ using NSubstitute;
 using Xunit;
 using Xunit.Extensions;
 
-#pragma warning disable 1998 // awaitが無いasyncラムダ式に対する警告を抑制
-
 namespace OpenTween.Thumbnail.Services
 {
     public class FoursquareCheckinTest
     {
-        public FoursquareCheckinTest()
-        {
-            this.MyCommonSetup();
-        }
-
-        public void MyCommonSetup()
-        {
-            var mockAssembly = Substitute.For<_Assembly>();
-            mockAssembly.GetName().Returns(new AssemblyName("OpenTween"));
-            MyCommon.EntryAssembly = mockAssembly;
-
-            MyCommon.fileVersion = "1.0.0.0";
-        }
-
         [Fact]
         public async Task GetThumbnailInfoAsync_RequestTest()
         {
             var handler = new HttpMessageHandlerMock();
             var service = new FoursquareCheckin(new HttpClient(handler));
 
-            handler.Queue.Enqueue(async x =>
+            handler.Enqueue(x =>
             {
                 Assert.Equal(HttpMethod.Get, x.Method);
                 Assert.Equal("https://api.foursquare.com/v2/checkins/xxxxxxxx",
@@ -83,8 +67,10 @@ namespace OpenTween.Thumbnail.Services
             };
 
             var thumb = await service.GetThumbnailInfoAsync(
-                "https://foursquare.com/checkin/hogehoge/xxxxxxxx",
+                "https://foursquare.com/hogehoge/checkin/xxxxxxxx",
                 post, CancellationToken.None);
+
+            Assert.Equal(0, handler.QueueCount);
         }
 
         [Fact]
@@ -93,7 +79,7 @@ namespace OpenTween.Thumbnail.Services
             var handler = new HttpMessageHandlerMock();
             var service = new FoursquareCheckin(new HttpClient(handler));
 
-            handler.Queue.Enqueue(async x =>
+            handler.Enqueue(x =>
             {
                 Assert.Equal(HttpMethod.Get, x.Method);
                 Assert.Equal("https://api.foursquare.com/v2/checkins/xxxxxxxx",
@@ -116,8 +102,10 @@ namespace OpenTween.Thumbnail.Services
             };
 
             var thumb = await service.GetThumbnailInfoAsync(
-                "https://foursquare.com/checkin/hogehoge/xxxxxxxx?s=aaaaaaa",
+                "https://foursquare.com/hogehoge/checkin/xxxxxxxx?s=aaaaaaa",
                 post, CancellationToken.None);
+
+            Assert.Equal(0, handler.QueueCount);
         }
 
         [Fact]
@@ -126,7 +114,7 @@ namespace OpenTween.Thumbnail.Services
             var handler = new HttpMessageHandlerMock();
             var service = new FoursquareCheckin(new HttpClient(handler));
 
-            handler.Queue.Enqueue(async x =>
+            handler.Enqueue(x =>
             {
                 // このリクエストは実行されないはず
                 Assert.True(false);
@@ -144,8 +132,10 @@ namespace OpenTween.Thumbnail.Services
             };
 
             var thumb = await service.GetThumbnailInfoAsync(
-                "https://foursquare.com/checkin/hogehoge/xxxxxxxx?s=aaaaaaa",
+                "https://foursquare.com/hogehoge/checkin/xxxxxxxx?s=aaaaaaa",
                 post, CancellationToken.None);
+
+            Assert.Equal(1, handler.QueueCount);
         }
 
         [Fact]

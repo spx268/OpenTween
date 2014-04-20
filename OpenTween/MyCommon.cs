@@ -220,6 +220,19 @@ namespace OpenTween
                    ListUserSubscribed | ListUserUnsubscribed | ListDestroyed),
         }
 
+        public static _Assembly EntryAssembly { get; internal set; }
+        public static string FileVersion { get; internal set; }
+
+        static MyCommon()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            MyCommon.EntryAssembly = assembly;
+
+            var fileVersionAttribute = (AssemblyFileVersionAttribute)assembly
+                .GetCustomAttributes(typeof(AssemblyFileVersionAttribute)).First();
+            MyCommon.FileVersion = fileVersionAttribute.Version;
+        }
+
         public static string GetErrorLogPath()
         {
             return Path.Combine(Path.GetDirectoryName(MyCommon.EntryAssembly.Location), "ErrorLogs");
@@ -269,7 +282,7 @@ namespace OpenTween
                     writer.WriteLine(Properties.Resources.TraceOutText3);
                     writer.WriteLine(Properties.Resources.TraceOutText4, Environment.OSVersion.VersionString);
                     writer.WriteLine(Properties.Resources.TraceOutText5, Environment.Version.ToString());
-                    writer.WriteLine(Properties.Resources.TraceOutText6, MyCommon.GetAssemblyName(), fileVersion);
+                    writer.WriteLine(Properties.Resources.TraceOutText6, MyCommon.GetAssemblyName(), FileVersion);
                     writer.WriteLine(Message);
                     writer.WriteLine();
                 }
@@ -391,7 +404,7 @@ namespace OpenTween
                     writer.WriteLine(Properties.Resources.UnhandledExceptionText4);
                     writer.WriteLine(Properties.Resources.UnhandledExceptionText5, Environment.OSVersion.VersionString);
                     writer.WriteLine(Properties.Resources.UnhandledExceptionText6, Environment.Version.ToString());
-                    writer.WriteLine(Properties.Resources.UnhandledExceptionText7, MyCommon.GetAssemblyName(), fileVersion);
+                    writer.WriteLine(Properties.Resources.UnhandledExceptionText7, MyCommon.GetAssemblyName(), FileVersion);
 
                     writer.Write(ExceptionOutMessage(ex, ref IsTerminatePermission));
                     writer.Flush();
@@ -739,19 +752,12 @@ namespace OpenTween
             //RTByMe
         }
 
-        public static string fileVersion = "";
-
         public static string GetUserAgentString(bool fakeMSIE = false)
         {
-            if (string.IsNullOrEmpty(fileVersion))
-            {
-                throw new Exception("fileversion is not Initialized.");
-            }
-
             if (fakeMSIE)
-                return GetAssemblyName() + "/" + fileVersion + " (compatible; MSIE 10.0)";
+                return GetAssemblyName() + "/" + FileVersion + " (compatible; MSIE 10.0)";
             else
-                return GetAssemblyName() + "/" + fileVersion;
+                return GetAssemblyName() + "/" + FileVersion;
         }
 
         public static TwitterApiStatus TwitterApiInfo = new TwitterApiStatus();
@@ -879,8 +885,6 @@ namespace OpenTween
             return MyCommon.EntryAssembly.GetName().Name;
         }
 
-        internal static _Assembly EntryAssembly = Assembly.GetEntryAssembly();
-
         /// <summary>
         /// 文字列中に含まれる %AppName% をアプリケーション名に置換する
         /// </summary>
@@ -913,15 +917,9 @@ namespace OpenTween
         /// </returns>
         public static string GetReadableVersion(string versionStr = null)
         {
-            if (versionStr == null)
-            {
-                if (MyCommon.fileVersion == null)
-                    return null;
+            var version = Version.Parse(versionStr ?? MyCommon.FileVersion);
 
-                versionStr = MyCommon.fileVersion;
-            }
-
-            return GetReadableVersion(Version.Parse(versionStr));
+            return GetReadableVersion(version);
         }
 
         /// <summary>

@@ -37,6 +37,7 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -55,6 +56,8 @@ namespace OpenTween
 {
     public partial class TweenMain : OTBaseForm
     {
+        private readonly HttpClient http;
+
         //各種設定
         private Size _mySize;           //画面サイズ
         private Point _myLoc;           //画面位置
@@ -808,7 +811,7 @@ namespace OpenTween
             TraceOutToolStripMenuItem.Checked = true;
             MyCommon.TraceFlag = true;
 #endif
-            if (!MyCommon.fileVersion.EndsWith("0"))
+            if (!MyCommon.FileVersion.EndsWith("0"))
             {
                 TraceOutToolStripMenuItem.Checked = true;
                 MyCommon.TraceFlag = true;
@@ -838,7 +841,6 @@ namespace OpenTween
 
             Regex.CacheSize = 100;
 
-            MyCommon.fileVersion = ((AssemblyFileVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyFileVersionAttribute), false)[0]).Version;
             InitializeTraceFrag();
             LoadIcons(); // アイコン読み込み
 
@@ -1084,7 +1086,7 @@ namespace OpenTween
             this.ToolStripFocusLockMenuItem.Checked = _cfgCommon.FocusLockToStatusText;
 
             //Regex statregex = new Regex("^0*");
-            SettingDialog.RecommendStatusText = " [TWNv" + Regex.Replace(MyCommon.fileVersion.Replace(".", ""), "^0*", "") + "]";
+            SettingDialog.RecommendStatusText = " [TWNv" + Regex.Replace(MyCommon.FileVersion.Replace(".", ""), "^0*", "") + "]";
 
             //書式指定文字列エラーチェック
             try
@@ -1149,7 +1151,7 @@ namespace OpenTween
             _initial = true;
 
             //アイコンリスト作成
-            this.IconCache = new ImageCache();
+            this.IconCache = new ImageCache(this.http);
 
             bool saveRequired = false;
             bool firstRun = false;
@@ -6158,14 +6160,11 @@ namespace OpenTween
             if (ApplicationSettings.VersionInfoUrl == null)
                 return; // 更新チェック無効化
 
-            if (string.IsNullOrEmpty(MyCommon.fileVersion))
-                return;
-
             try
             {
                 var versionInfo = await this.GetVersionInfoAsync();
 
-                if (versionInfo.Version <= Version.Parse(MyCommon.fileVersion))
+                if (versionInfo.Version <= Version.Parse(MyCommon.FileVersion))
                 {
                     // 更新不要
                     if (!startup)
@@ -10041,9 +10040,17 @@ namespace OpenTween
                 this.ClearUserPicture();
                 this.UserPicture.Image = image.Clone();
             }
-            catch (WebException) { this.UserPicture.ShowErrorImage(); }
-            catch (InvalidImageException) { this.UserPicture.ShowErrorImage(); }
-            catch (TaskCanceledException) { this.UserPicture.ShowErrorImage(); }
+            catch (Exception)
+            {
+                this.UserPicture.ShowErrorImage();
+                try
+                {
+                    throw;
+                }
+                catch (HttpRequestException) { }
+                catch (InvalidImageException) { }
+                catch (TaskCanceledException) { }
+            }
         }
 
         private void SaveOriginalSizeIconPictureToolStripMenuItem_Click(object sender, EventArgs e)
@@ -12527,7 +12534,9 @@ namespace OpenTween
         private HookGlobalHotkey _hookGlobalHotkey;
         public TweenMain()
         {
+            this.http = MyCommon.CreateHttpClient();
             _hookGlobalHotkey = new HookGlobalHotkey(this);
+
             // この呼び出しは、Windows フォーム デザイナで必要です。
             InitializeComponent();
 

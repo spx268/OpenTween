@@ -31,13 +31,28 @@ namespace OpenTween
 {
     public class HttpMessageHandlerMock : HttpMessageHandler
     {
-        public readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> Queue =
+        private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> Queue =
             new Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>>();
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public int QueueCount
+        {
+            get { return this.Queue.Count; }
+        }
+
+        public void Enqueue(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
+        {
+            this.Queue.Enqueue(handler);
+        }
+
+        public void Enqueue(Func<HttpRequestMessage, HttpResponseMessage> handler)
+        {
+            this.Queue.Enqueue(x => Task.Run(() => handler(x)));
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var handler = this.Queue.Dequeue();
-            return handler(request);
+            return await handler(request);
         }
     }
 }
