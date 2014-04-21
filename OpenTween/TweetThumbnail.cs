@@ -68,6 +68,7 @@ namespace OpenTween
         public async Task ShowThumbnailAsync(PostClass post, CancellationToken cancelToken)
         {
             var loadTasks = new List<Task>();
+            var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
             this.scrollBar.Enabled = false;
 
@@ -89,7 +90,20 @@ namespace OpenTween
                     picbox.Tag = thumb;
                     picbox.ContextMenu = CreateContextMenu(thumb);
 
-                    var loadTask = this.SetThumbnailImageAsync(picbox, thumb, cancelToken);
+                    var loadTask = this.SetThumbnailImageAsync(picbox, thumb, cancelToken)
+                        .ContinueWith(t2 =>
+                        {
+                            if (picbox.Image != null)  // 画像読み込みの成否をチェック
+                            {
+                                picbox.MouseDown += this.pictureBox_MouseDown;
+                                picbox.MouseUp += this.pictureBox_MouseUp;
+                                picbox.MouseMove += this.pictureBox_MouseMove;
+
+                                if (this.ThumbnailLoadCompleted != null)
+                                    this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
+                            }
+                        }, cancelToken, TaskContinuationOptions.OnlyOnRanToCompletion, uiScheduler);
+
                     loadTasks.Add(loadTask);
 
                     var tooltipText = thumb.TooltipText;
@@ -129,17 +143,6 @@ namespace OpenTween
                 catch (HttpRequestException) { }
                 catch (InvalidImageException) { }
                 catch (TaskCanceledException) { }
-                return;
-            }
-
-            if (picbox.Image != null)  // 画像読み込みの成否をチェック
-            {
-                picbox.MouseDown += this.pictureBox_MouseDown;
-                picbox.MouseUp += this.pictureBox_MouseUp;
-                picbox.MouseMove += this.pictureBox_MouseMove;
-
-                if (this.ThumbnailLoadCompleted != null)
-                    this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
             }
         }
 
