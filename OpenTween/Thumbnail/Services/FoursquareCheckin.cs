@@ -41,14 +41,9 @@ namespace OpenTween.Thumbnail.Services
 
         protected readonly HttpClient http;
 
-        public FoursquareCheckin()
-            : this(null)
-        {
-        }
-
         public FoursquareCheckin(HttpClient http)
         {
-            this.http = http ?? MyCommon.CreateHttpClient();
+            this.http = http;
         }
 
         public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
@@ -93,7 +88,7 @@ namespace OpenTween.Thumbnail.Services
 
                     var map = MapThumb.GetDefaultInstance();
 
-                    return new ThumbnailInfo(this.http)
+                    return new ThumbnailInfo
                     {
                         ImageUrl = map.CreateMapLinkUrl(location.Latitude, location.Longitude),
                         ThumbnailUrl = map.CreateStaticMapUrl(location.Latitude, location.Longitude),

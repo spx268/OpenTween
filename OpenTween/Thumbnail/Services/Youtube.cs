@@ -35,19 +35,21 @@ using System.Text.RegularExpressions;
 
 namespace OpenTween.Thumbnail.Services
 {
-    class Youtube : SimpleThumbnailService
+    class Youtube : IThumbnailService
     {
-        public Youtube(string pattern, string replacement = "${0}")
-            : base(pattern, replacement)
-        {
-        }
+        public static readonly Regex UrlPatternRegex =
+            new Regex(@"^http://(?:(www\.youtube\.com)|(youtu\.be))/(watch\?v=)?(?<videoid>([\w\-]+))");
 
         public override Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
             return Task.Run(() =>
             {
-                var imgUrl = base.ReplaceUrl(url);
-                if (imgUrl == null) return null;
+                var match = Youtube.UrlPatternRegex.Match(url);
+                if (!match.Success)
+                    return null;
+
+                var videoId = match.Groups["videoid"].Value;
+                var imgUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
 
                 // 参考
                 // http://code.google.com/intl/ja/apis/youtube/2.0/developers_guide_protocol_video_entries.html
@@ -171,7 +173,7 @@ namespace OpenTween.Thumbnail.Services
 
                         }
 
-                        return new ThumbnailInfo(this.http)
+                        return new ThumbnailInfo
                         {
                             ImageUrl = url,
                             ThumbnailUrl = imgUrl,

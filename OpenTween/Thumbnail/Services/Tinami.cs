@@ -22,54 +22,72 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.Serialization.Json;
-using System.Xml;
+using System.Web;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using System.Net;
 
 namespace OpenTween.Thumbnail.Services
 {
-    class Tinami : SimpleThumbnailService
+    class Tinami : IThumbnailService
     {
-        public Tinami(string pattern, string replacement = "${0}")
-            : base(pattern, replacement)
+        public static readonly Regex UrlPatternRegex =
+            new Regex(@"^http://www\.tinami\.com/view/(?<ContentId>\d+)$");
+
+        protected readonly HttpClient http;
+
+        public Tinami(HttpClient http)
         {
+            this.http = http;
         }
 
         public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
-            var apiUrl = base.ReplaceUrl(url);
-            if (apiUrl == null) return null;
+            var match = Tinami.UrlPatternRegex.Match(url);
+            if (!match.Success)
+                return null;
 
-            var xdoc = await this.FetchContentInfoApiAsync(apiUrl, token)
-                .ConfigureAwait(false);
+            var contentId = match.Groups["ContentId"].Value;
 
-            if (xdoc.XPathSelectElement("/rsp").Attribute("stat").Value == "ok")
+            try
             {
-                var thumbUrlElm = xdoc.XPathSelectElement("/rsp/content/thumbnails/thumbnail_150x150");
-                if (thumbUrlElm != null)
-                {
-                    var descElm = xdoc.XPathSelectElement("/rsp/content/description");
+                var xdoc = await this.FetchContentInfoApiAsync(contentId, token)
+                    .ConfigureAwait(false);
 
-                    return new ThumbnailInfo(this.http)
-                    {
-                        ImageUrl = url,
-                        ThumbnailUrl = thumbUrlElm.Attribute("url").Value,
-                        TooltipText = descElm == null ? null : descElm.Value,
-                    };
-                }
+                if (xdoc.XPathSelectElement("/rsp").Attribute("stat").Value != "ok")
+                    return null;
+
+                var thumbUrlElm = xdoc.XPathSelectElement("/rsp/content/thumbnails/thumbnail_150x150");
+                if (thumbUrlElm == null)
+                    return null;
+
+                var descElm = xdoc.XPathSelectElement("/rsp/content/description");
+
+                return new ThumbnailInfo
+                {
+                    ImageUrl = url,
+                    ThumbnailUrl = thumbUrlElm.Attribute("url").Value,
+                    TooltipText = descElm == null ? null : descElm.Value,
+                };
             }
+            catch (HttpRequestException) { }
 
             return null;
         }
 
-        protected virtual async Task<XDocument> FetchContentInfoApiAsync(string url, CancellationToken token)
+        protected virtual async Task<XDocument> FetchContentInfoApiAsync(string contentId, CancellationToken token)
         {
-            using (var response = await this.http.GetAsync(url, token).ConfigureAwait(false))
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            query["api_key"] = ApplicationSettings.TINAMIApiKey;
+            query["cont_id"] = contentId;
+
+            var apiUrl = "http://api.tinami.com/content/info?" + query;
+
+            using (var response = await this.http.GetAsync(apiUrl, token).ConfigureAwait(false))
             {
                 response.EnsureSuccessStatusCode();
 

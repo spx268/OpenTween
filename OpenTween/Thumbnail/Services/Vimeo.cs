@@ -22,37 +22,50 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.Serialization.Json;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using System.Net;
 
 namespace OpenTween.Thumbnail.Services
 {
-    class Vimeo : SimpleThumbnailService
+    class Vimeo : IThumbnailService
     {
-        public Vimeo(string pattern, string replacement = "${0}")
-            : base(pattern, replacement)
+        public static readonly Regex UrlPatternRegex =
+            new Regex(@"http://vimeo\.com/(?<postID>[0-9]+)");
+
+        protected readonly HttpClient http;
+
+        public Vimeo(HttpClient http)
         {
+            this.http = http;
         }
 
         public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
-            var apiUrl = base.ReplaceUrl(url);
-            if (apiUrl == null) return null;
+            var match = Vimeo.UrlPatternRegex.Match(url);
+            if (!match.Success)
+                return null;
 
-            var xmlStr = await this.http.GetStringAsync(apiUrl)
-                .ConfigureAwait(false);
-
-            var xdoc = XDocument.Parse(xmlStr);
-
-            var thumbUrlElm = xdoc.XPathSelectElement("/oembed/thumbnail_url");
-            if (thumbUrlElm != null)
+            try
             {
+                var apiUrl = "http://vimeo.com/api/oembed.xml?url=" + Uri.EscapeDataString(url);
+
+                var xmlStr = await this.http.GetStringAsync(apiUrl)
+                    .ConfigureAwait(false);
+
+                var xdoc = XDocument.Parse(xmlStr);
+
+                var thumbUrlElm = xdoc.XPathSelectElement("/oembed/thumbnail_url");
+                if (thumbUrlElm == null)
+                    return null;
+
                 var titleElm = xdoc.XPathSelectElement("/oembed/title");
                 var durationElm = xdoc.XPathSelectElement("/oembed/duration");
 
@@ -65,13 +78,14 @@ namespace OpenTween.Thumbnail.Services
                     tooltipText = string.Format("{0} ({1:00}:{2:00})", titleElm.Value, minute, second);
                 }
 
-                return new ThumbnailInfo(this.http)
+                return new ThumbnailInfo
                 {
                     ImageUrl = url,
                     ThumbnailUrl = thumbUrlElm.Value,
                     TooltipText = tooltipText,
                 };
             }
+            catch (HttpRequestException) { }
 
             return null;
         }

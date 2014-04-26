@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -34,16 +35,17 @@ namespace OpenTween.Thumbnail
     {
         public static List<IThumbnailService> Services { get; protected set; }
 
-        internal static readonly Lazy<ImgAzyobuziNet> ImgAzyobuziNetInstance;
+        internal static ImgAzyobuziNet ImgAzyobuziNetInstance { get; private set; }
 
         static ThumbnailGenerator()
         {
             ThumbnailGenerator.Services = new List<IThumbnailService>();
-            ImgAzyobuziNetInstance = new Lazy<ImgAzyobuziNet>(() => new ImgAzyobuziNet(autoupdate: true));
         }
 
-        public static void InitializeGenerator()
+        public static void InitializeGenerator(HttpClient http)
         {
+            ImgAzyobuziNetInstance = new ImgAzyobuziNet(http, autoupdate: true);
+
             ThumbnailGenerator.Services = new List<IThumbnailService>()
             {
                 // ton.twitter.com
@@ -53,7 +55,7 @@ namespace OpenTween.Thumbnail
                 new SimpleThumbnailService(@"^https?://.*(\.jpg|\.jpeg|\.gif|\.png|\.bmp)$", "${0}"),
 
                 // img.azyobuzi.net
-                ImgAzyobuziNetInstance.Value,
+                ImgAzyobuziNetInstance,
 
                 // ImgUr
                 new SimpleThumbnailService(
@@ -101,7 +103,7 @@ namespace OpenTween.Thumbnail
                 new SimpleThumbnailService(@"^http://(?:www\.)?bcphotoshare\.com/photos/\d+/(\d+)$", "http://images.bcphotoshare.com/storages/${1}/thumb180.jpg"),
 
                 // PhotoShare
-                new PhotoShareShortlink(@"^http://bctiny\.com/p(\w+)$"),
+                new PhotoShareShortlink(),
 
                 // img.ly
                 new SimpleThumbnailService(@"^http://img\.ly/(\w+)$",
@@ -114,10 +116,10 @@ namespace OpenTween.Thumbnail
                     "http://twitgoo.com/${1}/img"),
 
                 // youtube
-                new Youtube(@"^http://(?:(www\.youtube\.com)|(youtu\.be))/(watch\?v=)?(?<videoid>([\w\-]+))", "http://i.ytimg.com/vi/${videoid}/default.jpg"),
+                new Youtube(),
 
                 // ニコニコ動画
-                new Nicovideo(@"^http://(?:(www|ext)\.nicovideo\.jp/watch|nico\.ms)/(?:sm|nm)?([0-9]+)(\?.+)?$", "http://www.nicovideo.jp/api/getthumbinfo/${id}"),
+                new Nicovideo(),
 
                 // ニコニコ静画
                 new SimpleThumbnailService(
@@ -126,10 +128,10 @@ namespace OpenTween.Thumbnail
                     "http://lohas.nicoseiga.jp/thumb/${id}l?"),
 
                 // pixiv
-                new Pixiv(@"^http://www\.pixiv\.net/(member_illust|index)\.php\?(?=.*mode=(medium|big))(?=.*illust_id=(?<illustId>[0-9]+)).*$"),
+                new Pixiv(http),
 
                 // flickr
-                new MetaThumbnailService(@"^http://www\.flickr\.com/.+$"),
+                new MetaThumbnailService(http, @"^http://www\.flickr\.com/.+$"),
 
                 // フォト蔵
                 new SimpleThumbnailService(
@@ -138,10 +140,10 @@ namespace OpenTween.Thumbnail
                     "http://photozou.jp/p/img/${photoId}"),
 
                 // Piapro
-                new MetaThumbnailService(@"^http://piapro\.jp/(?:content/[0-9a-z]+|t/[0-9a-zA-Z_\-]+)$"),
+                new MetaThumbnailService(http, @"^http://piapro\.jp/(?:content/[0-9a-z]+|t/[0-9a-zA-Z_\-]+)$"),
 
                 // Tumblr
-                new Tumblr(@"(?<base>http://.+?\.tumblr\.com/)post/(?<postID>[0-9]+)(/(?<subject>.+?)/)?", "${base}api/read?id=${postID}"),
+                new Tumblr(),
 
                 // ついっぷるフォト
                 new SimpleThumbnailService(@"^http://p\.twipple\.jp/(?<contentId>[0-9a-z]+)", "http://p.twipple.jp/show/large/${contentId}"),
@@ -153,7 +155,7 @@ namespace OpenTween.Thumbnail
                 new SimpleThumbnailService(@"^http://ow\.ly/i/(\w+)$", "http://static.ow.ly/photos/thumb/${1}.jpg"),
 
                 // vimeo
-                new Vimeo(@"http://vimeo\.com/(?<postID>[0-9]+)", "http://vimeo.com/api/oembed.xml?url=${0}"),
+                new Vimeo(http),
 
                 // cloudfiles
                 new SimpleThumbnailService(@"^http://c[0-9]+\.cdn[0-9]+\.cloudfiles\.rackspacecloud\.com/[a-z_0-9]+", "${0}"),
@@ -171,10 +173,10 @@ namespace OpenTween.Thumbnail
                     "http://pikubo.me/l/${1}"),
 
                 // Foursquare
-                new FoursquareCheckin(),
+                new FoursquareCheckin(http),
 
                 // TINAMI
-                new Tinami(@"^http://www\.tinami\.com/view/(?<ContentId>\d+)$", "http://api.tinami.com/content/info?cont_id=${ContentId}&api_key=" + ApplicationSettings.TINAMIApiKey),
+                new Tinami(http),
 
                 // pic.twitter.com
                 new SimpleThumbnailService(
@@ -198,13 +200,13 @@ namespace OpenTween.Thumbnail
                     "${0}.jpg"),
 
                 // via.me
-                new ViaMe(@"^https?://via\.me/-(\w+)$", "http://via.me/api/v1/posts/$1"),
+                new ViaMe(http),
 
                 // tuna.be
                 new SimpleThumbnailService(@"^http://tuna\.be/t/(?<entryId>[a-zA-Z0-9\.\-_]+)$", "http://tuna.be/show/thumb/${entryId}"),
 
                 // Path (path.com)
-                new MetaThumbnailService(@"^https?://path.com/p/\w+$"),
+                new MetaThumbnailService(http, @"^https?://path.com/p/\w+$"),
             };
         }
 

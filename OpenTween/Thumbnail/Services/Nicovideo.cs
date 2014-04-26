@@ -28,25 +28,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
 namespace OpenTween.Thumbnail.Services
 {
-    class Nicovideo : SimpleThumbnailService
+    class Nicovideo : IThumbnailService
     {
-        public Nicovideo(string pattern, string replacement = "${0}")
-            : base(pattern, replacement)
-        {
-        }
+        public static readonly Regex UrlPatternRegex =
+            new Regex(@"^http://(?:(www|ext)\.nicovideo\.jp/watch|nico\.ms)/(?<id>(?:sm|nm)?[0-9]+)(\?.+)?$");
 
         public override Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)
         {
             return Task.Run(() =>
             {
-                var apiUrl = base.ReplaceUrl(url);
-                if (apiUrl == null) return null;
+                var match = Nicovideo.UrlPatternRegex.Match(url);
+                if (!match.Success)
+                    return null;
+
+                var apiUrl = "http://www.nicovideo.jp/api/getthumbinfo/" + match.Groups["id"].Value;
 
                 var http = new HttpVarious();
                 var src = "";
@@ -178,7 +180,7 @@ namespace OpenTween.Thumbnail.Services
 
                     if (!string.IsNullOrEmpty(imgurl))
                     {
-                        return new ThumbnailInfo(this.http)
+                        return new ThumbnailInfo
                         {
                             ImageUrl = url,
                             ThumbnailUrl = imgurl,

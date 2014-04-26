@@ -564,6 +564,9 @@ namespace OpenTween
                 this.IconCache.CancelAsync();
                 this.IconCache.Dispose();
             }
+
+            this.http.Dispose();
+
             // 終了時にRemoveHandlerしておかないとメモリリークする
             // http://msdn.microsoft.com/ja-jp/library/microsoft.win32.systemevents.powermodechanged.aspx
             Microsoft.Win32.SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
@@ -869,15 +872,15 @@ namespace OpenTween
             ////設定読み出し
             LoadConfig();
 
-            var imgazyobizinet = ThumbnailGenerator.ImgAzyobuziNetInstance.Value;
+            ThumbnailGenerator.InitializeGenerator(this.http);
+
+            var imgazyobizinet = ThumbnailGenerator.ImgAzyobuziNetInstance;
             imgazyobizinet.Enabled = this._cfgCommon.EnableImgAzyobuziNet;
             imgazyobizinet.DisabledInDM = this._cfgCommon.ImgAzyobuziNetDisabledInDM;
 
             Thumbnail.Services.TonTwitterCom.InitializeOAuthToken = x =>
                 x.Initialize(ApplicationSettings.TwitterConsumerKey, ApplicationSettings.TwitterConsumerSecret,
                     this.tw.AccessToken, this.tw.AccessTokenSecret, "", "");
-
-            ThumbnailGenerator.InitializeGenerator();
 
             //新着バルーン通知のチェック状態設定
             NewPostPopMenuItem.Checked = _cfgCommon.NewAllPop;
@@ -4187,7 +4190,7 @@ namespace OpenTween
                     // タブの表示位置の決定
                     SetTabAlignment();
 
-                    var imgazyobizinet = ThumbnailGenerator.ImgAzyobuziNetInstance.Value;
+                    var imgazyobizinet = ThumbnailGenerator.ImgAzyobuziNetInstance;
                     imgazyobizinet.Enabled = this.SettingDialog.EnableImgAzyobuziNet;
                     imgazyobizinet.DisabledInDM = this.SettingDialog.ImgAzyobuziNetDisabledInDM;
 
@@ -6089,12 +6092,10 @@ namespace OpenTween
         /// </summary>
         public async Task<VersionInfo> GetVersionInfoAsync()
         {
-            var http = MyCommon.CreateHttpClient();
-
             var versionInfoUrl = new Uri(ApplicationSettings.VersionInfoUrl + "?" +
                 DateTime.Now.ToString("yyMMddHHmmss") + Environment.TickCount);
 
-            var responseText = await http.GetStringAsync(versionInfoUrl)
+            var responseText = await this.http.GetStringAsync(versionInfoUrl)
                 .ConfigureAwait(false);
 
             // 改行2つで前後パートを分割（前半がバージョン番号など、後半が詳細テキスト）
@@ -13468,34 +13469,38 @@ namespace OpenTween
             OpenUriAsync(MyCommon.TwitterUrl + tw.Username);
         }
 
-        private void doTranslation(string str)
+        private async Task doTranslation(string str)
         {
-            Bing _bing = new Bing();
-            string buf = "";
-            if (string.IsNullOrEmpty(str)) return;
-            string srclng = "";
-            string dstlng = SettingDialog.TranslateLanguage;
-            string msg = "";
-            if (srclng != dstlng && _bing.Translate("", dstlng, str, out buf))
+            if (string.IsNullOrEmpty(str))
+                return;
+
+            var bing = new Bing(this.http);
+            try
             {
-                PostBrowser.DocumentText = createDetailHtml(buf);
+                var translatedText = await bing.TranslateAsync(str,
+                    langFrom: null,
+                    langTo: this.SettingDialog.TranslateLanguage);
+
+                this.PostBrowser.DocumentText = translatedText;
             }
-            else
+            catch (HttpRequestException e)
             {
-                if (msg.StartsWith("Err:"))
-                    StatusLabel.Text = msg;
+                this.StatusLabel.Text = "Err:" + e.Message;
             }
         }
 
-        private void TranslationToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void TranslationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!this.ExistCurrentPost) return;
-            doTranslation(_curPost.TextFromApi);
+            if (!this.ExistCurrentPost)
+                return;
+
+            await this.doTranslation(this._curPost.TextFromApi);
         }
 
-        private void SelectionTranslationToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void SelectionTranslationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            doTranslation(WebBrowser_GetSelectionText(PostBrowser));
+            var text = this.WebBrowser_GetSelectionText(this.PostBrowser);
+            await this.doTranslation(text);
         }
 
         private bool ExistCurrentPost
