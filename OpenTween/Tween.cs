@@ -257,7 +257,7 @@ namespace OpenTween
         }
 
         private Stack<ReplyChain> replyChains; //[, ]でのリプライ移動の履歴
-        private Stack<Tuple<TabPage, PostClass>> selectPostChains = new Stack<Tuple<TabPage, PostClass>>(); //ポスト選択履歴
+        private Stack<Tuple<TabPage, PostClass>> selectPostChains = new Stack<Tuple<TabPage, PostClass>>(1200); //ポスト選択履歴
 
         //Backgroundworkerの処理結果通知用引数構造体
         private class GetWorkerResult
@@ -7830,20 +7830,20 @@ namespace OpenTween
                     if (p.Item2 == null) this.selectPostChains.Pop();  //置き換えるため削除
                 }
             }
-            if (count >= 2500) TrimPostChain();
+            if (count >= 1200) TrimPostChain();
             this.selectPostChains.Push(Tuple.Create(this._curTab, this._curPost));
         }
 
         private void TrimPostChain()
         {
-            if (this.selectPostChains.Count <= 2000) return;
-            var p = new Stack<Tuple<TabPage, PostClass>>(2000);
-            for (int i = 0; i < 2000; i++)
+            if (this.selectPostChains.Count <= 1000) return;
+            var p = new Stack<Tuple<TabPage, PostClass>>(1000);
+            for (int i = 0; i < 1000; i++)
             {
                 p.Push(this.selectPostChains.Pop());
             }
             this.selectPostChains.Clear();
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 this.selectPostChains.Push(p.Pop());
             }
