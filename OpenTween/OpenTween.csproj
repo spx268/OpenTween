@@ -11,7 +11,8 @@
     <RootNamespace>OpenTween</RootNamespace>
     <AssemblyName>OpenTween</AssemblyName>
     <TargetFrameworkVersion Condition="'$(OS)' == 'Windows_NT'">v4.5.1</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(OS)' != 'Windows_NT'">v4.5</TargetFrameworkVersion><!-- Mono -->
+    <!-- Mono -->
+    <TargetFrameworkVersion Condition="'$(OS)' != 'Windows_NT'">v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -62,6 +63,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\ApiLimit.cs" />
+    <Compile Include="Api\GeoJson.cs" />
+    <Compile Include="Api\TwitterConfiguration.cs" />
+    <Compile Include="Api\TwitterEntity.cs" />
+    <Compile Include="Api\TwitterError.cs" />
+    <Compile Include="Api\TwitterFriendship.cs" />
+    <Compile Include="Api\TwitterList.cs" />
+    <Compile Include="Api\TwitterPageable.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Api\TwitterPlace.cs" />
+    <Compile Include="Api\TwitterSearchResult.cs" />
+    <Compile Include="Api\TwitterStatus.cs" />
+    <Compile Include="Api\TwitterStreamEvent.cs" />
+    <Compile Include="Api\TwitterUser.cs" />
     <Compile Include="Api\TwitterApiAccessLevel.cs" />
     <Compile Include="Api\TwitterApiStatus.cs" />
     <Compile Include="ApplicationEvents.cs">
@@ -143,7 +158,6 @@
     <Compile Include="Connection\TwitPic.cs" />
     <Compile Include="Connection\TwitterPhoto.cs" />
     <Compile Include="Connection\yfrog.cs" />
-    <Compile Include="DataModel.cs" />
     <Compile Include="DetailsListView.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -738,6 +752,12 @@
   </Target>
   -->
   <Target Name="AfterBuild">
-    <SGen BuildAssemblyName="$(TargetFileName)" BuildAssemblyPath="$(TargetDir)" ShouldGenerateSerializer="true" UseProxyTypes="false" Condition="'$(OS)' == 'Windows_NT'" />
+    <ItemGroup>
+      <SGenTypes Include="OpenTween.SettingAtIdList" />
+      <SGenTypes Include="OpenTween.SettingCommon" />
+      <SGenTypes Include="OpenTween.SettingLocal" />
+      <SGenTypes Include="OpenTween.SettingTabs" />
+    </ItemGroup>
+    <SGen BuildAssemblyName="$(TargetFileName)" BuildAssemblyPath="$(TargetDir)" ShouldGenerateSerializer="true" UseProxyTypes="false" Types="@(SGenTypes)" LogStandardErrorAsError="true" Condition="'$(OS)' == 'Windows_NT'" />
   </Target>
 </Project>
