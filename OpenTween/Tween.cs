@@ -3309,6 +3309,23 @@ namespace OpenTween
             }
         }
 
+        private async Task RefreshMuteUserIdsAsync()
+        {
+            this.StatusLabel.Text = Properties.Resources.UpdateMuteUserIds_Start;
+
+            try
+            {
+                await tw.RefreshMuteUserIdsAsync();
+            }
+            catch (WebApiException ex)
+            {
+                this.StatusLabel.Text = string.Format(Properties.Resources.UpdateMuteUserIds_Error, ex.Message);
+                return;
+            }
+
+            this.StatusLabel.Text = Properties.Resources.UpdateMuteUserIds_Finish;
+        }
+
         private void RemovePostFromFavTab(Int64[] ids)
         {
             string favTabName = _statuses.GetTabByType(MyCommon.TabUsageType.Favorites).TabName;
@@ -4342,7 +4359,27 @@ namespace OpenTween
         /// </summary>
         private void SetTabAlignment()
         {
-            ListTab.Alignment = (SettingDialog.ViewTabBottom ? TabAlignment.Bottom : TabAlignment.Top);
+            var newAlignment = SettingDialog.ViewTabBottom ? TabAlignment.Bottom : TabAlignment.Top;
+            if (ListTab.Alignment == newAlignment) return;
+
+            //現在の選択状態を退避
+            Dictionary<string, long[]> selId = new Dictionary<string, long[]>();
+            Dictionary<string, long[]> focusedId = new Dictionary<string, long[]>();
+            SaveSelectedStatus(selId, focusedId);
+
+            ListTab.Alignment = newAlignment;
+
+            //選択状態を復帰
+            foreach (TabPage tab in ListTab.TabPages)
+            {
+                DetailsListView lst = (DetailsListView)tab.Tag;
+                using (ControlTransaction.Update(lst))
+                {
+                    this.SelectListItem(lst,
+                                        _statuses.IndexOf(tab.Text, selId[tab.Text]),
+                                        _statuses.IndexOf(tab.Text, focusedId[tab.Text]));
+                }
+            }
         }
 
         private void ApplyListViewIconSize(MyCommon.IconSizes iconSz)
@@ -11049,6 +11086,7 @@ namespace OpenTween
 
             if (this.IsNetworkAvailable())
             {
+                this.RefreshMuteUserIdsAsync();
                 GetTimeline(MyCommon.WORKERTYPE.BlockIds, 0, 0, "");
                 GetTimeline(MyCommon.WORKERTYPE.NoRetweetIds, 0, 0, "");
                 if (SettingDialog.StartupFollowers)
