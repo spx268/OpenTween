@@ -1054,6 +1054,7 @@ namespace OpenTween
             SettingDialog.UseAtIdSupplement = _cfgCommon.UseAtIdSupplement;
             SettingDialog.UseHashSupplement = _cfgCommon.UseHashSupplement;
             SettingDialog.PreviewEnable = _cfgCommon.PreviewEnable;
+            SettingDialog.StatusAreaAtBottom = _cfgCommon.StatusAreaAtBottom;
             AtIdSupl = new AtIdSupplement(SettingAtIdList.Load().AtIdList, "@");
 
             SettingDialog.IsMonospace = _cfgCommon.IsMonospace;
@@ -1276,6 +1277,9 @@ namespace OpenTween
 
             // NameLabel のフォントを OTBaseForm.GlobalFont に変更
             this.NameLabel.Font = this.ReplaceToGlobalFont(this.NameLabel.Font);
+
+            // 必要であれば、発言一覧と発言詳細部・入力欄の上下を入れ替える
+            SplitContainer1.IsPanelInverted = !SettingDialog.StatusAreaAtBottom;
 
             //全新着通知のチェック状態により、Reply＆DMの新着通知有効無効切り替え（タブ別設定にするため削除予定）
             if (SettingDialog.UnreadManage == false)
@@ -4190,6 +4194,8 @@ namespace OpenTween
                     // タブの表示位置の決定
                     SetTabAlignment();
 
+                    SplitContainer1.IsPanelInverted = !SettingDialog.StatusAreaAtBottom;
+
                     var imgazyobizinet = ThumbnailGenerator.ImgAzyobuziNetInstance;
                     imgazyobizinet.Enabled = this.SettingDialog.EnableImgAzyobuziNet;
                     imgazyobizinet.DisabledInDM = this.SettingDialog.ImgAzyobuziNetDisabledInDM;
@@ -5616,18 +5622,20 @@ namespace OpenTween
 
         private void DrawListViewItemIcon(DrawListViewItemEventArgs e)
         {
+            if (_iconSz == 0) return;
+
             ImageListViewItem item = (ImageListViewItem)e.Item;
 
             //e.Bounds.Leftが常に0を指すから自前で計算
             Rectangle itemRect = item.Bounds;
-            itemRect.Width = e.Item.ListView.Columns[0].Width;
+            var col0 = e.Item.ListView.Columns[0];
+            itemRect.Width = col0.Width;
 
-            int dispIndex = e.Item.ListView.Columns[0].DisplayIndex;
-            if (dispIndex > 0)
+            if (col0.DisplayIndex > 0)
             {
                 foreach (ColumnHeader clm in e.Item.ListView.Columns)
                 {
-                    if (clm.DisplayIndex < dispIndex)
+                    if (clm.DisplayIndex < col0.DisplayIndex)
                         itemRect.X += clm.Width;
                 }
             }
@@ -8063,6 +8071,7 @@ namespace OpenTween
                 _cfgCommon.UseAtIdSupplement = SettingDialog.UseAtIdSupplement;
                 _cfgCommon.UseHashSupplement = SettingDialog.UseHashSupplement;
                 _cfgCommon.PreviewEnable = SettingDialog.PreviewEnable;
+                _cfgCommon.StatusAreaAtBottom = SettingDialog.StatusAreaAtBottom;
                 _cfgCommon.Language = SettingDialog.Language;
 
                 _cfgCommon.SortOrder = (int)_statuses.SortOrder;
@@ -8232,7 +8241,7 @@ namespace OpenTween
                 }
                 catch (WebApiException ex)
                 {
-                    var message = ex.InnerException.Message;
+                    var message = ex.Message;
                     MessageBox.Show(this, string.Format(Properties.Resources.OpenURL_LoadFailed, message),
                         Properties.Resources.OpenURL_Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;

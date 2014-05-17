@@ -47,7 +47,7 @@
             this.ToolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.HashToggleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.HashManageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.SplitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.SplitContainer1 = new OTSplitContainer();
             this.TimelinePanel = new System.Windows.Forms.Panel();
             this.ListTab = new System.Windows.Forms.TabControl();
             this.ContextMenuTabProperty = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -1222,6 +1222,7 @@
             // 
             resources.ApplyResources(this.tweetThumbnail1, "tweetThumbnail1");
             this.tweetThumbnail1.Name = "tweetThumbnail1";
+            this.tweetThumbnail1.TabStop = false;
             this.ToolTip1.SetToolTip(this.tweetThumbnail1, resources.GetString("tweetThumbnail1.ToolTip"));
             this.tweetThumbnail1.ThumbnailLoading += new System.EventHandler(this.tweetThumbnail1_ThumbnailLoading);
             this.tweetThumbnail1.ThumbnailLoadCompleted += new System.EventHandler(this.tweetThumbnail1_ThumbnailLoadCompleted);
@@ -2668,7 +2669,7 @@
         internal System.Windows.Forms.ToolStripSeparator ToolStripSeparator8;
         internal System.Windows.Forms.ToolStripMenuItem HashToggleMenuItem;
         internal System.Windows.Forms.ToolStripMenuItem HashManageMenuItem;
-        internal System.Windows.Forms.SplitContainer SplitContainer1;
+        internal OTSplitContainer SplitContainer1;
         internal System.Windows.Forms.Panel TimelinePanel;
         internal System.Windows.Forms.TabControl ListTab;
         internal System.Windows.Forms.ContextMenuStrip ContextMenuTabProperty;

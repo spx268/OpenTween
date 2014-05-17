@@ -144,9 +144,7 @@ namespace OpenTween
             lock (this.lockObject)
             {
                 Task<MemoryImage> imageTask;
-                this.innerDictionary.TryGetValue(address, out imageTask);
-
-                if (imageTask == null ||
+                if (!this.innerDictionary.TryGetValue(address, out imageTask) ||
                     imageTask.Status != TaskStatus.RanToCompletion)
                     return null;
 
