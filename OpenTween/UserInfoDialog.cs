@@ -44,18 +44,6 @@ namespace OpenTween
     public partial class UserInfoDialog : OTBaseForm
     {
         private TwitterUser _displayUser;
-        public TwitterUser DisplayUser
-        {
-            get { return this._displayUser; }
-            set
-            {
-                if (this._displayUser != value)
-                {
-                    this._displayUser = value;
-                    this.OnDisplayUserChanged();
-                }
-            }
-        }
 
         private readonly TweenMain mainForm;
         private readonly Twitter twitter;
@@ -71,12 +59,12 @@ namespace OpenTween
             this.LabelScreenName.Font = this.ReplaceToGlobalFont(this.LabelScreenName.Font);
         }
 
-        protected virtual async void OnDisplayUserChanged()
+        public async Task ShowUserAsync(TwitterUser user)
         {
-            if (this._displayUser == null)
+            if (user == null || user == this._displayUser)
                 return;
 
-            var user = this._displayUser;
+            this._displayUser = user;
 
             this.LabelId.Text = user.IdStr;
             this.LabelScreenName.Text = user.ScreenName;
@@ -173,11 +161,17 @@ namespace OpenTween
             if (imageUri == null)
                 return;
 
-            using (var http = MyCommon.CreateHttpClient())
+            await this.UserPicture.SetImageFromTask(async () =>
             {
-                var imageStream = await http.GetStreamAsync(imageUri.Replace("_normal", "_bigger"));
-                this.UserPicture.Image = await MemoryImage.CopyFromStreamAsync(imageStream);
-            }
+                using (var http = MyCommon.CreateHttpClient())
+                {
+                    var imageStream = await http.GetStreamAsync(imageUri.Replace("_normal", "_bigger"))
+                        .ConfigureAwait(false);
+
+                    return await MemoryImage.CopyFromStreamAsync(imageStream)
+                        .ConfigureAwait(false);
+                }
+            });
         }
 
         private async Task SetLinkLabelWebAsync(string uri)
@@ -476,6 +470,8 @@ namespace OpenTween
             }
             else
             {
+                Task showUserTask = null;
+
                 if (TextBoxName.Modified ||
                     TextBoxLocation.Modified ||
                     TextBoxWeb.Modified ||
@@ -490,7 +486,7 @@ namespace OpenTween
                                 this.TextBoxLocation.Text,
                                 this.TextBoxDescription.Text));
 
-                        this.DisplayUser = user;
+                        showUserTask = this.ShowUserAsync(user);
                     }
                     catch (WebApiException ex)
                     {
@@ -518,6 +514,9 @@ namespace OpenTween
                 ButtonEdit.Text = ButtonEditText;
 
                 IsEditing = false;
+
+                if (showUserTask != null)
+                    await showUserTask;
             }
 
             this.ButtonEdit.Enabled = true;
@@ -552,7 +551,7 @@ namespace OpenTween
                 });
 
                 if (user != null)
-                    this.DisplayUser = user;
+                    await this.ShowUserAsync(user);
             }
             catch (WebApiException ex)
             {

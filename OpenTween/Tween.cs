@@ -10055,25 +10055,16 @@ namespace OpenTween
         {
             if (this._curPost == null) return;
 
-            var imageUrl = this._curPost.ImageUrl;
-            try
+            await this.UserPicture.SetImageFromTask(async () =>
             {
-                var image = await this.IconCache.DownloadImageAsync(imageUrl, force: true);
+                var imageUrl = this._curPost.ImageUrl;
 
-                this.ClearUserPicture();
-                this.UserPicture.Image = image.Clone();
-            }
-            catch (Exception)
-            {
-                this.UserPicture.ShowErrorImage();
-                try
-                {
-                    throw;
-                }
-                catch (HttpRequestException) { }
-                catch (InvalidImageException) { }
-                catch (TaskCanceledException) { }
-            }
+                var image = await this.IconCache.DownloadImageAsync(imageUrl, force: true)
+                    .ConfigureAwait(false);
+
+                return await image.CloneAsync()
+                    .ConfigureAwait(false);
+            });
         }
 
         private void SaveOriginalSizeIconPictureToolStripMenuItem_Click(object sender, EventArgs e)
@@ -12420,14 +12411,18 @@ namespace OpenTween
             }
         }
 
-        private void doShowUserStatus(TwitterUser user)
+        private async void doShowUserStatus(TwitterUser user)
         {
-            using (var userinfo = new UserInfoDialog(this, this.tw))
+            using (var userDialog = new UserInfoDialog(this, this.tw))
             {
-                userinfo.DisplayUser = user;
-                userinfo.ShowDialog(this);
+                var showUserTask = userDialog.ShowUserAsync(user);
+                userDialog.ShowDialog(this);
+
                 this.Activate();
                 this.BringToFront();
+
+                // ユーザー情報の表示が完了するまで userDialog を破棄しない
+                await showUserTask;
             }
         }
 
