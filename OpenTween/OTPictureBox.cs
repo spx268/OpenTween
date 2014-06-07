@@ -122,18 +122,5 @@ namespace OpenTween
         {
             throw new NotImplementedException();
         }
-
-        protected override void OnPaint(PaintEventArgs pe)
-        {
-            try
-            {
-                base.OnPaint(pe);
-            }
-            catch (System.Runtime.InteropServices.ExternalException)
-            {
-                // XP: アニメーション GIF の再生中に GDI+ 汎用エラーが発生することがある
-                this.ShowErrorImage();
-            }
-        }
     }
 }
