@@ -2888,7 +2888,7 @@ namespace OpenTween
                 //    sb.Append("http://");
                 //}
                 var url = mu.Result("${url}");
-                var title = await ShortUrl.Instance.ExpandUrlStrAsync(url);
+                var title = await ShortUrl.Instance.ExpandUrlAsync(url);
                 sb.Append(url + "\" title=\"" + MyCommon.ConvertToReadableUrl(title) + "\">").Append(url).Append("</a>");
                 if (media != null && !media.ContainsKey(url)) media.Add(url, title);
                 return sb.ToString();
@@ -2977,7 +2977,7 @@ namespace OpenTween
                 {
                     foreach (var ent in entities.Urls)
                     {
-                        ent.ExpandedUrl = await ShortUrl.Instance.ExpandUrlStrAsync(ent.ExpandedUrl)
+                        ent.ExpandedUrl = await ShortUrl.Instance.ExpandUrlAsync(ent.ExpandedUrl)
                             .ConfigureAwait(false);
 
                         if (media != null && !media.ContainsKey(ent.Url))

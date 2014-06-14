@@ -181,7 +181,7 @@ namespace OpenTween
         }
 
         [Fact]
-        public async Task ExpandUrlStrAsync_Test()
+        public async Task ExpandUrlAsync_String_Test()
         {
             var handler = new HttpMessageHandlerMock();
             using (var http = new HttpClient(handler))
@@ -198,14 +198,14 @@ namespace OpenTween
                 });
 
                 Assert.Equal("http://example.com/hoge2",
-                    await shortUrl.ExpandUrlStrAsync("http://t.co/hoge1"));
+                    await shortUrl.ExpandUrlAsync("http://t.co/hoge1"));
 
                 Assert.Equal(0, handler.QueueCount);
             }
         }
 
         [Fact]
-        public async Task ExpandUrlStrAsync_SchemeLessUrlTest()
+        public async Task ExpandUrlAsync_String_SchemeLessUrlTest()
         {
             var handler = new HttpMessageHandlerMock();
             using (var http = new HttpClient(handler))
@@ -223,14 +223,14 @@ namespace OpenTween
 
                 // スキームが省略されたURL
                 Assert.Equal("http://example.com/hoge2",
-                    await shortUrl.ExpandUrlStrAsync("t.co/hoge1"));
+                    await shortUrl.ExpandUrlAsync("t.co/hoge1"));
 
                 Assert.Equal(0, handler.QueueCount);
             }
         }
 
         [Fact]
-        public async Task ExpandUrlStrAsync_InvalidUrlTest()
+        public async Task ExpandUrlAsync_String_InvalidUrlTest()
         {
             var handler = new HttpMessageHandlerMock();
             using (var http = new HttpClient(handler))
@@ -245,7 +245,7 @@ namespace OpenTween
                 });
 
                 // 不正なURL
-                Assert.Equal("..hogehoge..", await shortUrl.ExpandUrlStrAsync("..hogehoge.."));
+                Assert.Equal("..hogehoge..", await shortUrl.ExpandUrlAsync("..hogehoge.."));
 
                 Assert.Equal(1, handler.QueueCount);
             }
@@ -293,6 +293,28 @@ namespace OpenTween
                     await shortUrl.ExpandUrlHtmlAsync("<a href=\"http://t.co/hoge1\">hogehoge</a>"));
 
                 Assert.Equal(0, handler.QueueCount);
+            }
+        }
+
+        [Fact]
+        public async Task ExpandUrlHtmlAsync_RelativeUriTest()
+        {
+            var handler = new HttpMessageHandlerMock();
+            using (var http = new HttpClient(handler))
+            {
+                var shortUrl = new ShortUrl(http);
+
+                handler.Enqueue(x =>
+                {
+                    // リクエストは送信されないはず
+                    Assert.True(false);
+                    return this.CreateRedirectResponse("http://example.com/hoge");
+                });
+
+                Assert.Equal("<a href=\"./hoge\">hogehoge</a>",
+                    await shortUrl.ExpandUrlHtmlAsync("<a href=\"./hoge\">hogehoge</a>"));
+
+                Assert.Equal(1, handler.QueueCount);
             }
         }
 
