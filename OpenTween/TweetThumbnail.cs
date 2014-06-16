@@ -45,6 +45,8 @@ namespace OpenTween
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
         public event EventHandler<ThumbnailImageSearchEventArgs> ThumbnailImageSearchClick;
 
+        private readonly HttpClient http = MyCommon.CreateHttpClient();
+
         private object uiLockObj = new object();
 
         public ThumbnailInfo Thumbnail
@@ -72,52 +74,56 @@ namespace OpenTween
 
             this.scrollBar.Enabled = false;
 
+            if (post.Media.Count == 0 && post.PostGeo.Lat == 0 && post.PostGeo.Lng == 0)
+            {
+                this.SetThumbnailCount(0);
+                return;
+            }
+
             var thumbnails = (await this.GetThumbailInfoAsync(post, cancelToken))
                 .ToArray();
 
             cancelToken.ThrowIfCancellationRequested();
 
-            lock (this.uiLockObj)
+            this.SetThumbnailCount(thumbnails.Length);
+            if (thumbnails.Length == 0)
+                return;
+
+            for (int i = 0; i < thumbnails.Length; i++)
             {
-                this.SetThumbnailCount(thumbnails.Length);
-                if (thumbnails.Length == 0) return;
+                var thumb = thumbnails[i];
+                var picbox = this.pictureBox[i];
 
-                for (int i = 0; i < thumbnails.Length; i++)
-                {
-                    var thumb = thumbnails[i];
-                    var picbox = this.pictureBox[i];
+                picbox.Tag = thumb;
+                picbox.ContextMenuStrip = this.contextMenuStrip;
 
-                    picbox.Tag = thumb;
-                    picbox.ContextMenuStrip = this.contextMenuStrip;
-
-                    var loadTask = picbox.SetImageFromTask(() => thumb.LoadThumbnailImageAsync(cancelToken))
-                        .ContinueWith(t2 =>
-                        {
-                            if (picbox.Image != null)  // 画像読み込みの成否をチェック
-                            {
-                                picbox.MouseDown += this.pictureBox_MouseDown;
-                                picbox.MouseUp += this.pictureBox_MouseUp;
-                                picbox.MouseMove += this.pictureBox_MouseMove;
-
-                                if (this.ThumbnailLoadCompleted != null)
-                                    this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
-                            }
-                        }, cancelToken, TaskContinuationOptions.OnlyOnRanToCompletion, uiScheduler);
-
-                    loadTasks.Add(loadTask);
-
-                    var tooltipText = thumb.TooltipText;
-                    if (!string.IsNullOrEmpty(tooltipText))
+                var loadTask = picbox.SetImageFromTask(() => thumb.LoadThumbnailImageAsync(cancelToken))
+                    .ContinueWith(t2 =>
                     {
-                        this.toolTip.SetToolTip(picbox, tooltipText);
-                    }
+                        if (picbox.Image != null)  // 画像読み込みの成否をチェック
+                        {
+                            picbox.MouseDown += this.pictureBox_MouseDown;
+                            picbox.MouseUp += this.pictureBox_MouseUp;
+                            picbox.MouseMove += this.pictureBox_MouseMove;
 
-                    cancelToken.ThrowIfCancellationRequested();
+                            if (this.ThumbnailLoadCompleted != null)
+                                this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
+                        }
+                    }, cancelToken, TaskContinuationOptions.OnlyOnRanToCompletion, uiScheduler);
+
+                loadTasks.Add(loadTask);
+
+                var tooltipText = thumb.TooltipText;
+                if (!string.IsNullOrEmpty(tooltipText))
+                {
+                    this.toolTip.SetToolTip(picbox, tooltipText);
                 }
 
-                if (thumbnails.Length > 1)
-                    this.scrollBar.Enabled = true;
+                cancelToken.ThrowIfCancellationRequested();
             }
+
+            if (thumbnails.Length > 1)
+                this.scrollBar.Enabled = true;
 
             if (this.ThumbnailLoading != null)
                 this.ThumbnailLoading(this, EventArgs.Empty);
@@ -141,7 +147,10 @@ namespace OpenTween
         /// <param name="count">表示するサムネイルの数</param>
         protected void SetThumbnailCount(int count)
         {
-            using (ControlTransaction.Layout(this, false))
+            if (count == 0 && this.pictureBox.Count == 0)
+                return;
+
+            using (ControlTransaction.Layout(this.panelPictureBox, false))
             {
                 this.panelPictureBox.Controls.Clear();
                 foreach (var picbox in this.pictureBox)
@@ -151,6 +160,9 @@ namespace OpenTween
 
                     if (memoryImage != null)
                         memoryImage.Dispose();
+
+                    // メモリリーク対策 (http://stackoverflow.com/questions/2792427#2793714)
+                    picbox.ContextMenuStrip = null;
                 }
                 this.pictureBox.Clear();
 
