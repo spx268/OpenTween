@@ -70,7 +70,6 @@ namespace OpenTween
         public async Task ShowThumbnailAsync(PostClass post, CancellationToken cancelToken)
         {
             var loadTasks = new List<Task>();
-            var uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
             this.scrollBar.Enabled = false;
 
@@ -97,20 +96,7 @@ namespace OpenTween
                 picbox.Tag = thumb;
                 picbox.ContextMenuStrip = this.contextMenuStrip;
 
-                var loadTask = picbox.SetImageFromTask(() => thumb.LoadThumbnailImageAsync(cancelToken))
-                    .ContinueWith(t2 =>
-                    {
-                        if (picbox.Image != null)  // 画像読み込みの成否をチェック
-                        {
-                            picbox.MouseDown += this.pictureBox_MouseDown;
-                            picbox.MouseUp += this.pictureBox_MouseUp;
-                            picbox.MouseMove += this.pictureBox_MouseMove;
-
-                            if (this.ThumbnailLoadCompleted != null)
-                                this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
-                        }
-                    }, cancelToken, TaskContinuationOptions.OnlyOnRanToCompletion, uiScheduler);
-
+                var loadTask = this.SetThumbnailImageAsync(picbox, thumb, cancelToken);
                 loadTasks.Add(loadTask);
 
                 var tooltipText = thumb.TooltipText;
@@ -129,6 +115,37 @@ namespace OpenTween
                 this.ThumbnailLoading(this, EventArgs.Empty);
 
             await Task.WhenAll(loadTasks).ConfigureAwait(false);
+        }
+
+        private async Task SetThumbnailImageAsync(OTPictureBox picbox, ThumbnailInfo thumbInfo,
+            CancellationToken cancelToken)
+        {
+            try
+            {
+                picbox.ShowInitialImage();
+                picbox.Image = await thumbInfo.LoadThumbnailImageAsync(this.http, cancelToken);
+
+                cancelToken.ThrowIfCancellationRequested();
+
+                picbox.MouseDown += this.pictureBox_MouseDown;
+                picbox.MouseUp += this.pictureBox_MouseUp;
+                picbox.MouseMove += this.pictureBox_MouseMove;
+
+                if (this.ThumbnailLoadCompleted != null)
+                    this.ThumbnailLoadCompleted(picbox, EventArgs.Empty);
+            }
+            catch (Exception)
+            {
+                picbox.ShowErrorImage();
+                try
+                {
+                    throw;
+                }
+                catch (HttpRequestException) { }
+                catch (InvalidImageException) { }
+                catch (TaskCanceledException) { }
+                catch (WebException) { }
+            }
         }
 
         private string GetImageSearchUri(string image_uri)
