@@ -213,7 +213,7 @@ namespace OpenTween.Thumbnail
 
             if (post.Media != null)
             {
-                foreach (var media in post.Media.Values.SelectMany(x => x))
+                foreach (var media in post.Media)
                 {
                     var thumbInfo = await ThumbnailGenerator.GetThumbnailInfoAsync(media, post, token)
                         .ConfigureAwait(false);
