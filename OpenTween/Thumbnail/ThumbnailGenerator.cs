@@ -204,6 +204,9 @@ namespace OpenTween.Thumbnail
 
                 // Path (path.com)
                 new MetaThumbnailService(http, @"^https?://path.com/p/\w+$"),
+
+                // GIFMAGAZINE
+                new SimpleThumbnailService(@"^http://gifmagazine\.net/post_images/(\d+)", "http://img.gifmagazine.net/gifmagazine/images/${1}/original.gif"),
             };
         }
 
