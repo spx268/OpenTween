@@ -1563,16 +1563,7 @@ namespace OpenTween
             {
                 TabClass tb;
                 if (!_tabs.TryGetValue(TabName, out tb)) throw new ArgumentException("TabName=" + TabName + " is not contained.");
-                var id = tb.GetId(Index);
-                if (id < 0) throw new ArgumentException("Index can't find. Index=" + Index.ToString() + "/TabName=" + TabName);
-                try
-                {
-                    return tb.Posts[tb.GetId(Index)];
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("Index=" + Index.ToString() + "/TabName=" + TabName, ex);
-                }
+                return tb[Index];
             }
         }
 
@@ -1582,13 +1573,7 @@ namespace OpenTween
             {
                 TabClass tb;
                 if (!_tabs.TryGetValue(TabName, out tb)) throw new ArgumentException("TabName=" + TabName + " is not contained.");
-                var length = EndIndex - StartIndex + 1;
-                var posts = new PostClass[length];
-                for (int i = 0; i < length; i++)
-                {
-                    posts[i] = tb.Posts[tb.GetId(StartIndex + i)];
-                }
-                return posts;
+                return tb[StartIndex, EndIndex];
             }
         }
 
@@ -1743,15 +1728,7 @@ namespace OpenTween
 
         public long[] GetId(string TabName, ListView.SelectedIndexCollection IndexCollection)
         {
-            if (IndexCollection.Count == 0) return null;
-
-            var tb = _tabs[TabName];
-            var Ids = new long[IndexCollection.Count];
-            for (int i = 0; i < Ids.Length; i++)
-            {
-                Ids[i] = tb.GetId(IndexCollection[i]);
-            }
-            return Ids;
+            return _tabs[TabName].GetId(IndexCollection);
         }
 
         public long GetId(string TabName, int Index)
@@ -1761,14 +1738,7 @@ namespace OpenTween
 
         public int[] IndexOf(string TabName, long[] Ids)
         {
-            if (Ids == null) return null;
-            var idx = new int[Ids.Length];
-            var tb = _tabs[TabName];
-            for (int i = 0; i < Ids.Length; i++)
-            {
-                idx[i] = tb.IndexOf(Ids[i]);
-            }
-            return idx;
+            return _tabs[TabName].IndexOf(Ids);
         }
 
         public int IndexOf(string TabName, long Id)
@@ -2559,9 +2529,63 @@ namespace OpenTween
             _innerPosts.Clear();
         }
 
+        public PostClass this[int Index]
+        {
+            get
+            {
+                var id = GetId(Index);
+                if (id < 0) throw new ArgumentException("Index can't find. Index=" + Index.ToString() + "/TabName=" + TabName);
+                try
+                {
+                    return Posts[id];
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Index=" + Index.ToString() + "/TabName=" + TabName, ex);
+                }
+            }
+        }
+
+        public PostClass[] this[int StartIndex, int EndIndex]
+        {
+            get
+            {
+                var length = EndIndex - StartIndex + 1;
+                var posts = new PostClass[length];
+                for (int i = 0; i < length; i++)
+                {
+                    posts[i] = Posts[GetId(StartIndex + i)];
+                }
+                return posts;
+            }
+        }
+
+        public long[] GetId(ListView.SelectedIndexCollection IndexCollection)
+        {
+            if (IndexCollection.Count == 0) return null;
+
+            var Ids = new long[IndexCollection.Count];
+            for (int i = 0; i < Ids.Length; i++)
+            {
+                Ids[i] = GetId(IndexCollection[i]);
+            }
+            return Ids;
+        }
+
         public long GetId(int Index)
         {
             return Index < _ids.Count ? _ids[Index] : -1;
+        }
+
+        public int[] IndexOf(long[] Ids)
+        {
+            if (Ids == null) return null;
+            var idx = new int[Ids.Length];
+            for (int i = 0; i < Ids.Length; i++)
+            {
+                idx[i] = IndexOf(Ids[i]);
+            }
+            return idx;
         }
 
         public int IndexOf(long ID)

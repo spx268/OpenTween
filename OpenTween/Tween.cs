@@ -1711,8 +1711,8 @@ namespace OpenTween
                                 //アイコン描画不具合あり？
                             }
                             this.SelectListItem(lst,
-                                                _statuses.IndexOf(tab.Text, selId[tab.Text]),
-                                                _statuses.IndexOf(tab.Text, focusedId[tab.Text]));
+                                                tabInfo.IndexOf(selId[tab.Text]),
+                                                tabInfo.IndexOf(focusedId[tab.Text]));
                         }
                     }
                     if (tabInfo.UnreadCount > 0)
@@ -1864,10 +1864,11 @@ namespace OpenTween
             if (MyCommon._endingFlag) return;
             foreach (TabPage tab in ListTab.TabPages)
             {
-                DetailsListView lst = (DetailsListView)tab.Tag;
+                var lst = (DetailsListView)tab.Tag;
+                var tabInfo = _statuses.Tabs[tab.Text];
                 if (lst.SelectedIndices.Count > 0 && lst.SelectedIndices.Count < 61)
                 {
-                    selId.Add(tab.Text, _statuses.GetId(tab.Text, lst.SelectedIndices));
+                    selId.Add(tab.Text, tabInfo.GetId(lst.SelectedIndices));
                 }
                 else
                 {
@@ -1876,9 +1877,9 @@ namespace OpenTween
 
                 var fIds = new long[2];  // 0 = focus, 1 = selection mark
                 var item = lst.FocusedItem;
-                fIds[0] = (item != null) ? _statuses.GetId(tab.Text, item.Index) : -2;
+                fIds[0] = (item != null) ? tabInfo.GetId(item.Index) : -2;
                 var mIdx = lst.SelectionMark;
-                fIds[1] = (mIdx > -1) ? _statuses.GetId(tab.Text, mIdx) : -2;
+                fIds[1] = (mIdx > -1) ? tabInfo.GetId(mIdx) : -2;
                 focusedId.Add(tab.Text, fIds);
             }
 
@@ -2171,9 +2172,10 @@ namespace OpenTween
 
         private void ChangeCacheStyleRead(bool Read, int Index)
         {
+            var tabInfo = _statuses.Tabs[_curTab.Text];
             //Read:true=既読 false=未読
             //未読管理していなかったら既読として扱う
-            if (!_statuses.Tabs[_curTab.Text].UnreadManage ||
+            if (!tabInfo.UnreadManage ||
                !SettingDialog.UnreadManage) Read = true;
 
             //対象の特定
@@ -2185,7 +2187,7 @@ namespace OpenTween
             if (itm == null || post == null)
             {
                 itm = ((DetailsListView)_curTab.Tag).Items[Index];
-                post = _statuses[_curTab.Text, Index];
+                post = tabInfo[Index];
             }
 
             ChangeItemStyleRead(Read, itm, post, ((DetailsListView)_curTab.Tag));
@@ -4384,11 +4386,12 @@ namespace OpenTween
             foreach (TabPage tab in ListTab.TabPages)
             {
                 DetailsListView lst = (DetailsListView)tab.Tag;
+                TabClass tabInfo = _statuses.Tabs[tab.Text];
                 using (ControlTransaction.Update(lst))
                 {
                     this.SelectListItem(lst,
-                                        _statuses.IndexOf(tab.Text, selId[tab.Text]),
-                                        _statuses.IndexOf(tab.Text, focusedId[tab.Text]));
+                                        tabInfo.IndexOf(selId[tab.Text]),
+                                        tabInfo.IndexOf(focusedId[tab.Text]));
                 }
             }
         }
@@ -5336,14 +5339,15 @@ namespace OpenTween
             this.itemCacheLock.EnterWriteLock();
             try
             {
-                int bottomIndex = _statuses.Tabs[_curTab.Text].AllCount - 1;
+                var tabInfo = _statuses.Tabs[_curTab.Text];
+                int bottomIndex = tabInfo.AllCount - 1;
 
                 //キャッシュ要求（要求範囲±30を作成）
                 StartIndex -= 30;
                 if (StartIndex < 0) StartIndex = 0;
                 EndIndex += 30;
                 if (EndIndex > bottomIndex) EndIndex = bottomIndex;
-                _postCache = _statuses[_curTab.Text, StartIndex, EndIndex]; //配列で取得
+                _postCache = tabInfo[StartIndex, EndIndex]; //配列で取得
                 _itemCacheIndex = StartIndex;
 
                 _itemCache = new ListViewItem[0] {};
@@ -5417,7 +5421,7 @@ namespace OpenTween
             ImageListViewItem itm = SettingDialog.IconSz != MyCommon.IconSizes.IconNone ?
                                         new ImageListViewItem(sitem, this.IconCache, Post.ImageUrl) :
                                         new ImageListViewItem(sitem);
-            itm.StateImageIndex = Post.StateIndex;
+            itm.StateIndex = Post.StateIndex;
 
             bool read = Post.IsRead;
             //未読管理していなかったら既読として扱う
@@ -5676,14 +5680,14 @@ namespace OpenTween
                 //iconRect.Offset(0, Math.Max(0, (itemRect.Height - realIconSize.Height) / 2));
             }
 
-            if (item.StateImageIndex > -1)
+            if (item.StateIndex > -1)
             {
                 Rectangle stateRect = Rectangle.Intersect(new Rectangle(new Point(iconRect.X + realIconSize.Width + 2, iconRect.Y), realStateSize), itemRect);
                 if (stateRect.Width > 0)
                 {
                     //e.Graphics.FillRectangle(Brushes.White, stateRect);
                     //e.Graphics.InterpolationMode = Drawing2D.InterpolationMode.High;
-                    e.Graphics.DrawImage(this.PostStateImageList.Images[item.StateImageIndex], stateRect);
+                    e.Graphics.DrawImage(this.PostStateImageList.Images[item.StateIndex], stateRect);
                 }
             }
         }
