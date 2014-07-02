@@ -28,6 +28,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTween.Connection;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -35,6 +36,11 @@ namespace OpenTween.Thumbnail.Services
     {
         public static readonly string UrlPattern =
             @"^http://www\.pixiv\.net/(member_illust|index)\.php\?(?=.*mode=(medium|big))(?=.*illust_id=(?<illustId>[0-9]+)).*$";
+
+        public Pixiv()
+            : base(Pixiv.UrlPattern)
+        {
+        }
 
         public Pixiv(HttpClient http)
             : base(http, Pixiv.UrlPattern)
@@ -63,7 +69,7 @@ namespace OpenTween.Thumbnail.Services
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, this.ThumbnailUrl);
 
-                request.Headers.Add("User-Agent", MyCommon.GetUserAgentString(fakeMSIE: true));
+                request.Headers.Add("User-Agent", Networking.GetUserAgentString(fakeMSIE: true));
                 request.Headers.Referrer = new Uri(this.ImageUrl);
 
                 using (var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false))

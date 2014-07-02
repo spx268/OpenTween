@@ -45,8 +45,6 @@ namespace OpenTween
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
         public event EventHandler<ThumbnailImageSearchEventArgs> ThumbnailImageSearchClick;
 
-        private readonly HttpClient http = MyCommon.CreateHttpClient();
-
         private object uiLockObj = new object();
 
         public ThumbnailInfo Thumbnail
@@ -123,7 +121,7 @@ namespace OpenTween
             try
             {
                 picbox.ShowInitialImage();
-                picbox.Image = await thumbInfo.LoadThumbnailImageAsync(this.http, cancelToken);
+                picbox.Image = await thumbInfo.LoadThumbnailImageAsync(cancelToken);
 
                 cancelToken.ThrowIfCancellationRequested();
 

@@ -29,6 +29,7 @@ using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTween.Connection;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -43,9 +44,18 @@ namespace OpenTween.Thumbnail.Services
         protected IEnumerable<Regex> UrlRegex = null;
         protected Timer UpdateTimer;
 
-        protected readonly HttpClient http;
+        protected HttpClient http
+        {
+            get { return this.localHttpClient ?? Networking.Http; }
+        }
+        private readonly HttpClient localHttpClient;
 
         private object LockObj = new object();
+
+        public ImgAzyobuziNet(bool autoupdate)
+            : this(null, autoupdate)
+        {
+        }
 
         public ImgAzyobuziNet(HttpClient http)
             : this(http, autoupdate: false)
@@ -60,7 +70,7 @@ namespace OpenTween.Thumbnail.Services
             this.Enabled = true;
             this.DisabledInDM = true;
 
-            this.http = http;
+            this.localHttpClient = http;
         }
 
         public bool AutoUpdate

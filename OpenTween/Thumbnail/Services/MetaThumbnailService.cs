@@ -28,6 +28,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTween.Connection;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -39,12 +40,22 @@ namespace OpenTween.Thumbnail.Services
         protected static Regex metaPattern = new Regex("<meta (name|property)=[\"'](?<name>.+?)[\"'] (content|value)=[\"'](?<content>.+?)[\"']");
         protected static string[] propertyNames = { "twitter:image", "og:image" };
 
-        protected readonly HttpClient http;
+        protected HttpClient http
+        {
+            get { return this.localHttpClient ?? Networking.Http; }
+        }
+        private readonly HttpClient localHttpClient;
+
         protected readonly Regex regex;
+
+        public MetaThumbnailService(string urlPattern)
+            : this(null, urlPattern)
+        {
+        }
 
         public MetaThumbnailService(HttpClient http, string urlPattern)
         {
-            this.http = http;
+            this.localHttpClient = http;
             this.regex = new Regex(urlPattern);
         }
 

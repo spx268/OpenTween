@@ -45,6 +45,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using OpenTween.Api;
+using OpenTween.Connection;
 
 namespace OpenTween
 {
@@ -3766,7 +3767,7 @@ namespace OpenTween
                         {
                             Started();
                         }
-                        var res = twCon.UserStream(ref st, _allAtreplies, _trackwords, MyCommon.GetUserAgentString());
+                        var res = twCon.UserStream(ref st, _allAtreplies, _trackwords, Networking.GetUserAgentString());
 
                         switch (res)
                         {

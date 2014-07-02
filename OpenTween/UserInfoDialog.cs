@@ -38,6 +38,7 @@ using System.Web;
 using System.IO;
 using System.Net;
 using OpenTween.Api;
+using OpenTween.Connection;
 
 namespace OpenTween
 {
@@ -163,14 +164,13 @@ namespace OpenTween
 
             await this.UserPicture.SetImageFromTask(async () =>
             {
-                using (var http = MyCommon.CreateHttpClient())
-                {
-                    var imageStream = await http.GetStreamAsync(imageUri.Replace("_normal", "_bigger"))
-                        .ConfigureAwait(false);
+                var uri = imageUri.Replace("_normal", "_bigger");
 
-                    return await MemoryImage.CopyFromStreamAsync(imageStream)
-                        .ConfigureAwait(false);
-                }
+                var imageStream = await Networking.Http.GetStreamAsync(uri)
+                    .ConfigureAwait(false);
+
+                return await MemoryImage.CopyFromStreamAsync(imageStream)
+                    .ConfigureAwait(false);
             });
         }
 

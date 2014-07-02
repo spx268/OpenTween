@@ -32,6 +32,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml.Linq;
+using OpenTween.Connection;
 
 namespace OpenTween
 {
@@ -168,11 +169,20 @@ namespace OpenTween
         private static readonly string TranslateUri =
             "https://api.datamarket.azure.com/Data.ashx/Bing/MicrosoftTranslator/v1/Translate";
 
-        private readonly HttpClient http;
+        protected HttpClient http
+        {
+            get { return this.localHttpClient ?? Networking.Http; }
+        }
+        private readonly HttpClient localHttpClient;
+
+        public Bing()
+            : this(null)
+        {
+        }
 
         public Bing(HttpClient http)
         {
-            this.http = http;
+            this.localHttpClient = http;
         }
 
         /// <summary>

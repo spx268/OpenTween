@@ -27,11 +27,14 @@
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Drawing;
+using OpenTween.Connection;
 
 ///<summary>
 ///HttpWebRequest,HttpWebResponseを使用した基本的な通信機能を提供する
@@ -44,28 +47,6 @@ namespace OpenTween
 {
     public class HttpConnection
     {
-        ///<summary>
-        ///プロキシ
-        ///</summary>
-        internal static WebProxy proxy = null;
-
-        ///<summary>
-        ///ユーザーが選択したプロキシの方式
-        ///</summary>
-        internal static ProxyType proxyKind = ProxyType.IE;
-
-        ///<summary>
-        ///初期化済みフラグ
-        ///</summary>
-        private static bool isInitialize = false;
-
-        public enum ProxyType
-        {
-            None,
-            IE,
-            Specified,
-        }
-
         /// <summary>
         /// リクエスト間で Cookie を保持するか否か
         /// </summary>
@@ -96,7 +77,7 @@ namespace OpenTween
                                                Uri requestUri,
                                                Dictionary<string, string> param)
         {
-            if (!isInitialize) throw new Exception("Sequence error.(not initialized)");
+            Networking.CheckInitialized();
 
             //GETメソッドの場合はクエリとurlを結合
             UriBuilder ub = new UriBuilder(requestUri.AbsoluteUri);
@@ -110,7 +91,7 @@ namespace OpenTween
             webReq.ReadWriteTimeout = 90 * 1000; //Streamの読み込みは90秒でタイムアウト（デフォルト5分）
 
             //プロキシ設定
-            if (proxyKind != ProxyType.IE) webReq.Proxy = proxy;
+            if (Networking.ProxyType != ProxyType.IE) webReq.Proxy = Networking.Proxy;
 
             webReq.Method = method;
             if (method == "POST" || method == "PUT")
@@ -125,9 +106,9 @@ namespace OpenTween
             //cookie設定
             if (this.UseCookie) webReq.CookieContainer = this.cookieContainer;
             //タイムアウト設定
-            webReq.Timeout = this.InstanceTimeout ?? HttpConnection.DefaultTimeout;
+            webReq.Timeout = this.InstanceTimeout ?? (int)Networking.DefaultTimeout.TotalMilliseconds;
 
-            webReq.UserAgent = MyCommon.GetUserAgentString();
+            webReq.UserAgent = Networking.GetUserAgentString();
 
             return webReq;
         }
@@ -148,7 +129,7 @@ namespace OpenTween
                                                Dictionary<string, string> param,
                                                List<KeyValuePair<String, FileInfo>> binaryFileInfo)
         {
-            if (!isInitialize) throw new Exception("Sequence error.(not initialized)");
+            Networking.CheckInitialized();
 
             //methodはPOST,PUTのみ許可
             UriBuilder ub = new UriBuilder(requestUri.AbsoluteUri);
@@ -160,7 +141,7 @@ namespace OpenTween
             HttpWebRequest webReq = (HttpWebRequest)WebRequest.Create(ub.Uri);
 
             //プロキシ設定
-            if (proxyKind != ProxyType.IE) webReq.Proxy = proxy;
+            if (Networking.ProxyType != ProxyType.IE) webReq.Proxy = Networking.Proxy;
 
             webReq.Method = method;
             if (method == "POST" || method == "PUT")
@@ -275,7 +256,7 @@ namespace OpenTween
             //cookie設定
             if (this.UseCookie) webReq.CookieContainer = this.cookieContainer;
             //タイムアウト設定
-            webReq.Timeout = this.InstanceTimeout ?? HttpConnection.DefaultTimeout;
+            webReq.Timeout = this.InstanceTimeout ?? (int)Networking.DefaultTimeout.TotalMilliseconds;
 
             return webReq;
         }
@@ -583,73 +564,5 @@ namespace OpenTween
             }
         }
         #endregion
-
-        #region "DefaultTimeout"
-        ///<summary>
-        ///通信タイムアウト時間（ms）
-        ///</summary>
-        private static int timeout = 20000;
-
-        ///<summary>
-        ///通信タイムアウト時間（ms）。10～120秒の範囲で指定。範囲外は20秒とする
-        ///</summary>
-        protected static int DefaultTimeout
-        {
-            get { return timeout; }
-            set
-            {
-                const int TimeoutMinValue = 10000;
-                const int TimeoutMaxValue = 120000;
-                const int TimeoutDefaultValue = 20000;
-                if (value < TimeoutMinValue || value > TimeoutMaxValue)
-                    // 範囲外ならデフォルト値設定
-                    timeout = TimeoutDefaultValue;
-                else
-                    timeout = value;
-            }
-        }
-        #endregion
-
-        ///<summary>
-        ///通信クラスの初期化処理。タイムアウト値とプロキシを設定する
-        ///</summary>
-        ///<remarks>
-        ///通信開始前に最低一度呼び出すこと
-        ///</remarks>
-        ///<param name="timeout">タイムアウト値（秒）</param>
-        ///<param name="proxyType">なし・指定・IEデフォルト</param>
-        ///<param name="proxyAddress">プロキシのホスト名orIPアドレス</param>
-        ///<param name="proxyPort">プロキシのポート番号</param>
-        ///<param name="proxyUser">プロキシ認証が必要な場合のユーザ名。不要なら空文字</param>
-        ///<param name="proxyPassword">プロキシ認証が必要な場合のパスワード。不要なら空文字</param>
-        public static void InitializeConnection(
-                int timeout,
-                ProxyType proxyType,
-                string proxyAddress,
-                int proxyPort,
-                string proxyUser,
-                string proxyPassword)
-        {
-            isInitialize = true;
-            ServicePointManager.Expect100Continue = false;
-            DefaultTimeout = timeout * 1000;     //s -> ms
-            switch (proxyType)
-            {
-                case ProxyType.None:
-                    proxy = null;
-                    break;
-                case ProxyType.Specified:
-                    proxy = new WebProxy("http://" + proxyAddress + ":" + proxyPort);
-                    if (!String.IsNullOrEmpty(proxyUser) || !String.IsNullOrEmpty(proxyPassword))
-                        proxy.Credentials = new NetworkCredential(proxyUser, proxyPassword);
-                    break;
-                case ProxyType.IE:
-                    //IE設定（システム設定）はデフォルト値なので処理しない
-                    break;
-            }
-            proxyKind = proxyType;
-
-            Win32Api.SetProxy(proxyType, proxyAddress, proxyPort, proxyUser, proxyPassword);
-        }
     }
 }

@@ -30,6 +30,7 @@ using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using OpenTween.Connection;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -40,11 +41,20 @@ namespace OpenTween.Thumbnail.Services
 
         public static readonly string ApiBase = "https://api.foursquare.com/v2";
 
-        protected readonly HttpClient http;
+        protected HttpClient http
+        {
+            get { return this.localHttpClient ?? Networking.Http; }
+        }
+        private readonly HttpClient localHttpClient;
+
+        public FoursquareCheckin()
+            : this(null)
+        {
+        }
 
         public FoursquareCheckin(HttpClient http)
         {
-            this.http = http;
+            this.localHttpClient = http;
         }
 
         public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)

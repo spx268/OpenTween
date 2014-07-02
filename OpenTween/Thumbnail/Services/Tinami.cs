@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using OpenTween.Connection;
 
 namespace OpenTween.Thumbnail.Services
 {
@@ -38,11 +39,20 @@ namespace OpenTween.Thumbnail.Services
         public static readonly Regex UrlPatternRegex =
             new Regex(@"^http://www\.tinami\.com/view/(?<ContentId>\d+)$");
 
-        protected readonly HttpClient http;
+        protected HttpClient http
+        {
+            get { return this.localHttpClient ?? Networking.Http; }
+        }
+        private readonly HttpClient localHttpClient;
+
+        public Tinami()
+            : this(null)
+        {
+        }
 
         public Tinami(HttpClient http)
         {
-            this.http = http;
+            this.localHttpClient = http;
         }
 
         public override async Task<ThumbnailInfo> GetThumbnailInfoAsync(string url, PostClass post, CancellationToken token)

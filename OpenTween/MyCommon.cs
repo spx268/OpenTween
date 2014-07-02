@@ -752,14 +752,6 @@ namespace OpenTween
             //RTByMe
         }
 
-        public static string GetUserAgentString(bool fakeMSIE = false)
-        {
-            if (fakeMSIE)
-                return GetAssemblyName() + "/" + FileVersion + " (compatible; MSIE 10.0)";
-            else
-                return GetAssemblyName() + "/" + FileVersion;
-        }
-
         public static TwitterApiStatus TwitterApiInfo = new TwitterApiStatus();
 
         public static bool IsAnimatedGif(string filename)
@@ -973,41 +965,6 @@ namespace OpenTween
         public static string GetStatusUrl(string screenName, long statusId)
         {
             return TwitterUrl + screenName + "/status/" + statusId.ToString();
-        }
-
-        /// <summary>
-        /// OpenTween 内で共通して使う設定を施した HttpClient インスタンスを作成します
-        /// </summary>
-        public static HttpClient CreateHttpClient()
-        {
-            return CreateHttpClient(new HttpClientHandler());
-        }
-
-        /// <summary>
-        /// OpenTween 内で共通して使う設定を施した HttpClient インスタンスを作成します
-        /// </summary>
-        public static HttpClient CreateHttpClient(HttpClientHandler handler)
-        {
-            switch (HttpConnection.proxyKind)
-            {
-                case HttpConnection.ProxyType.None:
-                    handler.UseProxy = false;
-                    break;
-                case HttpConnection.ProxyType.Specified:
-                    handler.UseProxy = true;
-                    handler.Proxy = HttpConnection.proxy;
-                    break;
-                case HttpConnection.ProxyType.IE:
-                default:
-                    handler.UseProxy = true;
-                    handler.Proxy = WebRequest.GetSystemWebProxy();
-                    break;
-            }
-
-            var client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("User-Agent", MyCommon.GetUserAgentString());
-
-            return client;
         }
 
         /// <summary>
