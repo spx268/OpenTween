@@ -571,7 +571,9 @@ namespace OpenTween
                     this.IconCache.Dispose();
                 }
 
-                this.thumbnailTokenSource.Dispose();
+                if (this.thumbnailTokenSource != null)
+                    this.thumbnailTokenSource.Dispose();
+
                 this.itemCacheLock.Dispose();
                 this.tw.Dispose();
                 this._hookGlobalHotkey.Dispose();
@@ -12638,7 +12640,7 @@ namespace OpenTween
         {
             this.Activate();
             this.BringToFront();
-            ImageSelector.BeginSelection(((string[])e.Data.GetData(DataFormats.FileDrop, false))[0]);
+            ImageSelector.BeginSelection((string[])e.Data.GetData(DataFormats.FileDrop, false));
             StatusText.Focus();
         }
 
@@ -13223,7 +13225,7 @@ namespace OpenTween
                     langFrom: null,
                     langTo: this.SettingDialog.TranslateLanguage);
 
-                this.PostBrowser.DocumentText = translatedText;
+                this.PostBrowser.DocumentText = this.createDetailHtml(translatedText);
             }
             catch (HttpRequestException e)
             {
