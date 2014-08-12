@@ -855,7 +855,7 @@ namespace OpenTween
             {
                 //一見未読なさそうだが、未読カウントはあるので探索
                 //if (tb.UnreadCount > 0)
-                if (!(tb.UnreadManage && AppendSettingDialog.Instance.UnreadManage)) return -1;
+                if (!(tb.UnreadManage && SettingCommon.Instance.UnreadManage)) return -1;
                 lock (LockUnread)
                 {
                     this.SetNextUnreadId(-1, tb);
@@ -1198,7 +1198,7 @@ namespace OpenTween
                         {
                             if (Item.IsFav && Item.RetweetedId != null) Item.IsFav = false;
                             //既に持っている公式RTは捨てる
-                            if (AppendSettingDialog.Instance.HideDuplicatedRetweets &&
+                            if (SettingCommon.Instance.HideDuplicatedRetweets &&
                                 !Item.IsMe &&
                                 Item.RetweetedId != null &&
                                 this._retweets.TryGetValue(Item.RetweetedId.Value, out status) &&
@@ -1749,7 +1749,7 @@ namespace OpenTween
 
                 if (!tb.IsInnerStorageTabType)
                 {
-                    var ProtectCount = AppendSettingDialog.Instance.CountApi;
+                    var ProtectCount = SettingCommon.Instance.CountApi;
                     if (_statuses.Count > ProtectCount)
                     {
                         var oldIds = _statuses.Keys.ToList();
@@ -2383,7 +2383,7 @@ namespace OpenTween
         {
             get
             {
-                return this.UnreadManage && AppendSettingDialog.Instance.UnreadManage ? _unreadCount : 0;
+                return this.UnreadManage && SettingCommon.Instance.UnreadManage ? _unreadCount : 0;
             }
             set
             {
@@ -2503,7 +2503,7 @@ namespace OpenTween
                 _tabType == MyCommon.TabUsageType.Lists)
             {
                 var ProtectCount = ((_tabType == MyCommon.TabUsageType.UserTimeline) ?
-                    AppendSettingDialog.Instance.UserTimelineCountApi : AppendSettingDialog.Instance.ListCountApi) * 2;
+                    SettingCommon.Instance.UserTimelineCountApi : SettingCommon.Instance.ListCountApi) * 2;
                 if (_recentIds.Count > ProtectCount)
                 {
                     _recentIds.Sort();
