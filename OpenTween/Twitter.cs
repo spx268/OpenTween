@@ -3465,9 +3465,7 @@ namespace OpenTween
                         return;
                     }
                     else if (xElm.Element("disconnect") != null ||
-                             xElm.Element("warning") != null ||
-                             xElm.Element("status_withheld") != null ||
-                             xElm.Element("user_withheld") != null)
+                             xElm.Element("warning") != null)
                     {
                         Debug.WriteLine(line);
                         return;
