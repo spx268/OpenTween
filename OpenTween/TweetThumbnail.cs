@@ -91,7 +91,6 @@ namespace OpenTween
                 var picbox = this.pictureBox[i];
 
                 picbox.Tag = thumb;
-                picbox.ContextMenuStrip = this.contextMenuStrip;
 
                 var loadTask = this.SetThumbnailImageAsync(picbox, thumb, cancelToken);
                 loadTasks.Add(loadTask);
@@ -174,9 +173,6 @@ namespace OpenTween
 
                     if (memoryImage != null)
                         memoryImage.Dispose();
-
-                    // メモリリーク対策 (http://stackoverflow.com/questions/2792427#2793714)
-                    picbox.ContextMenuStrip = null;
                 }
                 this.pictureBox.Clear();
 
@@ -253,7 +249,7 @@ namespace OpenTween
 
         private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
         {
-            var picbox = (OTPictureBox)this.contextMenuStrip.SourceControl;
+            var picbox = (OTPictureBox)this.pictureBox[this.scrollBar.Value];
             var thumb = (ThumbnailInfo)picbox.Tag;
 
             var searchTargetUri = thumb.FullSizeImageUrl ?? thumb.ThumbnailUrl ?? null;

@@ -50,6 +50,7 @@
             // panelPictureBox
             // 
             resources.ApplyResources(this.panelPictureBox, "panelPictureBox");
+            this.panelPictureBox.ContextMenuStrip = this.contextMenuStrip;
             this.panelPictureBox.Name = "panelPictureBox";
             this.toolTip.SetToolTip(this.panelPictureBox, resources.GetString("panelPictureBox.ToolTip"));
             // 
