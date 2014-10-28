@@ -279,7 +279,7 @@ namespace OpenTween
 
         private void pictureBox_MouseDown(object sender, MouseEventArgs e)
         {
-            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger)
+            if ((e.Button & ThumbnailZoomWindow.Trigger) == ThumbnailZoomWindow.Trigger)
             {
                 this.popupMouseDownPos = e.Location;
             }
@@ -287,7 +287,7 @@ namespace OpenTween
 
         private void pictureBox_MouseUp(object sender, MouseEventArgs e)
         {
-            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger)
+            if ((e.Button & ThumbnailZoomWindow.Trigger) == ThumbnailZoomWindow.Trigger)
             {
                 this.popupMouseDownPos = null;
             }
@@ -295,7 +295,7 @@ namespace OpenTween
 
         private void pictureBox_MouseMove(object sender, MouseEventArgs e)
         {
-            if ((e.Button & ThumbnailWindow.Trigger) == ThumbnailWindow.Trigger &&
+            if ((e.Button & ThumbnailZoomWindow.Trigger) == ThumbnailZoomWindow.Trigger &&
                 this.popupMouseDownPos.HasValue)
             {
                 // ダブルクリック時の些細な移動で反応するのを阻止
@@ -307,7 +307,7 @@ namespace OpenTween
 
                 try
                 {
-                    ThumbnailWindow.Show((OTPictureBox)sender, originPos);
+                    ThumbnailZoomWindow.Show((OTPictureBox)sender, originPos);
                 }
                 catch (Exception)
                 {
@@ -336,7 +336,7 @@ namespace OpenTween
         }
     }
 
-    public class ThumbnailWindow : Form
+    public class ThumbnailZoomWindow : Form
     {
         public static MouseButtons Trigger = MouseButtons.Left;
 
@@ -345,7 +345,7 @@ namespace OpenTween
 
         private bool disposed = false;
 
-        protected ThumbnailWindow(MemoryImage thumbnail, Rectangle startupBounds, Point originPos)
+        protected ThumbnailZoomWindow(MemoryImage thumbnail, Rectangle startupBounds, Point originPos)
         {
             this.startupBounds = startupBounds;
             this.originPos = originPos;
@@ -363,8 +363,8 @@ namespace OpenTween
 
             this.Capture = true;
 
-            this.MouseMove += ThumbnailWindow_MouseMove;
-            this.MouseUp += ThumbnailWindow_MouseUp;
+            this.MouseMove += ThumbnailZoomWindow_MouseMove;
+            this.MouseUp += ThumbnailZoomWindow_MouseUp;
 
             var picbox = new OTPictureBox()
             {
@@ -376,13 +376,13 @@ namespace OpenTween
             };
             this.Controls.Add(picbox);
 
-            picbox.MouseMove += ThumbnailWindow_MouseMove;
-            picbox.MouseUp += ThumbnailWindow_MouseUp;
+            picbox.MouseMove += ThumbnailZoomWindow_MouseMove;
+            picbox.MouseUp += ThumbnailZoomWindow_MouseUp;
 
             this.ResumeLayout(false);
         }
 
-        private void ThumbnailWindow_MouseMove(object sender, MouseEventArgs e)
+        private void ThumbnailZoomWindow_MouseMove(object sender, MouseEventArgs e)
         {
             if ((e.Button & Trigger) == Trigger)
             {
@@ -410,7 +410,7 @@ namespace OpenTween
             }
         }
 
-        private void ThumbnailWindow_MouseUp(object sender, MouseEventArgs e)
+        private void ThumbnailZoomWindow_MouseUp(object sender, MouseEventArgs e)
         {
             if ((e.Button & Trigger) == Trigger)
             {
@@ -451,7 +451,7 @@ namespace OpenTween
             var thumbnail = picbox.Image;
             picbox.Image = null;
 
-            var popup = new ThumbnailWindow(thumbnail, picbox.RectangleToScreen(picbox.Bounds), picbox.PointToScreen(originPos))
+            var popup = new ThumbnailZoomWindow(thumbnail, picbox.RectangleToScreen(picbox.Bounds), picbox.PointToScreen(originPos))
             {
                 BackColor = picbox.BackColor,
             };
