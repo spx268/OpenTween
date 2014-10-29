@@ -73,6 +73,7 @@
             this.SaveIconPictureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NameLabel = new System.Windows.Forms.Label();
             this.PostBrowser = new System.Windows.Forms.WebBrowser();
+            this.PostBrowserPanel = new System.Windows.Forms.UserControl();
             this.ContextMenuPostBrowser = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.SelectionSearchContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SearchGoogleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -734,7 +735,6 @@
             resources.ApplyResources(this.TableLayoutPanel1, "TableLayoutPanel1");
             this.TableLayoutPanel1.Controls.Add(this.UserPicture, 0, 0);
             this.TableLayoutPanel1.Controls.Add(this.NameLabel, 1, 0);
-            this.TableLayoutPanel1.Controls.Add(this.PostBrowser, 1, 1);
             this.TableLayoutPanel1.Controls.Add(this.DateTimeLabel, 2, 0);
             this.TableLayoutPanel1.Controls.Add(this.SourceLinkLabel, 3, 0);
             this.TableLayoutPanel1.Name = "TableLayoutPanel1";
@@ -856,7 +856,6 @@
             // PostBrowser
             // 
             resources.ApplyResources(this.PostBrowser, "PostBrowser");
-            this.TableLayoutPanel1.SetColumnSpan(this.PostBrowser, 3);
             this.PostBrowser.ContextMenuStrip = this.ContextMenuPostBrowser;
             this.PostBrowser.IsWebBrowserContextMenuEnabled = false;
             this.PostBrowser.Name = "PostBrowser";
@@ -2838,6 +2837,7 @@
         internal System.Windows.Forms.ToolStripMenuItem IconSize48_2ToolStripMenuItem;
         internal System.Windows.Forms.ToolStripSeparator ToolStripSeparator45;
         internal System.Windows.Forms.ToolStripMenuItem LockListSortOrderToolStripMenuItem;
+        private System.Windows.Forms.UserControl PostBrowserPanel;
 
     }
 }

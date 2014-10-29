@@ -12348,6 +12348,18 @@ namespace OpenTween
             // メイリオフォント指定時にタブの最小幅が広くなる問題の対策
             this.ListTab.HandleCreated += (s, e) => NativeMethods.SetMinTabWidth((TabControl)s, 40);
 
+            // IE10/11 がインストールされた環境で WebBrowser コントロールを ToolStripContainer コントロール内に配置すると
+            // ダブルクリックでの単語選択ができなくなる問題の回避策
+            // InitializeComponent() での初期化が終わってから、PostBrowserPanel を挟んで PostBrowser を追加する
+            //
+            // 詳細:
+            // Windows.Forms.WebBrowser on UserControl with IE 10 Installed Breaks Double-Click Text Select
+            // https://connect.microsoft.com/VisualStudio/feedback/details/792884/windows-forms-webbrowser-on-usercontrol-with-ie-10-installed-breaks-double-click-text-select
+            this.PostBrowserPanel.Dock = DockStyle.Fill;
+            this.PostBrowserPanel.Controls.Add(this.PostBrowser);
+            this.TableLayoutPanel1.Controls.Add(this.PostBrowserPanel, 1, 1);
+            this.TableLayoutPanel1.SetColumnSpan(this.PostBrowserPanel, 3);
+
             this._apiGauge = new ToolStripAPIGauge();
             this._apiGauge.BorderSides = ToolStripStatusLabelBorderSides.Right;
             this.StatusStrip1.Items.Insert(2, this._apiGauge);
