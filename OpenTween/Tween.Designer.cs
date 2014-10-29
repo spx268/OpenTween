@@ -31,6 +31,7 @@
             this.ToolStripFocusLockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripSeparator35 = new System.Windows.Forms.ToolStripSeparator();
             this.ImageSelectMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.UseThumbnailWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.HashToggleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.HashManageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -424,6 +425,7 @@
             this.ToolStripFocusLockMenuItem,
             this.ToolStripSeparator35,
             this.ImageSelectMenuItem,
+            this.UseThumbnailWindowMenuItem,
             this.ToolStripSeparator8,
             this.HashToggleMenuItem,
             this.HashManageMenuItem});
@@ -486,6 +488,12 @@
             resources.ApplyResources(this.ImageSelectMenuItem, "ImageSelectMenuItem");
             this.ImageSelectMenuItem.Name = "ImageSelectMenuItem";
             this.ImageSelectMenuItem.Click += new System.EventHandler(this.ImageSelectMenuItem_Click);
+            // 
+            // UseThumbnailWindowMenuItem
+            // 
+            resources.ApplyResources(this.UseThumbnailWindowMenuItem, "UseThumbnailWindowMenuItem");
+            this.UseThumbnailWindowMenuItem.Name = "UseThumbnailWindowMenuItem";
+            this.UseThumbnailWindowMenuItem.Click += new System.EventHandler(this.UseThumbnailWindowMenuItem_Click);
             // 
             // ToolStripSeparator8
             // 
@@ -1127,6 +1135,8 @@
             this.tweetThumbnail1.Name = "tweetThumbnail1";
             this.tweetThumbnail1.TabStop = false;
             this.ToolTip1.SetToolTip(this.tweetThumbnail1, resources.GetString("tweetThumbnail1.ToolTip"));
+            this.tweetThumbnail1.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.tweetThumbnail1_PreviewKeyDown);
+            this.tweetThumbnail1.ThumbnailNotFound += new System.EventHandler(this.tweetThumbnail1_ThumbnailNotFound);
             this.tweetThumbnail1.ThumbnailLoading += new System.EventHandler(this.tweetThumbnail1_ThumbnailLoading);
             this.tweetThumbnail1.ThumbnailLoadCompleted += new System.EventHandler(this.tweetThumbnail1_ThumbnailLoadCompleted);
             this.tweetThumbnail1.ThumbnailDoubleClick += new System.EventHandler<OpenTween.ThumbnailDoubleClickEventArgs>(this.tweetThumbnail1_ThumbnailDoubleClick);
@@ -2566,6 +2576,7 @@
         internal System.Windows.Forms.ToolStripMenuItem ToolStripFocusLockMenuItem;
         internal System.Windows.Forms.ToolStripSeparator ToolStripSeparator35;
         internal System.Windows.Forms.ToolStripMenuItem ImageSelectMenuItem;
+        internal System.Windows.Forms.ToolStripMenuItem UseThumbnailWindowMenuItem;
         internal System.Windows.Forms.ToolStripSeparator ToolStripSeparator8;
         internal System.Windows.Forms.ToolStripMenuItem HashToggleMenuItem;
         internal System.Windows.Forms.ToolStripMenuItem HashManageMenuItem;

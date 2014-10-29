@@ -41,6 +41,7 @@ namespace OpenTween
     {
         protected internal List<OTPictureBox> pictureBox = new List<OTPictureBox>();
 
+        public event EventHandler ThumbnailNotFound;
         public event EventHandler ThumbnailLoading;
         public event EventHandler ThumbnailLoadCompleted;
         public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
@@ -51,12 +52,19 @@ namespace OpenTween
             get { return this.pictureBox[this.scrollBar.Value].Tag as ThumbnailInfo; }
         }
 
+        public int ThumbnailCount
+        {
+            get { return this.pictureBox.Count; }
+        }
+
         private Point? popupMouseDownPos = null;
 
         public TweetThumbnail()
         {
             InitializeComponent();
+
             this.BackColor = Color.FromArgb(32, 32, 32);
+            this.MouseWheel += TweetThumbnail_MouseWheel;
         }
 
         public Task ShowThumbnailAsync(PostClass post)
@@ -73,6 +81,9 @@ namespace OpenTween
             if (post.Media.Count == 0 && post.PostGeo.Lat == 0 && post.PostGeo.Lng == 0)
             {
                 this.SetThumbnailCount(0);
+
+                if (this.ThumbnailNotFound != null)
+                    this.ThumbnailNotFound(this, EventArgs.Empty);
                 return;
             }
 
@@ -83,7 +94,11 @@ namespace OpenTween
 
             this.SetThumbnailCount(thumbnails.Length);
             if (thumbnails.Length == 0)
+            {
+                if (this.ThumbnailNotFound != null)
+                    this.ThumbnailNotFound(this, EventArgs.Empty);
                 return;
+            }
 
             for (int i = 0; i < thumbnails.Length; i++)
             {
@@ -163,7 +178,7 @@ namespace OpenTween
             if (count == 0 && this.pictureBox.Count == 0)
                 return;
 
-            using (ControlTransaction.Layout(this.panelPictureBox, false))
+            using (ControlTransaction.Layout(this.panelPictureBox, true))
             {
                 this.panelPictureBox.Controls.Clear();
                 foreach (var picbox in this.pictureBox)
@@ -223,6 +238,17 @@ namespace OpenTween
             this.scrollBar.Value = newval;
         }
 
+        private void TweetThumbnail_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (this.scrollBar.Enabled)
+            {
+                if (e.Delta > 0)
+                    ScrollUp();
+                else
+                    ScrollDown();
+            }
+        }
+
         private void scrollBar_ValueChanged(object sender, EventArgs e)
         {
             using (ControlTransaction.Layout(this, false))
@@ -275,6 +301,8 @@ namespace OpenTween
 
         private void pictureBox_MouseDown(object sender, MouseEventArgs e)
         {
+            this.Select();
+
             if ((e.Button & ThumbnailZoomWindow.Trigger) == ThumbnailZoomWindow.Trigger)
             {
                 this.popupMouseDownPos = e.Location;

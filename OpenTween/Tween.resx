@@ -4238,6 +4238,9 @@
   <data name="LockListSortOrderToolStripMenuItem.Text" xml:space="preserve">
     <value>ソート順をロック</value>
   </data>
+  <data name="UseThumbnailWindowMenuItem.Text" xml:space="preserve">
+    <value>サムネイル枠を分離</value>
+  </data>
   <data name="&gt;&gt;ContextMenuColumnHeader.Name" xml:space="preserve">
     <value>ContextMenuColumnHeader</value>
   </data>

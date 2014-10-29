@@ -82,6 +82,8 @@ namespace OpenTween
         public bool StatusMultiline = false;
         public int StatusTextHeight = 38;
         public int PreviewDistance = -1;
+        public Point ThumbFormLocation = new Point(0, 0);
+        public Size ThumbFormSize = new Size(300, 250);
 
         [XmlIgnore]
         public Font FontUnread = new Font(SystemFonts.DefaultFont, FontStyle.Bold | FontStyle.Underline);

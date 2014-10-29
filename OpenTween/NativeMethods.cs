@@ -101,6 +101,39 @@ namespace OpenTween
             ShowWindow(window.Handle, /* SW_RESTORE */ 9);
         }
 
+        #region "ウィンドウをアクティブにせず最前面に表示"
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_SHOWWINDOW = 0x0040;
+        private const uint SWP_NOSENDCHANGING = 0x0400;
+
+        private const int HWND_TOP = 0;
+
+        public static void BringWindowToTopNA(IWin32Window window)
+        {
+            if (window == null)
+            {
+                throw new ArgumentNullException("window");
+            }
+
+            SetWindowPos(window.Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_SHOWWINDOW);
+        }
+
+        public static void RestoreWindowNA(IWin32Window window)
+        {
+            if (window == null)
+            {
+                throw new ArgumentNullException("window");
+            }
+
+            ShowWindow(window.Handle, /* SW_SHOWNOACTIVATE */ 4);
+        }
+        #endregion
+
         #region "画面ブリンク用"
         public static bool FlashMyWindow(IntPtr hwnd,
             FlashSpecification flashType,

@@ -118,6 +118,8 @@ namespace OpenTween
         public HashtagManage HashMgr;
         private EventViewerDialog evtDialog;
 
+        private Form _thumbnailWindow = null;   //サムネイル分離表示用ウィンドウ
+
         //表示フォント、色、アイコン
         private Font _fntUnread;            //未読用フォント
         private Color _clUnread;            //未読用文字色
@@ -533,6 +535,7 @@ namespace OpenTween
                 SearchDialog.Dispose();
                 fltDialog.Dispose();
                 UrlDialog.Dispose();
+                CloseThumbnailWindow();
                 _webBrowserKeyCanceler.Dispose();
                 _formSnapper.Dispose();
                 if (NIconAt != null) NIconAt.Dispose();
@@ -6406,6 +6409,7 @@ namespace OpenTween
             ListTab,
             StatusText,
             PostBrowser,
+            TweetThumbnail,
         }
 
         private bool CommonKeyDown(Keys KeyCode, FocusedControl Focused, ModifierState Modifier)
@@ -6442,6 +6446,30 @@ namespace OpenTween
                         SendKeys.Send("{PGUP}");
                         return true;
                     }
+                }
+            }
+            else if (Focused == FocusedControl.TweetThumbnail)
+            {
+                switch (KeyCode)
+                {
+                    //スクロールバーへフォーカスを移動させないようにするため、true を返す
+                    case Keys.Up:
+                        if (Modifier == ModifierState.None ||
+                            Modifier == (ModifierState.Alt | ModifierState.Shift))
+                        {
+                            this.tweetThumbnail1.ScrollUp();
+                        }
+                        return true;
+                    case Keys.Down:
+                        if (Modifier == ModifierState.None ||
+                            Modifier == (ModifierState.Alt | ModifierState.Shift))
+                        {
+                            this.tweetThumbnail1.ScrollDown();
+                        }
+                        return true;
+                    case Keys.Left:
+                    case Keys.Right:
+                        return true;
                 }
             }
 
@@ -7035,7 +7063,7 @@ namespace OpenTween
                     }
                     if (Focused == FocusedControl.ListTab && KeyCode == Keys.Enter)
                     {
-                        if (!this.SplitContainer3.Panel2Collapsed)
+                        if (!this.SplitContainer3.Panel2Collapsed || _thumbnailWindow != null)
                         {
                             OpenThumbnailPicture(this.tweetThumbnail1.Thumbnail);
                         }
@@ -11147,6 +11175,7 @@ namespace OpenTween
         private void ContextMenuPostMode_Opening(object sender, CancelEventArgs e)
         {
             ToolStripMenuItemUrlAutoShorten.Checked = this._cfgCommon.UrlConvertAuto;
+            UseThumbnailWindowMenuItem.Checked = (_thumbnailWindow != null);
         }
 
         private void TraceOutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -12432,6 +12461,111 @@ namespace OpenTween
             get { return _curPost; }
         }
 
+#region "分離型サムネイルウィンドウ"
+        private void OpenThumbnailWindow()
+        {
+            if (_thumbnailWindow == null)
+            {
+                this.SplitContainer3.Panel2Collapsed = true;
+                this.SplitContainer3.Panel2.Controls.Remove(this.tweetThumbnail1);
+
+                _thumbnailWindow = new Form()
+                {
+                    Name = "ThumbnailWindow",
+                    Text = "Thumbnail",
+                    Icon = Properties.Resources.MIcon,
+                    StartPosition = FormStartPosition.Manual,
+                    DesktopLocation = _cfgLocal.ThumbFormLocation,
+                    ClientSize = _cfgLocal.ThumbFormSize,
+                };
+                _thumbnailWindow.Controls.Add(this.tweetThumbnail1);
+                this.tweetThumbnail1.Select();
+
+                _thumbnailWindow.FormClosed += ThumbnailWindow_FormClosed;
+                _thumbnailWindow.LocationChanged += ThumbnailWindow_LocationChanged;
+                _thumbnailWindow.ClientSizeChanged += ThumbnailWindow_ClientSizeChanged;
+            }
+
+            if (this.tweetThumbnail1.ThumbnailCount > 0)
+                ShowThumbnailWindow();
+        }
+
+        private void ShowThumbnailWindow()
+        {
+            if (_thumbnailWindow != null)
+            {
+                //サムネイル用ウィンドウをアクティブにせず最前面に表示
+                if (_thumbnailWindow.WindowState == FormWindowState.Minimized)
+                    NativeMethods.RestoreWindowNA(_thumbnailWindow);
+
+                NativeMethods.BringWindowToTopNA(_thumbnailWindow);
+
+                _thumbnailWindow.Visible = true;  //フラグの整合性を保つ
+            }
+        }
+
+        private void CloseThumbnailWindow()
+        {
+            if (_thumbnailWindow != null)
+                _thumbnailWindow.Close();
+        }
+
+        private void UseThumbnailWindowMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_thumbnailWindow == null)
+                OpenThumbnailWindow();
+            else
+                CloseThumbnailWindow();
+        }
+
+        private void ThumbnailWindow_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            _thumbnailWindow.FormClosed -= ThumbnailWindow_FormClosed;
+            _thumbnailWindow.LocationChanged -= ThumbnailWindow_LocationChanged;
+            _thumbnailWindow.ClientSizeChanged -= ThumbnailWindow_ClientSizeChanged;
+
+            _thumbnailWindow.Controls.Remove(this.tweetThumbnail1);
+
+            _thumbnailWindow.Dispose();
+            _thumbnailWindow = null;
+
+            if (!this.IsDisposed && !this.SplitContainer3.Panel2.IsDisposed)
+            {
+                //戻すべき場所が残っていれば戻す
+                this.SplitContainer3.Panel2.Controls.Add(this.tweetThumbnail1);
+
+                if (this.tweetThumbnail1.ThumbnailCount > 0)
+                    this.SplitContainer3.Panel2Collapsed = false;
+            }
+            else
+            {
+                //戻せないので破棄する
+                this.tweetThumbnail1.Dispose();
+                this.tweetThumbnail1 = null;
+            }
+        }
+
+        private void ThumbnailWindow_LocationChanged(object sender, EventArgs e)
+        {
+            if (_thumbnailWindow.Visible &&
+                _thumbnailWindow.WindowState == FormWindowState.Normal)
+            {
+                _cfgLocal.ThumbFormLocation = _thumbnailWindow.DesktopLocation;
+                _modifySettingLocal = true;
+            }
+        }
+
+        private void ThumbnailWindow_ClientSizeChanged(object sender, EventArgs e)
+        {
+            if (_thumbnailWindow.Visible &&
+                _thumbnailWindow.WindowState == FormWindowState.Normal)
+            {
+                _cfgLocal.ThumbFormSize = _thumbnailWindow.ClientSize;
+                _modifySettingLocal = true;
+            }
+        }
+#endregion
+
 #region "画像投稿"
         private void ImageSelectMenuItem_Click(object sender, EventArgs e)
         {
@@ -13258,23 +13392,40 @@ namespace OpenTween
             AboutMenuItem.Text = MyCommon.ReplaceAppName(AboutMenuItem.Text);
         }
 
+        private void tweetThumbnail1_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            ModifierState State = GetModifierState(e.Control, e.Shift, e.Alt);
+            if (State == ModifierState.NotFlags) return;
+            if (CommonKeyDown(e.KeyCode, FocusedControl.TweetThumbnail, State))
+            {
+                e.IsInputKey = true;
+            }
+        }
+
+        private void tweetThumbnail1_ThumbnailNotFound(object sender, EventArgs e)
+        {
+            if (_thumbnailWindow != null)
+                _thumbnailWindow.Visible = false;
+        }
+
         private void tweetThumbnail1_ThumbnailLoading(object sender, EventArgs e)
         {
-            //this.SplitContainer3.Panel2Collapsed = false;
-
-            // PreviewDistance が起動のたびに広がっていく問題の回避策
-            // FixedPanel が Panel2 に設定された状態で Panel2 を開くと、初回だけ SplitterDistance が再計算されておかしくなるため、
-            // None で開いた後に設定するようにする
-            //if (this.SplitContainer3.FixedPanel == FixedPanel.None)
-            //    this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
+            if (_thumbnailWindow != null)
+                ShowThumbnailWindow();
         }
 
         private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, EventArgs e)
         {
-            this.SplitContainer3.Panel2Collapsed = false;
+            if (_thumbnailWindow == null)
+            {
+                this.SplitContainer3.Panel2Collapsed = false;
 
-            if (this.SplitContainer3.FixedPanel == FixedPanel.None)
-                this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
+                // PreviewDistance が起動のたびに広がっていく問題の回避策
+                // FixedPanel が Panel2 に設定された状態で Panel2 を開くと、初回だけ SplitterDistance が再計算されておかしくなるため、
+                // None で開いた後に設定するようにする
+                if (this.SplitContainer3.FixedPanel == FixedPanel.None)
+                    this.SplitContainer3.FixedPanel = FixedPanel.Panel2;
+            }
         }
 
         private void tweetThumbnail1_ThumbnailDoubleClick(object sender, ThumbnailDoubleClickEventArgs e)
