@@ -273,7 +273,7 @@ namespace OpenTween
                     Directory.CreateDirectory(logPath);
 
                 var now = DateTime.Now;
-                var fileName = string.Format("{0}Trace-{1:0000}{2:00}{3:00}-{4:00}{5:00}{6:00}.log", GetAssemblyName(), now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second);
+                var fileName = string.Format("{0}Trace-{1:0000}{2:00}{3:00}-{4:00}{5:00}{6:00}-{7:000}.log", GetAssemblyName(), now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, now.Millisecond);
                 fileName = Path.Combine(logPath, fileName);
 
                 using (var writer = new StreamWriter(fileName))
