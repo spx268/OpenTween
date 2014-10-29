@@ -137,9 +137,15 @@ namespace OpenTween
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (this.tabControl.SelectedTab == this.tabPageTimeline)
+            {
                 this.AcceptButton = this.buttonSearchTimeline;
+                this.textSearchTimeline.Focus();
+            }
             else
+            {
                 this.AcceptButton = this.buttonSearchPublic;
+                this.textSearchPublic.Focus();
+            }
         }
 
         private void buttonSearchTimeline_Click(object sender, EventArgs e)
