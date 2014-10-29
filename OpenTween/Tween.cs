@@ -4370,15 +4370,24 @@ namespace OpenTween
                 if (e.Url.AbsoluteUri.StartsWith("http://twitter.com/search?q=%23") ||
                    e.Url.AbsoluteUri.StartsWith("https://twitter.com/search?q=%23"))
                 {
-                    //ハッシュタグの場合は、タブで開く
+                    //ハッシュタグの場合
                     string urlStr = Uri.UnescapeDataString(e.Url.AbsoluteUri);
                     int i = urlStr.IndexOf('#');
                     if (i == -1) return;
 
-                    string hash = urlStr.Substring(i);
-                    HashSupl.AddItem(hash);
-                    HashMgr.AddHashToHistory(hash.Trim(), false);
-                    AddNewTabForSearch(hash);
+                    // Ctrlを押しながらハッシュタグをクリックした場合はブラウザで開く
+                    if (MyCommon.IsKeyDown(Keys.Control))
+                    {
+                        OpenUriAsync(e.Url.OriginalString);
+                    }
+                    else
+                    {
+                        //タブで開く
+                        string hash = urlStr.Substring(i);
+                        HashSupl.AddItem(hash);
+                        HashMgr.AddHashToHistory(hash.Trim(), false);
+                        AddNewTabForSearch(hash);
+                    }
                     return;
                 }
                 else
