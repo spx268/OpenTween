@@ -92,6 +92,7 @@ namespace OpenTween
         private WebBrowserKeyCanceler _webBrowserKeyCanceler;
         private FormSnapper _formSnapper;
         private FormWindowState _formWindowState = FormWindowState.Normal; // フォームの状態保存用 通知領域からアイコンをクリックして復帰した際に使用する
+        private int? _dragEnterKeyState;   //ファイルのDragEnter時のキー状態を保持（DragDrop時に使う）
 
         //設定ファイル関連
         //private SettingToConfig _cfg; //旧
@@ -4685,6 +4686,7 @@ namespace OpenTween
                 _listCustom.DrawColumnHeader += MyList_DrawColumnHeader;
                 _listCustom.DragDrop += TweenMain_DragDrop;
                 _listCustom.DragEnter += TweenMain_DragEnter;
+                _listCustom.DragLeave += TweenMain_DragLeave;
                 _listCustom.DragOver += TweenMain_DragOver;
                 _listCustom.DrawItem += MyList_DrawItem;
                 _listCustom.MouseClick += MyList_MouseClick;
@@ -4785,6 +4787,7 @@ namespace OpenTween
                 _listCustom.DrawColumnHeader -= MyList_DrawColumnHeader;
                 _listCustom.DragDrop -= TweenMain_DragDrop;
                 _listCustom.DragEnter -= TweenMain_DragEnter;
+                _listCustom.DragLeave -= TweenMain_DragLeave;
                 _listCustom.DragOver -= TweenMain_DragOver;
                 _listCustom.DrawItem -= MyList_DrawItem;
                 _listCustom.MouseClick -= MyList_MouseClick;
@@ -10604,6 +10607,11 @@ namespace OpenTween
             }
         }
 
+        private void TweenMain_DragLeave(object sender, EventArgs e)
+        {
+            SelectMedia_DragLeave();
+        }
+
         private void TweenMain_DragOver(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -12410,9 +12418,16 @@ namespace OpenTween
             if (ImageSelector.HasUploadableService(((string[])e.Data.GetData(DataFormats.FileDrop, false))[0], true))
             {
                 e.Effect = DragDropEffects.Copy;
+                _dragEnterKeyState = e.KeyState;
                 return;
             }
             e.Effect = DragDropEffects.None;
+        }
+
+        private void SelectMedia_DragLeave()
+        {
+            if (_dragEnterKeyState != null)
+                _dragEnterKeyState = null;
         }
 
         private void SelectMedia_DragOver(DragEventArgs e)
@@ -12424,7 +12439,9 @@ namespace OpenTween
         {
             this.Activate();
             this.BringToFront();
-            ImageSelector.BeginSelection((string[])e.Data.GetData(DataFormats.FileDrop, false));
+            bool toEmptyPage = _dragEnterKeyState.HasValue ? (_dragEnterKeyState.Value & 2) != 0 : false;  // 2 = 右ドロップ
+            ImageSelector.BeginSelection((string[])e.Data.GetData(DataFormats.FileDrop, false), toEmptyPage);
+            _dragEnterKeyState = null;
             StatusText.Focus();
         }
 

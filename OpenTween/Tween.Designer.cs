@@ -2506,6 +2506,7 @@
             this.LocationChanged += new System.EventHandler(this.TweenMain_LocationChanged);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.TweenMain_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.TweenMain_DragEnter);
+            this.DragLeave += new System.EventHandler(this.TweenMain_DragLeave);
             this.DragOver += new System.Windows.Forms.DragEventHandler(this.TweenMain_DragOver);
             this.Resize += new System.EventHandler(this.TweenMain_Resize);
             this.ToolStripContainer1.BottomToolStripPanel.ResumeLayout(false);

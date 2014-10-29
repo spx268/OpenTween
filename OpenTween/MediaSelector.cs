@@ -209,7 +209,7 @@ namespace OpenTween
         /// 投稿するファイルとその投稿先を選択するためのコントロールを表示する。
         /// D&Dをサポートする場合は引数にドロップされたファイル名を指定して呼ぶこと。
         /// </summary>
-        public void BeginSelection(string[] fileNames = null)
+        public void BeginSelection(string[] fileNames = null, bool toEmptyPage = false)
         {
             if (fileNames != null && fileNames.Length > 0)
             {
@@ -217,7 +217,7 @@ namespace OpenTween
                 if (string.IsNullOrEmpty(serviceName)) return;
                 var service = this.pictureService[serviceName];
 
-                var count = Math.Min(fileNames.Length, service.MaxMediaCount);
+                var count = Math.Min(toEmptyPage ? 1 : fileNames.Length, service.MaxMediaCount);
                 if (!this.Visible || count > 1)
                 {
                     // 非表示時または複数のファイル指定は新規選択として扱う
@@ -232,6 +232,21 @@ namespace OpenTween
 
                 if (count == 1)
                 {
+                    if (toEmptyPage)
+                    {
+                        // 未選択状態のページへ移動
+                        int i = 0, pageCount = ImagePageCombo.Items.Count;
+                        for ( ; i < pageCount; i++)
+                        {
+                            var item = (SelectedMedia)ImagePageCombo.Items[i];
+                            if (!item.IsValid)
+                            {
+                                ImagePageCombo.SelectedIndex = i;
+                                break;
+                            }
+                        }
+                        if (i == pageCount) return;  // 未選択状態のページがなければ何もしない
+                    }
                     ImagefilePathText.Text = fileNames[0];
                     ImageFromSelectedFile(false);
                 }
