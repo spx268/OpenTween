@@ -211,7 +211,7 @@ namespace OpenTween
         /// </summary>
         private static string FilterText(string text)
         {
-            text = text.Replace("\n", "<br>");
+            text = text.Replace("\n", "<br>").Replace(" ", "&nbsp;");
 
             return text;
         }
