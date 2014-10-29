@@ -146,7 +146,7 @@ namespace OpenTween
 
         private string GetImageSearchUri(string image_uri)
         {
-            return @"https://www.google.com/searchbyimage?image_url=" + Uri.EscapeDataString(image_uri);
+            return @"https://www.google.co.jp/searchbyimage?image_url=" + Uri.EscapeDataString(image_uri);
         }
 
         protected virtual Task<IEnumerable<ThumbnailInfo>> GetThumbailInfoAsync(PostClass post, CancellationToken token)
