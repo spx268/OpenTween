@@ -1001,7 +1001,7 @@ namespace OpenTween
                                     _cfgCommon.HashIsPermanent,
                                     _cfgCommon.HashIsHead,
                                     _cfgCommon.HashIsNotAddToAtReply);
-            if (!string.IsNullOrEmpty(HashMgr.UseHash) && HashMgr.IsPermanent) HashStripSplitButton.Text = HashMgr.UseHash;
+            if (!string.IsNullOrEmpty(HashMgr.UseHash) && HashMgr.IsPermanent) SetHashtagText(HashMgr.UseHash);
 
             _initial = true;
 
@@ -3078,7 +3078,7 @@ namespace OpenTween
                         if (!HashMgr.IsPermanent && !string.IsNullOrEmpty(HashMgr.UseHash))
                         {
                             HashMgr.ClearHashtag();
-                            this.HashStripSplitButton.Text = "#[-]";
+                            SetHashtagText(null);
                             this.HashToggleMenuItem.Checked = false;
                             this.HashToggleToolStripMenuItem.Checked = false;
                         }
@@ -11861,7 +11861,7 @@ namespace OpenTween
             if (m.Success)
             {
                 HashMgr.SetPermanentHash("#" + Uri.UnescapeDataString(m.Result("${hash}")));
-                HashStripSplitButton.Text = HashMgr.UseHash;
+                SetHashtagText(HashMgr.UseHash);
                 HashToggleMenuItem.Checked = true;
                 HashToggleToolStripMenuItem.Checked = true;
                 //使用ハッシュタグとして設定
@@ -11872,6 +11872,20 @@ namespace OpenTween
         private void StatusLabel_DoubleClick(object sender, EventArgs e)
         {
             MessageBox.Show(StatusLabel.TextHistory, "Logs", MessageBoxButtons.OK, MessageBoxIcon.None);
+        }
+
+        private void SetHashtagText(string hashtag)
+        {
+            if (!string.IsNullOrEmpty(hashtag))
+            {
+                HashStripSplitButton.Text = hashtag;
+                HashStripSplitButton.ForeColor = Color.Red;
+            }
+            else
+            {
+                HashStripSplitButton.Text = "#[-]";
+                HashStripSplitButton.ForeColor = SystemColors.ControlText;
+            }
         }
 
         private void HashManageMenuItem_Click(object sender, EventArgs e)
@@ -11889,13 +11903,13 @@ namespace OpenTween
             if (rslt == DialogResult.Cancel) return;
             if (!string.IsNullOrEmpty(HashMgr.UseHash))
             {
-                HashStripSplitButton.Text = HashMgr.UseHash;
+                SetHashtagText(HashMgr.UseHash);
                 HashToggleMenuItem.Checked = true;
                 HashToggleToolStripMenuItem.Checked = true;
             }
             else
             {
-                HashStripSplitButton.Text = "#[-]";
+                SetHashtagText(null);
                 HashToggleMenuItem.Checked = false;
                 HashToggleToolStripMenuItem.Checked = false;
             }
@@ -11922,13 +11936,13 @@ namespace OpenTween
             HashMgr.ToggleHash();
             if (!string.IsNullOrEmpty(HashMgr.UseHash))
             {
-                HashStripSplitButton.Text = HashMgr.UseHash;
+                SetHashtagText(HashMgr.UseHash);
                 HashToggleMenuItem.Checked = true;
                 HashToggleToolStripMenuItem.Checked = true;
             }
             else
             {
-                HashStripSplitButton.Text = "#[-]";
+                SetHashtagText(null);
                 HashToggleMenuItem.Checked = false;
                 HashToggleToolStripMenuItem.Checked = false;
             }
