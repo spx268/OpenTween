@@ -5226,10 +5226,7 @@ namespace OpenTween
                 }
             }
 
-            // e.Item に値をセットする前に await しないこと
             e.Item = item;
-
-            await ((ImageListViewItem)item).GetImageAsync();
         }
 
         private void CreateCache(int StartIndex, int EndIndex)
@@ -5576,6 +5573,8 @@ namespace OpenTween
             {
                 iconRect = Rectangle.Intersect(new Rectangle(e.Item.GetBounds(ItemBoundsPortion.Icon).Location, new Size(1, 1)), itemRect);
                 //iconRect.Offset(0, Math.Max(0, (itemRect.Height - realIconSize.Height) / 2));
+
+                item.GetImageAsync();
             }
 
             if (item.StateIndex > -1)
