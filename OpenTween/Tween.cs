@@ -2417,7 +2417,7 @@ namespace OpenTween
             //Google検索（試験実装）
             if (StatusText.Text.StartsWith("Google:", StringComparison.OrdinalIgnoreCase) && StatusText.Text.Trim().Length > 7)
             {
-                string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeUriString(StatusText.Text.Substring(7)));
+                string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeDataString(StatusText.Text.Substring(7)));
                 await this.OpenUriAsync(tmp);
             }
         }
