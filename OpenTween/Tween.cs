@@ -5214,7 +5214,7 @@ namespace OpenTween
             finally { this.itemCacheLock.ExitUpgradeableReadLock(); }
         }
 
-        private async void MyList_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
+        private void MyList_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
             ListViewItem item = null;
             PostClass cacheItemPost = null;
@@ -7440,6 +7440,9 @@ namespace OpenTween
 
         private void GoTopEnd(bool GoTop)
         {
+            if (_curList.VirtualListSize == 0)
+                return;
+
             ListViewItem _item;
             int idx;
 
@@ -7464,6 +7467,9 @@ namespace OpenTween
 
         private void GoMiddle()
         {
+            if (_curList.VirtualListSize == 0)
+                return;
+
             ListViewItem _item;
             int idx1;
             int idx2;
@@ -9309,10 +9315,6 @@ namespace OpenTween
                             href = MyCommon.IDNEncode(linkElm.GetAttribute("href"));
                             if (string.IsNullOrEmpty(urlStr)) urlStr = href;
                             linkText = linkElm.InnerText;
-                            if (!linkText.StartsWith("http") && !linkText.StartsWith("#") && !linkText.Contains("."))
-                            {
-                                linkText = "@" + linkText;
-                            }
                         }
                         catch (ArgumentException)
                         {

@@ -3381,6 +3381,12 @@ namespace OpenTween
             this._lastUserstreamDataReceived = DateTime.Now;
             if (string.IsNullOrEmpty(line)) return;
 
+            if (line.First() != '{' || line.Last() != '}')
+            {
+                MyCommon.TraceOut("Invalid JSON (StatusArrived):" + Environment.NewLine + line);
+                return;
+            }
+
             var isDm = false;
 
             try

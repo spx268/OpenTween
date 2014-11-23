@@ -59,6 +59,30 @@ namespace OpenTween
         }
 
         [Fact]
+        public async Task ExpandUrlAsync_IrregularUrlTest()
+        {
+            var handler = new HttpMessageHandlerMock();
+            using (var http = new HttpClient(handler))
+            {
+                var shortUrl = new ShortUrl(http);
+
+                // https://www.flickr.com/photo.gne?short=hoge -> /photos/foo/11111/
+                handler.Enqueue(x =>
+                {
+                    Assert.Equal(HttpMethod.Head, x.Method);
+                    Assert.Equal(new Uri("https://www.flickr.com/photo.gne?short=hoge"), x.RequestUri);
+
+                    return this.CreateRedirectResponse("/photos/foo/11111/", UriKind.Relative);
+                });
+
+                Assert.Equal(new Uri("https://www.flickr.com/photos/foo/11111/"),
+                    await shortUrl.ExpandUrlAsync(new Uri("https://www.flickr.com/photo.gne?short=hoge")));
+
+                Assert.Equal(0, handler.QueueCount);
+            }
+        }
+
+        [Fact]
         public async Task ExpandUrlAsync_DisableExpandingTest()
         {
             var handler = new HttpMessageHandlerMock();
@@ -177,6 +201,40 @@ namespace OpenTween
                     await shortUrl.ExpandUrlAsync(new Uri("./foo/bar", UriKind.Relative)));
 
                 Assert.Equal(1, handler.QueueCount);
+            }
+        }
+
+        [Fact]
+        public async Task ExpandUrlAsync_RelativeRedirectTest()
+        {
+            var handler = new HttpMessageHandlerMock();
+            using (var http = new HttpClient(handler))
+            {
+                var shortUrl = new ShortUrl(http);
+
+                // Location に相対 URL を指定したリダイレクト (テストに使う URL は適当)
+                // https://t.co/hogehoge -> /tetetete
+                handler.Enqueue(x =>
+                {
+                    Assert.Equal(HttpMethod.Head, x.Method);
+                    Assert.Equal(new Uri("https://t.co/hogehoge"), x.RequestUri);
+
+                    return this.CreateRedirectResponse("/tetetete", UriKind.Relative);
+                });
+
+                // https://t.co/tetetete -> http://example.com/tetetete
+                handler.Enqueue(x =>
+                {
+                    Assert.Equal(HttpMethod.Head, x.Method);
+                    Assert.Equal(new Uri("https://t.co/tetetete"), x.RequestUri);
+
+                    return this.CreateRedirectResponse("http://example.com/tetetete");
+                });
+
+                Assert.Equal(new Uri("http://example.com/tetetete"),
+                    await shortUrl.ExpandUrlAsync(new Uri("https://t.co/hogehoge")));
+
+                Assert.Equal(0, handler.QueueCount);
             }
         }
 
@@ -320,8 +378,13 @@ namespace OpenTween
 
         private HttpResponseMessage CreateRedirectResponse(string uriStr)
         {
+            return this.CreateRedirectResponse(uriStr, UriKind.Absolute);
+        }
+
+        private HttpResponseMessage CreateRedirectResponse(string uriStr, UriKind uriKind)
+        {
             var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
-            response.Headers.Location = new Uri(uriStr);
+            response.Headers.Location = new Uri(uriStr, uriKind);
             return response;
         }
 

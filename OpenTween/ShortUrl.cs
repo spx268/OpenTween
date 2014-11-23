@@ -194,7 +194,7 @@ namespace OpenTween
 
             try
             {
-                if (!ShortUrlHosts.Contains(uri.Host))
+                if (!ShortUrlHosts.Contains(uri.Host) && !IsIrregularShortUrl(uri))
                     return uri;
 
                 Uri expanded;
@@ -478,6 +478,17 @@ namespace OpenTween
             }
         }
 
+        private bool IsIrregularShortUrl(Uri uri)
+        {
+            // Flickrの https://www.flickr.com/photo.gne?short=... 形式のURL
+            // flic.kr ドメインのURLを展開する途中に経由する
+            if (uri.Host.EndsWith("flickr.com", StringComparison.OrdinalIgnoreCase) &&
+                uri.PathAndQuery.StartsWith("/photo.gne", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return false;
+        }
+
         private async Task<Uri> GetRedirectTo(Uri url)
         {
             var request = new HttpRequestMessage(HttpMethod.Head, url);
@@ -491,7 +502,15 @@ namespace OpenTween
                         response.EnsureSuccessStatusCode();
                 }
 
-                return response.Headers.Location;
+                var redirectedUrl = response.Headers.Location;
+
+                if (redirectedUrl == null)
+                    return null;
+
+                if (redirectedUrl.IsAbsoluteUri)
+                    return redirectedUrl;
+                else
+                    return new Uri(url, redirectedUrl);
             }
         }
 
