@@ -5357,7 +5357,10 @@ namespace OpenTween
                     var tab = this._statuses.Tabs[tabPage.Text];
 
                     var listview = (DetailsListView)tabPage.Tag;
-                    listview.VirtualListSize = tab.AllCount;
+                    using (ControlTransaction.Update(listview))
+                    {
+                        listview.VirtualListSize = tab.AllCount;
+                    }
 
                     if (this._cfgCommon.TabIconDisp)
                     {
