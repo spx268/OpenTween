@@ -11731,6 +11731,8 @@ namespace OpenTween
             }
             else
             {
+                DetailsListView listView = null;
+
                 TabClass tb = _statuses.RemovedTab.Pop();
                 if (tb.TabType == MyCommon.TabUsageType.Related)
                 {
@@ -11743,10 +11745,12 @@ namespace OpenTween
                         _statuses.Tabs[tb.TabName] = tb;
                         for (int i = 0; i < ListTab.TabPages.Count; i++)
                         {
-                            if (tb.TabName == ListTab.TabPages[i].Text)
+                            var tabPage = ListTab.TabPages[i];
+                            if (tb.TabName == tabPage.Text)
                             {
+                                listView = (DetailsListView)tabPage.Tag;
                                 ListTab.SelectedIndex = i;
-                                ListTabSelect(ListTab.TabPages[i]);
+                                ListTabSelect(tabPage);
                                 break;
                             }
                         }
@@ -11763,8 +11767,11 @@ namespace OpenTween
                         tb.TabName = renamed;
                         AddNewTab(renamed, false, tb.TabType, tb.ListInfo);
                         _statuses.Tabs.Add(renamed, tb);  // 後に
+
+                        var tabPage = ListTab.TabPages[ListTab.TabPages.Count - 1];
+                        listView = (DetailsListView)tabPage.Tag;
                         ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                        ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
+                        ListTabSelect(tabPage);
                     }
                 }
                 else
@@ -11778,10 +11785,21 @@ namespace OpenTween
                     tb.TabName = renamed;
                     _statuses.Tabs.Add(renamed, tb);  // 先に
                     AddNewTab(renamed, false, tb.TabType, tb.ListInfo);
+
+                    var tabPage = ListTab.TabPages[ListTab.TabPages.Count - 1];
+                    listView = (DetailsListView)tabPage.Tag;
                     ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                    ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
+                    ListTabSelect(tabPage);
                 }
                 SaveConfigsTabs();
+
+                if (listView != null)
+                {
+                    using (ControlTransaction.Update(listView))
+                    {
+                        listView.VirtualListSize = tb.AllCount;
+                    }
+                }
             }
         }
 
