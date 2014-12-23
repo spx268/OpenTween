@@ -134,12 +134,14 @@ namespace OpenTween
             try
             {
                 picbox.ShowInitialImage();
+
+                picbox.MouseDown += this.pictureBox_MouseDown;
+                picbox.MouseUp += this.pictureBox_MouseUp;
+
                 picbox.Image = await thumbInfo.LoadThumbnailImageAsync(cancelToken);
 
                 cancelToken.ThrowIfCancellationRequested();
 
-                picbox.MouseDown += this.pictureBox_MouseDown;
-                picbox.MouseUp += this.pictureBox_MouseUp;
                 picbox.MouseMove += this.pictureBox_MouseMove;
 
                 if (this.ThumbnailLoadCompleted != null)
