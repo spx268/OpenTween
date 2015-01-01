@@ -12480,9 +12480,24 @@ namespace OpenTween
                 ShowThumbnailWindow();
         }
 
+        private bool IsThumbnailWindowActivated
+        {
+            get
+            {
+                if (_thumbnailWindow != null)
+                {
+                    if (!_thumbnailWindow.IsDisposed)
+                        return true;
+
+                    _thumbnailWindow = null;  // dispose済み
+                }
+                return false;
+            }
+        }
+
         private void ShowThumbnailWindow()
         {
-            if (_thumbnailWindow != null)
+            if (IsThumbnailWindowActivated)
             {
                 //サムネイル用ウィンドウをアクティブにせず最前面に表示
                 if (_thumbnailWindow.WindowState == FormWindowState.Minimized)
@@ -12496,19 +12511,26 @@ namespace OpenTween
 
         private void CloseThumbnailWindow()
         {
-            if (_thumbnailWindow != null)
-                _thumbnailWindow.Close();
+            if (IsThumbnailWindowActivated)
+            {
+                if (_thumbnailWindow.Visible)
+                {
+                    try
+                    {
+                        _thumbnailWindow.Close();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+                }
+                else
+                {
+                    DisposeThumbnailWindow();
+                }
+            }
         }
 
-        private void UseThumbnailWindowMenuItem_Click(object sender, EventArgs e)
-        {
-            if (_thumbnailWindow == null)
-                OpenThumbnailWindow();
-            else
-                CloseThumbnailWindow();
-        }
-
-        private void ThumbnailWindow_FormClosed(object sender, FormClosedEventArgs e)
+        private void DisposeThumbnailWindow()
         {
             _thumbnailWindow.FormClosed -= ThumbnailWindow_FormClosed;
             _thumbnailWindow.LocationChanged -= ThumbnailWindow_LocationChanged;
@@ -12533,6 +12555,19 @@ namespace OpenTween
                 this.tweetThumbnail1.Dispose();
                 this.tweetThumbnail1 = null;
             }
+        }
+
+        private void UseThumbnailWindowMenuItem_Click(object sender, EventArgs e)
+        {
+            if (IsThumbnailWindowActivated)
+                CloseThumbnailWindow();
+            else
+                OpenThumbnailWindow();
+        }
+
+        private void ThumbnailWindow_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            DisposeThumbnailWindow();
         }
 
         private void ThumbnailWindow_LocationChanged(object sender, EventArgs e)
@@ -13394,19 +13429,19 @@ namespace OpenTween
 
         private void tweetThumbnail1_ThumbnailNotFound(object sender, EventArgs e)
         {
-            if (_thumbnailWindow != null)
+            if (IsThumbnailWindowActivated)
                 _thumbnailWindow.Visible = false;
         }
 
         private void tweetThumbnail1_ThumbnailLoading(object sender, EventArgs e)
         {
-            if (_thumbnailWindow != null)
+            if (IsThumbnailWindowActivated)
                 ShowThumbnailWindow();
         }
 
         private void tweetThumbnail1_ThumbnailLoadCompleted(object sender, EventArgs e)
         {
-            if (_thumbnailWindow == null)
+            if (!IsThumbnailWindowActivated)
             {
                 this.SplitContainer3.Panel2Collapsed = false;
 
