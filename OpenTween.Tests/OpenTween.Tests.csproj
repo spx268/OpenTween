@@ -10,8 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OpenTween</RootNamespace>
     <AssemblyName>OpenTween.Tests</AssemblyName>
-    <TargetFrameworkVersion Condition="'$(OS)' == 'Windows_NT'">v4.5.1</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(OS)' != 'Windows_NT'">v4.5</TargetFrameworkVersion><!-- Mono -->
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -70,6 +69,7 @@
     <Compile Include="HttpMessageHandlerMock.cs" />
     <Compile Include="MyApplicationTest.cs" />
     <Compile Include="OTPictureBoxTest.cs" />
+    <Compile Include="OTSplitContainerTest.cs" />
     <Compile Include="PostFilterRuleTest.cs" />
     <Compile Include="LRUCacheDictionaryTest.cs" />
     <Compile Include="MyCommonTest.cs" />
@@ -103,9 +103,6 @@
   <ItemGroup>
     <Content Include="dlls\NSubstitute.dll" />
     <Content Include="dlls\nunit.framework.dll" />
-    <Content Include="Resources\dot.gif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Resources\re.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -9957,7 +9957,7 @@ namespace OpenTween
                         {
                             var srcUri = new Uri(MyCommon.urlEncodeMultibyteChar(tmp));
                             var resultUri = await ShortUrl.Instance.ShortenUrlAsync(Converter_Type, srcUri);
-                            result = resultUri.ToString();
+                            result = resultUri.AbsoluteUri;
                         }
                         catch (WebApiException e)
                         {
@@ -10026,7 +10026,7 @@ namespace OpenTween
                         {
                             var srcUri = new Uri(MyCommon.urlEncodeMultibyteChar(tmp));
                             var resultUri = await ShortUrl.Instance.ShortenUrlAsync(Converter_Type, srcUri);
-                            result = resultUri.ToString();
+                            result = resultUri.AbsoluteUri;
                         }
                         catch (HttpRequestException e)
                         {
