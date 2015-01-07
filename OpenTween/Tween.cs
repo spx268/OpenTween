@@ -11194,8 +11194,9 @@ namespace OpenTween
 
                 var result = (TwitterApiStatus)dlg.Result;
 
-                if (result == null)
+                if (result != null)
                 {
+                    // TODO: 表示方法の変更
                     var accessLevel = result.AccessLevel;
                     var timelineLimit = result.AccessLimit["/statuses/home_timeline"];
                     var mediaLimit = result.MediaUploadLimit;
@@ -12397,6 +12398,8 @@ namespace OpenTween
 
             this._apiGauge = new ToolStripAPIGauge();
             this._apiGauge.BorderSides = ToolStripStatusLabelBorderSides.Right;
+            this._apiGauge.DoubleClickEnabled = true;
+            this._apiGauge.DoubleClick += this.ApiUsageInfoMenuItem_Click;
             this.StatusStrip1.Items.Insert(2, this._apiGauge);
 
             this.ImageSelector.Visible = false;
