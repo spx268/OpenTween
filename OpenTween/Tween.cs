@@ -1430,6 +1430,7 @@ namespace OpenTween
             {
                 try
                 {
+                    tb.FilterModified = false;
                     _statuses.Tabs.Add(tb.TabName, tb);
                 }
                 catch (Exception)
@@ -4691,7 +4692,8 @@ namespace OpenTween
 
         public bool RemoveSpecifiedTab(string TabName, bool confirm)
         {
-            if (_statuses.IsDefaultTab(TabName) || _statuses.Tabs[TabName].Protected)
+            var tabInfo = _statuses.GetTabByName(TabName);
+            if (tabInfo.IsDefaultTabType || tabInfo.Protected)
             {
                 ClearTab(TabName, true);
                 return false;
@@ -4707,12 +4709,10 @@ namespace OpenTween
                 }
             }
 
-            var _tabPage = ListTab.TabPages.Cast<TabPage>().FirstOrDefault<TabPage>(tp => tp.Text == TabName);
+            var _tabPage = ListTab.TabPages.Cast<TabPage>().FirstOrDefault(tp => tp.Text == TabName);
             if (_tabPage == null) return false;
 
             SetListProperty();   //他のタブに列幅等を反映
-
-            MyCommon.TabUsageType tabType = _statuses.Tabs[TabName].TabType;
 
             //オブジェクトインスタンスの削除
             DetailsListView _listCustom = (DetailsListView)_tabPage.Tag;
@@ -4733,14 +4733,14 @@ namespace OpenTween
                 this.ListTab.Controls.Remove(_tabPage);
 
                 // 後付けのコントロールを破棄
-                if (tabType == MyCommon.TabUsageType.UserTimeline || tabType == MyCommon.TabUsageType.Lists)
+                if (tabInfo.TabType == MyCommon.TabUsageType.UserTimeline || tabInfo.TabType == MyCommon.TabUsageType.Lists)
                 {
                     using (Control label = _tabPage.Controls["labelUser"])
                     {
                         _tabPage.Controls.Remove(label);
                     }
                 }
-                else if (tabType == MyCommon.TabUsageType.PublicSearch)
+                else if (tabInfo.TabType == MyCommon.TabUsageType.PublicSearch)
                 {
                     using (Control pnl = _tabPage.Controls["panelSearch"])
                     {
@@ -8139,26 +8139,17 @@ namespace OpenTween
                         return false;
                     }
                 }
-                //タブ名のリスト作り直し（デフォルトタブ以外は再作成）
+                //タブ名を変更
                 for (int i = 0; i < ListTab.TabCount; i++)
                 {
                     if (ListTab.TabPages[i].Text == tabName)
                     {
                         ListTab.TabPages[i].Text = newTabText;
+                        break;
                     }
                 }
                 _statuses.RenameTab(tabName, newTabText);
 
-                for (int i = 0; i < ListTab.TabCount; i++)
-                {
-                    if (_statuses.IsDistributableTab(ListTab.TabPages[i].Text))
-                    {
-                        if (ListTab.TabPages[i].Text == tabName)
-                        {
-                            ListTab.TabPages[i].Text = newTabText;
-                        }
-                    }
-                }
                 SaveConfigsCommon();
                 SaveConfigsTabs();
                 _rclickTabName = newTabText;
@@ -8759,12 +8750,12 @@ namespace OpenTween
 
         private void TabMenuControl(string tabName)
         {
+            var tabInfo = _statuses.GetTabByName(tabName);
+
             this.FilterEditMenuItem.Enabled = true;
             this.EditRuleTbMenuItem.Enabled = true;
 
-            bool isDefaultTab = _statuses.IsDefaultTab(tabName);
-
-            if (isDefaultTab)
+            if (tabInfo.IsDefaultTabType)
             {
                 this.ProtectTabMenuItem.Enabled = false;
                 this.ProtectTbMenuItem.Enabled = false;
@@ -8775,7 +8766,7 @@ namespace OpenTween
                 this.ProtectTbMenuItem.Enabled = true;
             }
 
-            if (isDefaultTab || _statuses.Tabs[tabName].Protected)
+            if (tabInfo.IsDefaultTabType || tabInfo.Protected)
             {
                 this.ProtectTabMenuItem.Checked = true;
                 this.ProtectTbMenuItem.Checked = true;

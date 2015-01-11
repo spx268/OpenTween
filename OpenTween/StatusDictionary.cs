@@ -488,8 +488,9 @@ namespace OpenTween
         {
             lock (LockObj)
             {
-                if (IsDefaultTab(TabName)) return; //念のため
-                var tb = _tabs[TabName];
+                var tb = GetTabByName(TabName);
+                if (tb.IsDefaultTabType) return; //念のため
+
                 if (!tb.IsInnerStorageTabType)
                 {
                     var homeTab = GetTabByType(MyCommon.TabUsageType.Home);
@@ -1458,38 +1459,6 @@ namespace OpenTween
             }
         }
 
-        // デフォルトタブの判定処理
-        public bool IsDefaultTab(string tabName)
-        {
-            TabClass tab;
-            if (tabName != null &&
-               _tabs.TryGetValue(tabName, out tab) &&
-               (tab.TabType == MyCommon.TabUsageType.Home ||
-               tab.TabType == MyCommon.TabUsageType.Mentions ||
-               tab.TabType == MyCommon.TabUsageType.DirectMessage ||
-               tab.TabType == MyCommon.TabUsageType.Favorites))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        //振り分け可能タブの判定処理
-        public bool IsDistributableTab(string tabName)
-        {
-            TabClass tab;
-            if (tabName != null &&
-                _tabs.TryGetValue(tabName, out tab) &&
-                (tab.TabType == MyCommon.TabUsageType.Mentions ||
-                tab.TabType == MyCommon.TabUsageType.UserDefined))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         public string GetUniqueTabName()
         {
             var tabNameTemp = "MyTab" + (_tabs.Count + 1).ToString();
@@ -1989,6 +1958,7 @@ namespace OpenTween
             lock (this._lockObj)
             {
                 _filters.Remove(filter);
+                filter.PropertyChanged -= this.OnFilterModified;
                 this.FilterModified = true;
             }
         }
@@ -1998,54 +1968,16 @@ namespace OpenTween
             lock (this._lockObj)
             {
                 if (_filters.Contains(filter)) return false;
+                filter.PropertyChanged += this.OnFilterModified;
                 _filters.Add(filter);
                 this.FilterModified = true;
                 return true;
             }
         }
 
-        public void EditFilter(PostFilterRule original, PostFilterRule modified)
+        private void OnFilterModified(object sender, PropertyChangedEventArgs e)
         {
-            original.FilterBody = modified.FilterBody;
-            original.FilterName = modified.FilterName;
-            original.UseNameField = modified.UseNameField;
-            original.FilterByUrl = modified.FilterByUrl;
-            original.UseRegex = modified.UseRegex;
-            original.CaseSensitive = modified.CaseSensitive;
-            original.FilterRt = modified.FilterRt;
-            original.UseLambda = modified.UseLambda;
-            original.FilterSource = modified.FilterSource;
-            original.ExFilterBody = modified.ExFilterBody;
-            original.ExFilterName = modified.ExFilterName;
-            original.ExUseNameField = modified.ExUseNameField;
-            original.ExFilterByUrl = modified.ExFilterByUrl;
-            original.ExUseRegex = modified.ExUseRegex;
-            original.ExCaseSensitive = modified.ExCaseSensitive;
-            original.ExFilterRt = modified.ExFilterRt;
-            original.ExUseLambda = modified.ExUseLambda;
-            original.ExFilterSource = modified.ExFilterSource;
-            original.MoveMatches = modified.MoveMatches;
-            original.MarkMatches = modified.MarkMatches;
             this.FilterModified = true;
-        }
-
-        [XmlIgnore]
-        public List<PostFilterRule> Filters
-        {
-            get
-            {
-                lock (this._lockObj)
-                {
-                    return _filters;
-                }
-            }
-            set
-            {
-                lock (this._lockObj)
-                {
-                    _filters = value;
-                }
-            }
         }
 
         public PostFilterRule[] FilterArray
@@ -2061,9 +1993,18 @@ namespace OpenTween
             {
                 lock (this._lockObj)
                 {
-                    foreach (var filters in value)
+                    foreach (var oldFilter in this._filters)
                     {
-                        _filters.Add(filters);
+                        oldFilter.PropertyChanged -= this.OnFilterModified;
+                    }
+
+                    this._filters.Clear();
+                    this.FilterModified = true;
+
+                    foreach (var newFilter in value)
+                    {
+                        _filters.Add(newFilter);
+                        newFilter.PropertyChanged += this.OnFilterModified;
                     }
                 }
             }
@@ -2186,23 +2127,75 @@ namespace OpenTween
             }
         }
 
+        public bool IsDefaultTabType
+        {
+            get
+            {
+                return _tabType.IsDefault();
+            }
+        }
+
+        public bool IsDistributableTabType
+        {
+            get
+            {
+                return _tabType.IsDistributable();
+            }
+        }
+
         public bool IsInnerStorageTabType
         {
             get
             {
-                if (_tabType == MyCommon.TabUsageType.PublicSearch ||
-                    _tabType == MyCommon.TabUsageType.DirectMessage ||
-                    _tabType == MyCommon.TabUsageType.Lists ||
-                    _tabType == MyCommon.TabUsageType.UserTimeline ||
-                    _tabType == MyCommon.TabUsageType.Related)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return _tabType.IsInnerStorage();
             }
+        }
+    }
+
+    /// <summary>
+    /// enum TabUsageType に対応する拡張メソッドを定義したクラス
+    /// </summary>
+    public static class TabUsageTypeExt
+    {
+        const MyCommon.TabUsageType DefaultTabTypeMask =
+            MyCommon.TabUsageType.Home |
+            MyCommon.TabUsageType.Mentions |
+            MyCommon.TabUsageType.DirectMessage |
+            MyCommon.TabUsageType.Favorites;
+
+        const MyCommon.TabUsageType DistributableTabTypeMask =
+            MyCommon.TabUsageType.Mentions |
+            MyCommon.TabUsageType.UserDefined;
+
+        const MyCommon.TabUsageType InnerStorageTabTypeMask =
+            MyCommon.TabUsageType.DirectMessage |
+            MyCommon.TabUsageType.PublicSearch |
+            MyCommon.TabUsageType.Lists |
+            MyCommon.TabUsageType.UserTimeline |
+            MyCommon.TabUsageType.Related;
+
+        /// <summary>
+        /// デフォルトタブかどうかを示す値を取得します。
+        /// </summary>
+        public static bool IsDefault(this MyCommon.TabUsageType tabType)
+        {
+            return (tabType & DefaultTabTypeMask) != 0;
+        }
+
+        /// <summary>
+        /// 振り分け可能タブかどうかを示す値を取得します。
+        /// </summary>
+        public static bool IsDistributable(this MyCommon.TabUsageType tabType)
+        {
+            return (tabType & DistributableTabTypeMask) != 0;
+        }
+
+        /// <summary>
+        /// 内部ストレージを使用するタブかどうかを示す値を取得します。
+        /// </summary>
+        public static bool IsInnerStorage(this MyCommon.TabUsageType tabType)
+        {
+            return (tabType & InnerStorageTabTypeMask) != 0;
         }
     }
 

@@ -43,6 +43,7 @@ namespace OpenTween
     {
         private EDITMODE _mode;
         private bool _directAdd;
+        private bool _moveRules = false;
         private TabInformations _sts;
         private string _cur;
         private List<string> idlist = new List<string>();
@@ -63,25 +64,31 @@ namespace OpenTween
         {
             if (ListTabs.Items.Count == 0) return;
 
-            ListFilters.Items.Clear();
-            ListFilters.Items.AddRange(_sts.Tabs[tabName].GetFilters());
-            if (ListFilters.Items.Count > 0) ListFilters.SelectedIndex = 0;
+            var tab = _sts.Tabs[tabName];
 
-            if (TabInformations.GetInstance().IsDefaultTab(tabName))
+            ListFilters.Items.Clear();
+            ListFilters.Items.AddRange(tab.GetFilters());
+
+            if (ListFilters.Items.Count > 0)
+                ListFilters.SelectedIndex = 0;
+            else
+                ShowDetail();
+
+            if (tab.IsDefaultTabType)
             {
                 CheckProtected.Checked = true;
                 CheckProtected.Enabled = false;
             }
             else
             {
-                CheckProtected.Checked = _sts.Tabs[tabName].Protected;
+                CheckProtected.Checked = tab.Protected;
                 CheckProtected.Enabled = true;
             }
 
-            CheckManageRead.Checked = _sts.Tabs[tabName].UnreadManage;
-            CheckNotifyNew.Checked = _sts.Tabs[tabName].Notify;
+            CheckManageRead.Checked = tab.UnreadManage;
+            CheckNotifyNew.Checked = tab.Notify;
 
-            int idx = ComboSound.Items.IndexOf(_sts.Tabs[tabName].SoundFile);
+            int idx = ComboSound.Items.IndexOf(tab.SoundFile);
             if (idx == -1) idx = 0;
             ComboSound.SelectedIndex = idx;
 
@@ -90,12 +97,8 @@ namespace OpenTween
             ListTabs.Enabled = true;
             GroupTab.Enabled = true;
             ListFilters.Enabled = true;
-            if (ListFilters.SelectedIndex != -1)
-            {
-                ShowDetail();
-            }
             EditFilterGroup.Enabled = false;
-            switch (TabInformations.GetInstance().Tabs[tabName].TabType)
+            switch (tab.TabType)
             {
                 case MyCommon.TabUsageType.Home:
                 case MyCommon.TabUsageType.DirectMessage:
@@ -134,7 +137,7 @@ namespace OpenTween
                     }
                     break;
             }
-            switch (TabInformations.GetInstance().Tabs[tabName].TabType)
+            switch (tab.TabType)
             {
                 case MyCommon.TabUsageType.Home:
                     LabelTabType.Text = Properties.Resources.TabUsageTypeName_Home;
@@ -168,7 +171,7 @@ namespace OpenTween
                     break;
             }
             ButtonRenameTab.Enabled = true;
-            if (TabInformations.GetInstance().IsDefaultTab(tabName) || TabInformations.GetInstance().Tabs[tabName].Protected)
+            if (tab.IsDefaultTabType || tab.Protected)
             {
                 ButtonDeleteTab.Enabled = false;
             }
@@ -323,29 +326,31 @@ namespace OpenTween
 
         private void ButtonDelete_Click(object sender, EventArgs e)
         {
-            if (ListFilters.SelectedIndex == -1) return;
-            string tmp = "";
-            DialogResult rslt;
+            var selectedCount = ListFilters.SelectedIndices.Count;
+            if (selectedCount == 0) return;
 
-            if (ListFilters.SelectedIndices.Count == 1)
+            string tmp;
+
+            if (selectedCount == 1)
             {
-                tmp = string.Format(Properties.Resources.ButtonDelete_ClickText1, "\r\n", ListFilters.SelectedItem.ToString());
-                rslt = MessageBox.Show(tmp, Properties.Resources.ButtonDelete_ClickText2,
-                            MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                tmp = string.Format(Properties.Resources.ButtonDelete_ClickText1, Environment.NewLine, ListFilters.SelectedItem.ToString());
             }
             else
             {
-                tmp = string.Format(Properties.Resources.ButtonDelete_ClickText3, ListFilters.SelectedIndices.Count.ToString());
-                rslt = MessageBox.Show(tmp, Properties.Resources.ButtonDelete_ClickText2,
-                            MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                tmp = string.Format(Properties.Resources.ButtonDelete_ClickText3, selectedCount.ToString());
             }
+
+            var rslt = MessageBox.Show(tmp, Properties.Resources.ButtonDelete_ClickText2, MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
             if (rslt == DialogResult.Cancel) return;
 
-            for (int idx = ListFilters.Items.Count - 1; idx >= 0; idx--)
+            var indices = ListFilters.SelectedIndices.Cast<int>().Reverse().ToArray();  // 後ろの要素から削除
+            var tab = _sts.Tabs[ListTabs.SelectedItem.ToString()];
+
+            using (ControlTransaction.Update(ListFilters))
             {
-                if (ListFilters.GetSelected(idx))
+                foreach (var idx in indices)
                 {
-                    _sts.Tabs[ListTabs.SelectedItem.ToString()].RemoveFilter((PostFilterRule)ListFilters.Items[idx]);
+                    tab.RemoveFilter((PostFilterRule)ListFilters.Items[idx]);
                     ListFilters.Items.RemoveAt(idx);
                 }
             }
@@ -545,9 +550,12 @@ namespace OpenTween
             }
 
             int i = ListFilters.SelectedIndex;
-            PostFilterRule ft;
 
-            ft = new PostFilterRule();
+            PostFilterRule ft;
+            if (_mode == EDITMODE.AddNew)
+                ft = new PostFilterRule();
+            else
+                ft = (PostFilterRule)this.ListFilters.SelectedItem;
 
             ft.MoveMatches = OptMove.Checked;
             ft.MarkMatches = CheckMark.Checked;
@@ -627,10 +635,6 @@ namespace OpenTween
             {
                 if (!_sts.Tabs[ListTabs.SelectedItem.ToString()].AddFilter(ft))
                     MessageBox.Show(Properties.Resources.ButtonOK_ClickText4, Properties.Resources.ButtonOK_ClickText2, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            else
-            {
-                _sts.Tabs[ListTabs.SelectedItem.ToString()].EditFilter((PostFilterRule)ListFilters.SelectedItem, ft);
             }
 
             SetFilters(ListTabs.SelectedItem.ToString());
@@ -788,7 +792,8 @@ namespace OpenTween
 
         private void ListFilters_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ShowDetail();
+            if (!_moveRules)
+                ShowDetail();
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
@@ -814,20 +819,12 @@ namespace OpenTween
 
         private void ListFilters_DoubleClick(object sender, EventArgs e)
         {
-            if (ListFilters.SelectedItem == null)
-            {
-                return;
-            }
+            var idx = ListFilters.SelectedIndex;
+            if (idx == -1) return;
 
-            if (ListFilters.IndexFromPoint(ListFilters.PointToClient(Control.MousePosition)) == ListBox.NoMatches)
-            {
-                return;
-            }
+            var midx = ListFilters.IndexFromPoint(ListFilters.PointToClient(Control.MousePosition));
+            if (midx == ListBox.NoMatches || idx != midx) return;
 
-            if (ListFilters.Items[ListFilters.IndexFromPoint(ListFilters.PointToClient(Control.MousePosition))] == null)
-            {
-                return;
-            }
             ButtonEdit_Click(sender, e);
         }
 
@@ -1049,29 +1046,70 @@ namespace OpenTween
 
         private void ButtonRuleUp_Click(object sender, EventArgs e)
         {
-            if (ListTabs.SelectedIndex > -1 && ListFilters.SelectedItem != null && ListFilters.SelectedIndex > 0)
-            {
-                string tabname = ListTabs.SelectedItem.ToString();
-                PostFilterRule target = _sts.Tabs[tabname].Filters[ListFilters.SelectedIndex - 1];
-                int idx = ListFilters.SelectedIndex;
-                ListFilters.Items.RemoveAt(idx - 1);
-                ListFilters.Items.Insert(idx, target);
-                _sts.Tabs[tabname].Filters.RemoveAt(idx - 1);
-                _sts.Tabs[tabname].Filters.Insert(idx, target);
-            }
+            MoveSelectedRules(up: true);
         }
 
         private void ButtonRuleDown_Click(object sender, EventArgs e)
         {
-            if (ListTabs.SelectedIndex > -1 && ListFilters.SelectedItem != null && ListFilters.SelectedIndex < ListFilters.Items.Count - 1)
+            MoveSelectedRules(up: false);
+        }
+
+        private void MoveSelectedRules(bool up)
+        {
+            var tabIdx = ListTabs.SelectedIndex;
+            if (tabIdx == -1 ||
+                ListFilters.SelectedIndices.Count == 0) return;
+
+            var indices = ListFilters.SelectedIndices.Cast<int>().ToArray();
+
+            int diff;
+            if (up)
             {
-                string tabname = ListTabs.SelectedItem.ToString();
-                PostFilterRule target = _sts.Tabs[tabname].Filters[ListFilters.SelectedIndex + 1];
-                int idx = ListFilters.SelectedIndex;
-                ListFilters.Items.RemoveAt(idx + 1);
-                ListFilters.Items.Insert(idx, target);
-                _sts.Tabs[tabname].Filters.RemoveAt(idx + 1);
-                _sts.Tabs[tabname].Filters.Insert(idx, target);
+                if (indices[0] <= 0) return;
+                diff = -1;
+            }
+            else
+            {
+                if (indices[indices.Length - 1] >= ListFilters.Items.Count - 1) return;
+                diff = +1;
+                Array.Reverse(indices);  // 逆順にして、下にある要素から処理する
+            }
+
+            var lastSelIdx = indices[0] + diff;
+            var tab = _sts.Tabs[ListTabs.Items[tabIdx].ToString()];
+
+            try
+            {
+                _moveRules = true;  // SelectedIndexChanged を無視する
+
+                using (ControlTransaction.Update(ListFilters))
+                {
+                    ListFilters.SelectedIndices.Clear();
+
+                    foreach (var idx in indices)
+                    {
+                        var tidx = idx + diff;
+                        var target = (PostFilterRule)ListFilters.Items[tidx];
+
+                        // 移動先にある要素と位置を入れ替える
+                        ListFilters.Items.RemoveAt(tidx);
+                        ListFilters.Items.Insert(idx, target);
+
+                        // 移動方向の先頭要素以外なら選択する
+                        if (tidx != lastSelIdx)
+                            ListFilters.SelectedIndex = tidx;
+                    }
+
+                    tab.FilterArray = ListFilters.Items.Cast<PostFilterRule>().ToArray();
+
+                    // 移動方向の先頭要素は最後に選択する
+                    // ※移動方向への自動スクロール目的
+                    ListFilters.SelectedIndex = lastSelIdx;
+                }
+            }
+            finally
+            {
+                _moveRules = false;
             }
         }
 
@@ -1095,7 +1133,7 @@ namespace OpenTween
 
                 foreach (int idx in ListFilters.SelectedIndices)
                 {
-                    filters.Add(_sts.Tabs[tabname].Filters[idx].Clone());
+                    filters.Add(_sts.Tabs[tabname].FilterArray[idx].Clone());
                 }
                 foreach (var tb in selectedTabs)
                 {
@@ -1103,7 +1141,7 @@ namespace OpenTween
 
                     foreach (PostFilterRule flt in filters)
                     {
-                        if (!tb.Filters.Contains(flt))
+                        if (!tb.FilterArray.Contains(flt))
                             tb.AddFilter(flt.Clone());
                     }
                 }
@@ -1130,7 +1168,7 @@ namespace OpenTween
 
                 foreach (int idx in ListFilters.SelectedIndices)
                 {
-                    filters.Add(_sts.Tabs[tabname].Filters[idx].Clone());
+                    filters.Add(_sts.Tabs[tabname].FilterArray[idx].Clone());
                 }
                 if (selectedTabs.Length == 1 && selectedTabs[0].TabName == tabname) return;
                 foreach (var tb in selectedTabs)
@@ -1139,7 +1177,7 @@ namespace OpenTween
 
                     foreach (PostFilterRule flt in filters)
                     {
-                        if (!tb.Filters.Contains(flt))
+                        if (!tb.FilterArray.Contains(flt))
                             tb.AddFilter(flt.Clone());
                     }
                 }

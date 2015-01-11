@@ -26,6 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Xunit;
+using Xunit.Extensions;
 
 namespace OpenTween
 {
@@ -221,6 +222,125 @@ namespace OpenTween
             tab.SetReadState(100L, false); // 未読にする
 
             Assert.Equal(1, tab.UnreadCount);
+        }
+
+        [Fact]
+        public void FilterArraySetter_Test()
+        {
+            var tab = new TabClass();
+
+            var filter = new PostFilterRule();
+            tab.FilterArray = new[] { filter };
+
+            Assert.Equal(new[] { filter }, tab.FilterArray);
+            Assert.True(tab.FilterModified);
+        }
+
+        [Fact]
+        public void AddFilter_Test()
+        {
+            var tab = new TabClass();
+
+            var filter = new PostFilterRule();
+            tab.AddFilter(filter);
+
+            Assert.Equal(new[] { filter }, tab.FilterArray);
+            Assert.True(tab.FilterModified);
+        }
+
+        [Fact]
+        public void RemoveFilter_Test()
+        {
+            var tab = new TabClass();
+
+            var filter = new PostFilterRule();
+            tab.FilterArray = new[] { filter };
+            tab.FilterModified = false;
+
+            tab.RemoveFilter(filter);
+
+            Assert.Empty(tab.FilterArray);
+            Assert.True(tab.FilterModified);
+        }
+
+        [Fact]
+        public void OnFilterModified_Test()
+        {
+            var tab = new TabClass();
+
+            var filter = new PostFilterRule();
+            tab.FilterArray = new[] { filter };
+            tab.FilterModified = false;
+
+            // TabClass に紐付いているフィルタを変更
+            filter.FilterSource = "OpenTween";
+
+            Assert.True(tab.FilterModified);
+        }
+
+        [Fact]
+        public void OnFilterModified_DetachedTest()
+        {
+            var tab = new TabClass();
+
+            var filter = new PostFilterRule();
+            tab.FilterArray = new[] { filter };
+
+            tab.RemoveFilter(filter);
+            tab.FilterModified = false;
+
+            // TabClass から既に削除されたフィルタを変更
+            filter.FilterSource = "OpenTween";
+
+            Assert.False(tab.FilterModified);
+        }
+    }
+
+    public class TabUsageTypeExtTest
+    {
+        [Theory]
+        [InlineData(MyCommon.TabUsageType.Home,          true)]
+        [InlineData(MyCommon.TabUsageType.Mentions,      true)]
+        [InlineData(MyCommon.TabUsageType.DirectMessage, true)]
+        [InlineData(MyCommon.TabUsageType.Favorites,     true)]
+        [InlineData(MyCommon.TabUsageType.UserDefined,   false)]
+        [InlineData(MyCommon.TabUsageType.Lists,         false)]
+        [InlineData(MyCommon.TabUsageType.UserTimeline,  false)]
+        [InlineData(MyCommon.TabUsageType.PublicSearch,  false)]
+        [InlineData(MyCommon.TabUsageType.Related,       false)]
+        public void IsDefault_Test(MyCommon.TabUsageType tabType, bool expected)
+        {
+            Assert.Equal(expected, tabType.IsDefault());
+        }
+
+        [Theory]
+        [InlineData(MyCommon.TabUsageType.Home,          false)]
+        [InlineData(MyCommon.TabUsageType.Mentions,      true)]
+        [InlineData(MyCommon.TabUsageType.DirectMessage, false)]
+        [InlineData(MyCommon.TabUsageType.Favorites,     false)]
+        [InlineData(MyCommon.TabUsageType.UserDefined,   true)]
+        [InlineData(MyCommon.TabUsageType.Lists,         false)]
+        [InlineData(MyCommon.TabUsageType.UserTimeline,  false)]
+        [InlineData(MyCommon.TabUsageType.PublicSearch,  false)]
+        [InlineData(MyCommon.TabUsageType.Related,       false)]
+        public void IsDistributable_Test(MyCommon.TabUsageType tabType, bool expected)
+        {
+            Assert.Equal(expected, tabType.IsDistributable());
+        }
+
+        [Theory]
+        [InlineData(MyCommon.TabUsageType.Home,          false)]
+        [InlineData(MyCommon.TabUsageType.Mentions,      false)]
+        [InlineData(MyCommon.TabUsageType.DirectMessage, true)]
+        [InlineData(MyCommon.TabUsageType.Favorites,     false)]
+        [InlineData(MyCommon.TabUsageType.UserDefined,   false)]
+        [InlineData(MyCommon.TabUsageType.Lists,         true)]
+        [InlineData(MyCommon.TabUsageType.UserTimeline,  true)]
+        [InlineData(MyCommon.TabUsageType.PublicSearch,  true)]
+        [InlineData(MyCommon.TabUsageType.Related,       true)]
+        public void IsInnerStorage_Test(MyCommon.TabUsageType tabType, bool expected)
+        {
+            Assert.Equal(expected, tabType.IsInnerStorage());
         }
     }
 }
