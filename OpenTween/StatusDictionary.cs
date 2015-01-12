@@ -417,8 +417,8 @@ namespace OpenTween
         private Dictionary<long, PostClass> _retweets = new Dictionary<long, PostClass>();
         private Stack<TabClass> _removedTab = new Stack<TabClass>();
 
-        public List<long> BlockIds = new List<long>();
-        public List<long> MuteUserIds = new List<long>();
+        public ISet<long> BlockIds = new HashSet<long>();
+        public ISet<long> MuteUserIds = new HashSet<long>();
 
         //発言の追加
         //AddPost(複数回) -> DistributePosts          -> SubmitUpdate
@@ -696,7 +696,7 @@ namespace OpenTween
                             PostClass rPost = null;
                             try
                             {
-                                rPost = this[tn, i];
+                                rPost = this.Tabs[tn][i];
                             }
                             catch (ArgumentOutOfRangeException)
                             {
@@ -1188,26 +1188,6 @@ namespace OpenTween
             }
         }
 
-        public PostClass this[string TabName, int Index]
-        {
-            get
-            {
-                TabClass tb;
-                if (!_tabs.TryGetValue(TabName, out tb)) throw new ArgumentException("TabName=" + TabName + " is not contained.");
-                return tb[Index];
-            }
-        }
-
-        public PostClass[] this[string TabName, int StartIndex, int EndIndex]
-        {
-            get
-            {
-                TabClass tb;
-                if (!_tabs.TryGetValue(TabName, out tb)) throw new ArgumentException("TabName=" + TabName + " is not contained.");
-                return tb[StartIndex, EndIndex];
-            }
-        }
-
         //public ReadOnly int ItemCount
         //{
         //    get
@@ -1225,16 +1205,6 @@ namespace OpenTween
             lock (LockObj)
             {
                 return _statuses.ContainsKey(Id);
-            }
-        }
-
-        public bool ContainsKey(long Id, string TabName)
-        {
-            //DM,公式検索は対応版
-            lock (LockObj)
-            {
-                TabClass tab;
-                return _tabs.TryGetValue(TabName, out tab) && tab.Contains(Id);
             }
         }
 
@@ -1313,26 +1283,6 @@ namespace OpenTween
             }
         }
 
-        public long[] GetId(string TabName, ListView.SelectedIndexCollection IndexCollection)
-        {
-            return _tabs[TabName].GetId(IndexCollection);
-        }
-
-        public long GetId(string TabName, int Index)
-        {
-            return _tabs[TabName].GetId(Index);
-        }
-
-        public int[] IndexOf(string TabName, long[] Ids)
-        {
-            return _tabs[TabName].IndexOf(Ids);
-        }
-
-        public int IndexOf(string TabName, long Id)
-        {
-            return _tabs[TabName].IndexOf(Id);
-        }
-
         public void ClearTabIds(string TabName)
         {
             //不要なPostを削除
@@ -1374,7 +1324,7 @@ namespace OpenTween
             }
         }
 
-        public void RefreshOwl(List<long> follower)
+        public void RefreshOwl(ISet<long> follower)
         {
             lock (LockObj)
             {
