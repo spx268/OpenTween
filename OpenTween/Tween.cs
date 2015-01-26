@@ -1189,6 +1189,10 @@ namespace OpenTween
             StatusText.Font = _fntInputFont;
             StatusText.ForeColor = _clInputFont;
 
+            // SplitContainer2.Panel2MinSize を一行表示の入力欄の高さに合わせる (MS UI Gothic 12pt (96dpi) の場合は 19px)
+            this.StatusText.Multiline = false; // _cfgLocal.StatusMultiline の設定は後で反映される
+            this.SplitContainer2.Panel2MinSize = this.StatusText.Height;
+
             // NameLabel のフォントを OTBaseForm.GlobalFont に変更
             this.NameLabel.Font = this.ReplaceToGlobalFont(this.NameLabel.Font);
 
@@ -3250,7 +3254,8 @@ namespace OpenTween
 
         private void RemovePostFromFavTab(Int64[] ids)
         {
-            string favTabName = _statuses.GetTabByType(MyCommon.TabUsageType.Favorites).TabName;
+            var favTab = this._statuses.GetTabByType(MyCommon.TabUsageType.Favorites);
+            string favTabName = favTab.TabName;
             int fidx = 0;
             if (_curTab.Text.Equals(favTabName))
             {
@@ -3283,7 +3288,7 @@ namespace OpenTween
             {
                 if (tp.Text == favTabName)
                 {
-                    ((DetailsListView)tp.Tag).VirtualListSize = _statuses.Tabs[favTabName].AllCount;
+                    ((DetailsListView)tp.Tag).VirtualListSize = favTab.AllCount;
                     break;
                 }
             }
@@ -3295,15 +3300,15 @@ namespace OpenTween
                 }
                 while (_curList.SelectedIndices.Count > 0);
 
-                if (_statuses.Tabs[favTabName].AllCount > 0)
+                if (favTab.AllCount > 0)
                 {
-                    if (_statuses.Tabs[favTabName].AllCount - 1 > fidx && fidx > -1)
+                    if (favTab.AllCount - 1 > fidx && fidx > -1)
                     {
                         _curList.SelectedIndices.Add(fidx);
                     }
                     else
                     {
-                        _curList.SelectedIndices.Add(_statuses.Tabs[favTabName].AllCount - 1);
+                        _curList.SelectedIndices.Add(favTab.AllCount - 1);
                     }
                     if (_curList.SelectedIndices.Count > 0)
                     {
@@ -4905,6 +4910,7 @@ namespace OpenTween
             DispSelectedPost();
             SetMainWindowTitle();
             SetStatusLabelUrl();
+            SetApiStatusLabel();
             if (ListTab.Focused || ((Control)ListTab.SelectedTab.Tag).Focused) this.Tag = ListTab.Tag;
             TabMenuControl(ListTab.SelectedTab.Text);
             this.PushSelectPostChain();
@@ -9505,10 +9511,7 @@ namespace OpenTween
                 else
                 {
                     var endpointName = (e as TwitterApiStatus.AccessLimitUpdatedEventArgs).EndpointName;
-                    if (endpointName == "/statuses/home_timeline" || endpointName == null)
-                    {
-                        this._apiGauge.ApiLimit = MyCommon.TwitterApiInfo.AccessLimit["/statuses/home_timeline"];
-                    }
+                    SetApiStatusLabel(endpointName);
                 }
             }
             catch (ObjectDisposedException)
@@ -9518,6 +9521,112 @@ namespace OpenTween
             catch (InvalidOperationException)
             {
                 return;
+            }
+        }
+
+        private void SetApiStatusLabel(string endpointName = null)
+        {
+            if (_curTab == null)
+            {
+                this._apiGauge.ApiEndpoint = null;
+            }
+            else
+            {
+                var tabType = _statuses.Tabs[_curTab.Text].TabType;
+
+                if (endpointName == null)
+                {
+                    // 表示中のタブに応じて更新
+                    switch (tabType)
+                    {
+                        case MyCommon.TabUsageType.Home:
+                        case MyCommon.TabUsageType.UserDefined:
+                            endpointName = "/statuses/home_timeline";
+                            break;
+
+                        case MyCommon.TabUsageType.Mentions:
+                            endpointName = "/statuses/mentions_timeline";
+                            break;
+
+                        case MyCommon.TabUsageType.Favorites:
+                            endpointName = "/favorites/list";
+                            break;
+
+                        case MyCommon.TabUsageType.DirectMessage:
+                            endpointName = "/direct_messages";
+                            break;
+
+                        case MyCommon.TabUsageType.UserTimeline:
+                            endpointName = "/statuses/user_timeline";
+                            break;
+
+                        case MyCommon.TabUsageType.Lists:
+                            endpointName = "/lists/statuses";
+                            break;
+
+                        case MyCommon.TabUsageType.PublicSearch:
+                            endpointName = "/search/tweets";
+                            break;
+
+                        case MyCommon.TabUsageType.Related:
+                            endpointName = "/statuses/show/:id";
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    this._apiGauge.ApiEndpoint = endpointName;
+                }
+                else
+                {
+                    // 表示中のタブに関連する endpoint であれば更新
+                    var update = false;
+
+                    switch (endpointName)
+                    {
+                        case "/statuses/home_timeline":
+                            update = tabType == MyCommon.TabUsageType.Home ||
+                                     tabType == MyCommon.TabUsageType.UserDefined;
+                            break;
+
+                        case "/statuses/mentions_timeline":
+                            update = tabType == MyCommon.TabUsageType.Mentions;
+                            break;
+
+                        case "/favorites/list":
+                            update = tabType == MyCommon.TabUsageType.Favorites;
+                            break;
+
+                        case "/direct_messages:":
+                            update = tabType == MyCommon.TabUsageType.DirectMessage;
+                            break;
+
+                        case "/statuses/user_timeline":
+                            update = tabType == MyCommon.TabUsageType.UserTimeline;
+                            break;
+
+                        case "/lists/statuses":
+                            update = tabType == MyCommon.TabUsageType.Lists;
+                            break;
+
+                        case "/search/tweets":
+                            update = tabType == MyCommon.TabUsageType.PublicSearch;
+                            break;
+
+                        case "/statuses/show/:id":
+                            update = tabType == MyCommon.TabUsageType.Related;
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    if (update)
+                    {
+                        this._apiGauge.ApiEndpoint = endpointName;
+                    }
+                }
             }
         }
 
@@ -9646,10 +9755,6 @@ namespace OpenTween
                 }
                 //発言欄複数行
                 StatusText.Multiline = _cfgLocal.StatusMultiline;
-
-                // SplitContainer2.Panel2MinSize を入力欄の高さに合わせる (MS UI Gothic 12pt (96dpi) の場合は 19px)
-                this.SplitContainer2.Panel2MinSize = this.StatusText.Height;
-
                 if (StatusText.Multiline)
                 {
                     int dis = SplitContainer2.Height - _cfgLocal.StatusTextHeight - SplitContainer2.SplitterWidth;
@@ -11208,43 +11313,27 @@ namespace OpenTween
 
         private void ApiUsageInfoMenuItem_Click(object sender, EventArgs e)
         {
-            StringBuilder tmp = new StringBuilder();
+            var result = false;
 
-            using (FormInfo dlg = new FormInfo(this, Properties.Resources.ApiInfo6, GetApiInfo_Dowork))
+            using (var dlg = new FormInfo(this, Properties.Resources.ApiInfo6, GetApiInfo_Dowork))
             {
                 dlg.ShowDialog();
 
-                var result = (TwitterApiStatus)dlg.Result;
-
-                if (result != null)
-                {
-                    // TODO: 表示方法の変更
-                    var accessLevel = result.AccessLevel;
-                    var timelineLimit = result.AccessLimit["/statuses/home_timeline"];
-                    var mediaLimit = result.MediaUploadLimit;
-
-                    tmp.AppendLine(Properties.Resources.ApiInfo1 + timelineLimit.AccessLimitCount);
-                    tmp.AppendLine(Properties.Resources.ApiInfo2 + timelineLimit.AccessLimitRemain);
-                    tmp.AppendLine(Properties.Resources.ApiInfo3 + timelineLimit.AccessLimitResetDate);
-                    tmp.AppendLine(Properties.Resources.ApiInfo7 + (tw.UserStreamEnabled ? Properties.Resources.Enable : Properties.Resources.Disable));
-
-                    tmp.AppendLine();
-                    tmp.AppendLine(Properties.Resources.ApiInfo8 + accessLevel);
-                    SetStatusLabelUrl();
-
-                    tmp.AppendLine();
-                    tmp.AppendLine(Properties.Resources.ApiInfo9 + (mediaLimit == null ? Properties.Resources.ApiInfo91 : mediaLimit.AccessLimitCount.ToString()));
-                    tmp.AppendLine(Properties.Resources.ApiInfo10 + (mediaLimit == null ? Properties.Resources.ApiInfo91 : mediaLimit.AccessLimitRemain.ToString()));
-                    tmp.AppendLine(Properties.Resources.ApiInfo11 + (mediaLimit == null ? Properties.Resources.ApiInfo91 : mediaLimit.AccessLimitResetDate.ToString()));
-                }
-                else
-                {
-                    tmp.Append(Properties.Resources.ApiInfo5);
-                }
+                result = dlg.Result != null;
             }
 
-            MessageBox.Show(tmp.ToString(), Properties.Resources.ApiInfo4, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+            if (result)
+            {
+                using (var apiDlg = new ApiInfoDialog())
+                {
+                    apiDlg.ShowDialog();
+                }
+            }
+            else
+            {
+                MessageBox.Show(Properties.Resources.ApiInfo5, Properties.Resources.ApiInfo4, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+}
 
         private void FollowCommandMenuItem_Click(object sender, EventArgs e)
         {
