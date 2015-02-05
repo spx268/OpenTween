@@ -3366,7 +3366,6 @@ namespace OpenTween
             { "list_user_unsubscribed", MyCommon.EVENTTYPE.ListUserUnsubscribed },
             { "mute", MyCommon.EVENTTYPE.Mute },
             { "unmute", MyCommon.EVENTTYPE.Unmute },
-            { "favorited_retweet", MyCommon.EVENTTYPE.Favorite },
         };
 
         public bool IsUserstreamDataReceived
@@ -3541,8 +3540,8 @@ namespace OpenTween
                     evt.Target = "@" + eventData.Target.ScreenName;
                     break;
                 case "favorited_retweet":
-                    if (evt.Username.ToLower().Equals(_uname)) return;  //元発言のfavoriteイベントも同時に流れてくるので、こっちは無視する
-                    goto case "favorite";
+                case "retweeted_retweet":
+                    return;
                 case "favorite":
                 case "unfavorite":
                     var tweetEvent = TwitterStreamEvent<TwitterStatus>.ParseJson(content);
@@ -3555,7 +3554,6 @@ namespace OpenTween
                                                return ev.Username == evt.Username && ev.Eventtype == evt.Eventtype && ev.Target == evt.Target;
                                            })) return;
                     }
-                    if (evt.Event == "favorited_retweet") break;
                     if (TabInformations.GetInstance().ContainsKey(tweetEvent.TargetObject.Id))
                     {
                         var post = TabInformations.GetInstance()[tweetEvent.TargetObject.Id];
