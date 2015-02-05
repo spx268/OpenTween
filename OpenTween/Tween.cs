@@ -109,9 +109,7 @@ namespace OpenTween
         private GrowlHelper gh = new GrowlHelper(Application.ProductName);
 
         //サブ画面インスタンス
-        private AppendSettingDialog SettingDialog = new AppendSettingDialog();       //設定画面インスタンス
         private SearchWordDialog SearchDialog = new SearchWordDialog();     //検索画面インスタンス
-        private FilterDialog fltDialog = new FilterDialog(); //フィルター編集画面
         private OpenURL UrlDialog = new OpenURL();
         public AtIdSupplement AtIdSupl;     //@id補助
         public AtIdSupplement HashSupl;    //Hashtag補助
@@ -531,9 +529,7 @@ namespace OpenTween
                     this.components.Dispose();
 
                 //後始末
-                SettingDialog.Dispose();
                 SearchDialog.Dispose();
-                fltDialog.Dispose();
                 UrlDialog.Dispose();
                 CloseThumbnailWindow();
                 _webBrowserKeyCanceler.Dispose();
@@ -898,13 +894,10 @@ namespace OpenTween
 
             //アイコン設定
             this.Icon = MainIcon;              //メインフォーム（TweenMain）
-            this.SettingDialog.Icon = this.MainIcon;
             NotifyIcon1.Icon = NIconAt;      //タスクトレイ
             TabImage.Images.Add(TabIcon);    //タブ見出し
 
-            SettingDialog.Owner = this;;
             SearchDialog.Owner = this;
-            fltDialog.Owner = this;
             UrlDialog.Owner = this;
 
             _history.Add(new PostingStatus());
@@ -1038,27 +1031,14 @@ namespace OpenTween
             {
                 saveRequired = true;
                 firstRun = true;
-                SettingDialog.ShowInTaskbar = true;
 
-                this.SettingDialog.tw = this.tw;
-                this.SettingDialog.LoadConfig(this._cfgCommon, this._cfgLocal);
-
-                //設定せずにキャンセルされた場合はプログラム終了
-                if (SettingDialog.ShowDialog(this) == DialogResult.Cancel)
+                //設定せずにキャンセルされたか、設定されたが依然ユーザー名が未設定ならプログラム終了
+                if (ShowSettingDialog(showTaskbarIcon: true) != DialogResult.OK ||
+                    string.IsNullOrEmpty(tw.Username))
                 {
                     Application.Exit();  //強制終了
                     return;
                 }
-
-                this.SettingDialog.SaveConfig(this._cfgCommon, this._cfgLocal);
-
-                //設定されたが、依然ユーザー名とパスワードが未設定ならプログラム終了
-                if (string.IsNullOrEmpty(tw.Username))
-                {
-                    Application.Exit();  //強制終了
-                    return;
-                }
-                SettingDialog.ShowInTaskbar = false;
 
                 //新しい設定を反映
                 //フォント＆文字色＆背景色保持
@@ -4001,33 +3981,52 @@ namespace OpenTween
             }
         }
 
+        private DialogResult ShowSettingDialog(bool showTaskbarIcon = false)
+        {
+            DialogResult result = DialogResult.Abort;
+
+            using (var settingDialog = new AppendSettingDialog())
+            {
+                settingDialog.Icon = this.MainIcon;
+                settingDialog.Owner = this;
+                settingDialog.ShowInTaskbar = showTaskbarIcon;
+                settingDialog.IntervalChanged += this.TimerInterval_Changed;
+
+                settingDialog.tw = this.tw;
+                settingDialog.LoadConfig(this._cfgCommon, this._cfgLocal);
+
+                try
+                {
+                    result = settingDialog.ShowDialog(this);
+                }
+                catch (Exception)
+                {
+                    return DialogResult.Abort;
+                }
+
+                if (result == DialogResult.OK)
+                {
+                    lock (_syncObject)
+                    {
+                        settingDialog.SaveConfig(this._cfgCommon, this._cfgLocal);
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private void SettingStripMenuItem_Click(object sender, EventArgs e)
         {
-            DialogResult result;
-
             // 設定画面表示前のユーザー情報
             var oldUser = new { tw.AccessToken, tw.AccessTokenSecret, tw.Username, tw.UserId };
 
-            this.SettingDialog.tw = this.tw;
-            this.SettingDialog.LoadConfig(this._cfgCommon, this._cfgLocal);
+            var oldIconSz = this._cfgCommon.IconSize;
 
-            try
-            {
-                result = SettingDialog.ShowDialog(this);
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
-            if (result == DialogResult.OK)
+            if (ShowSettingDialog() == DialogResult.OK)
             {
                 lock (_syncObject)
                 {
-                    var oldIconSz = this._cfgCommon.IconSize;
-
-                    this.SettingDialog.SaveConfig(this._cfgCommon, this._cfgLocal);
-
                     tw.RestrictFavCheck = this._cfgCommon.RestrictFavCheck;
                     tw.ReadOwnPost = this._cfgCommon.ReadOwnPost;
                     ShortUrl.Instance.DisableExpanding = !this._cfgCommon.TinyUrlResolve;
@@ -8904,8 +8903,13 @@ namespace OpenTween
         private void FilterEditMenuItem_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(_rclickTabName)) _rclickTabName = _statuses.GetTabByType(MyCommon.TabUsageType.Home).TabName;
-            fltDialog.SetCurrent(_rclickTabName);
-            fltDialog.ShowDialog(this);
+
+            using (var fltDialog = new FilterDialog())
+            {
+                fltDialog.Owner = this;
+                fltDialog.SetCurrent(_rclickTabName);
+                fltDialog.ShowDialog(this);
+            }
             this.TopMost = this._cfgCommon.AlwaysTop;
 
             this.ApplyPostFilters();
@@ -8966,24 +8970,29 @@ namespace OpenTween
 
         private void TabMenuItem_Click(object sender, EventArgs e)
         {
-            //選択発言を元にフィルタ追加
-            foreach (int idx in _curList.SelectedIndices)
+            using (var fltDialog = new FilterDialog())
             {
-                string tabName;
-                //タブ選択（or追加）
-                if (!SelectTab(out tabName)) return;
+                fltDialog.Owner = this;
 
-                fltDialog.SetCurrent(tabName);
-                if (_statuses.Tabs[_curTab.Text][idx].RetweetedId == null)
+                //選択発言を元にフィルタ追加
+                foreach (int idx in _curList.SelectedIndices)
                 {
-                    fltDialog.AddNewFilter(_statuses.Tabs[_curTab.Text][idx].ScreenName, _statuses.Tabs[_curTab.Text][idx].TextFromApi);
+                    string tabName;
+                    //タブ選択（or追加）
+                    if (!SelectTab(out tabName)) return;
+
+                    fltDialog.SetCurrent(tabName);
+                    if (_statuses.Tabs[_curTab.Text][idx].RetweetedId == null)
+                    {
+                        fltDialog.AddNewFilter(_statuses.Tabs[_curTab.Text][idx].ScreenName, _statuses.Tabs[_curTab.Text][idx].TextFromApi);
+                    }
+                    else
+                    {
+                        fltDialog.AddNewFilter(_statuses.Tabs[_curTab.Text][idx].RetweetedBy, _statuses.Tabs[_curTab.Text][idx].TextFromApi);
+                    }
+                    fltDialog.ShowDialog(this);
+                    this.TopMost = this._cfgCommon.AlwaysTop;
                 }
-                else
-                {
-                    fltDialog.AddNewFilter(_statuses.Tabs[_curTab.Text][idx].RetweetedBy, _statuses.Tabs[_curTab.Text][idx].TextFromApi);
-                }
-                fltDialog.ShowDialog(this);
-                this.TopMost = this._cfgCommon.AlwaysTop;
             }
 
             this.ApplyPostFilters();
@@ -12488,7 +12497,6 @@ namespace OpenTween
 
             // InitializeComponent() 呼び出しの後で初期化を追加します。
 
-            this.SettingDialog.IntervalChanged += this.TimerInterval_Changed;
             this.TimerTimeline.Elapsed += this.TimerTimeline_Elapsed;
             this._hookGlobalHotkey.HotkeyPressed += _hookGlobalHotkey_HotkeyPressed;
             this.gh.NotifyClicked += GrowlHelper_Callback;
