@@ -2983,7 +2983,7 @@ namespace OpenTween
             return retStr;
         }
 
-        public async Task<string> CreateHtmlAnchorAsync(string text, List<string> AtList, TwitterEntities entities, List<string> media)
+        public async Task<string> CreateHtmlAnchorAsync(string text, List<string> AtList, TwitterEntities entities, List<MediaInfo> media)
         {
             if (entities != null)
             {
@@ -2994,8 +2994,8 @@ namespace OpenTween
                         ent.ExpandedUrl = await ShortUrl.Instance.ExpandUrlAsync(ent.ExpandedUrl)
                             .ConfigureAwait(false);
 
-                        if (media != null && !media.Contains(ent.ExpandedUrl))
-                            media.Add(ent.ExpandedUrl);
+                        if (media != null && !media.Any(info => info.Url == ent.ExpandedUrl))
+                            media.Add(new MediaInfo(ent.ExpandedUrl));
                     }
                 }
                 if (entities.Hashtags != null)
@@ -3020,8 +3020,20 @@ namespace OpenTween
                     {
                         foreach (var ent in entities.Media)
                         {
-                            if (!media.Contains(ent.MediaUrl))
-                                media.Add(ent.MediaUrl);
+                            if (!media.Any(x => x.Url == ent.MediaUrl))
+                            {
+                                if (ent.VideoInfo != null &&
+                                    ent.Type == "animated_gif" || ent.Type == "video")
+                                {
+                                    //var videoUrl = ent.VideoInfo.Variants
+                                    //    .Where(v => v.ContentType == "video/mp4")
+                                    //    .OrderByDescending(v => v.Bitrate)
+                                    //    .Select(v => v.Url).FirstOrDefault();
+                                    media.Add(new MediaInfo(ent.MediaUrl, ent.ExpandedUrl));
+                                }
+                                else
+                                    media.Add(new MediaInfo(ent.MediaUrl));
+                            }
                         }
                     }
                 }
@@ -3036,7 +3048,7 @@ namespace OpenTween
         }
 
         [Obsolete]
-        public string CreateHtmlAnchor(string text, List<string> AtList, TwitterEntities entities, List<string> media)
+        public string CreateHtmlAnchor(string text, List<string> AtList, TwitterEntities entities, List<MediaInfo> media)
         {
             return this.CreateHtmlAnchorAsync(text, AtList, entities, media).Result;
         }
