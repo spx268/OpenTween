@@ -183,7 +183,6 @@ namespace OpenTween
         private StringFormat sfTab = new StringFormat();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////
-        private ToolStripAPIGauge _apiGauge;
         private TabInformations _statuses;
 
         // ListViewItem のキャッシュ関連
@@ -562,7 +561,6 @@ namespace OpenTween
                 {
                     _bwFollower.Dispose();
                 }
-                this._apiGauge.Dispose();
                 if (IconCache != null)
                 {
                     this.IconCache.CancelAsync();
@@ -9559,7 +9557,7 @@ namespace OpenTween
         {
             if (_curTab == null)
             {
-                this._apiGauge.ApiEndpoint = null;
+                this.toolStripApiGauge.ApiEndpoint = null;
             }
             else
             {
@@ -9607,7 +9605,7 @@ namespace OpenTween
                             break;
                     }
 
-                    this._apiGauge.ApiEndpoint = endpointName;
+                    this.toolStripApiGauge.ApiEndpoint = endpointName;
                 }
                 else
                 {
@@ -9655,7 +9653,7 @@ namespace OpenTween
 
                     if (update)
                     {
-                        this._apiGauge.ApiEndpoint = endpointName;
+                        this.toolStripApiGauge.ApiEndpoint = endpointName;
                     }
                 }
             }
@@ -12527,6 +12525,12 @@ namespace OpenTween
 
             // InitializeComponent() 呼び出しの後で初期化を追加します。
 
+            if (!this.DesignMode)
+            {
+                // デザイナでの編集時にレイアウトが縦方向に数pxずれる問題の対策
+                this.StatusText.Dock = DockStyle.Fill;
+            }
+
             this.TimerTimeline.Elapsed += this.TimerTimeline_Elapsed;
             this._hookGlobalHotkey.HotkeyPressed += _hookGlobalHotkey_HotkeyPressed;
             this.gh.NotifyClicked += GrowlHelper_Callback;
@@ -12545,12 +12549,6 @@ namespace OpenTween
             this.PostBrowserPanel.Controls.Add(this.PostBrowser);
             this.TableLayoutPanel1.Controls.Add(this.PostBrowserPanel, 1, 1);
             this.TableLayoutPanel1.SetColumnSpan(this.PostBrowserPanel, 3);
-
-            this._apiGauge = new ToolStripAPIGauge();
-            this._apiGauge.BorderSides = ToolStripStatusLabelBorderSides.Right;
-            this._apiGauge.DoubleClickEnabled = true;
-            this._apiGauge.DoubleClick += this.ApiUsageInfoMenuItem_Click;
-            this.StatusStrip1.Items.Insert(2, this._apiGauge);
 
             this.ImageSelector.Visible = false;
             this.ImageSelector.Enabled = false;
