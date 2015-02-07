@@ -2646,6 +2646,9 @@
   <data name="LockListSortOrderToolStripMenuItem.Text" xml:space="preserve">
     <value>ソート順をロック</value>
   </data>
+  <data name="SearchAlcContextMenuItem.Text" xml:space="preserve">
+    <value>英辞郎検索(&amp;E)</value>
+  </data>
   <data name="UseThumbnailWindowMenuItem.Text" xml:space="preserve">
     <value>サムネイル枠を分離</value>
   </data>
@@ -4225,6 +4228,18 @@
     <value>LockListSortOrderToolStripMenuItem</value>
   </data>
   <data name="&gt;&gt;LockListSortOrderToolStripMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;SearchAlcContextMenuItem.Name" xml:space="preserve">
+    <value>SearchAlcContextMenuItem</value>
+  </data>
+  <data name="&gt;&gt;SearchAlcContextMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;UseThumbnailWindowMenuItem.Name" xml:space="preserve">
+    <value>UseThumbnailWindowMenuItem</value>
+  </data>
+  <data name="&gt;&gt;UseThumbnailWindowMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
