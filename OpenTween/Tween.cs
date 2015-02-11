@@ -1472,7 +1472,7 @@ namespace OpenTween
             ResetTimers = e;
         }
 
-        private IntervalChangedEventArgs ResetTimers = new IntervalChangedEventArgs();
+        private IntervalChangedEventArgs ResetTimers = IntervalChangedEventArgs.ResetAll;
 
         private static int homeCounter = 0;
         private static int mentionCounter = 0;
@@ -5607,6 +5607,8 @@ namespace OpenTween
         protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
         {
             base.ScaleControl(factor, specified);
+
+            ScaleChildControl(this.TabImage, factor);
 
             var tabpages = this.ListTab.TabPages.Cast<TabPage>();
             var listviews = tabpages.Select(x => x.Tag).Cast<ListView>();
@@ -13664,8 +13666,9 @@ namespace OpenTween
 
         private void OpenThumbnailPicture(ThumbnailInfo thumbnail)
         {
-            string url = thumbnail.ImageUrl;
+            var url = thumbnail.FullSizeImageUrl ?? thumbnail.ImageUrl;
             url = url.Replace(" ", "%20");
+
             this.OpenUriAsync(url);
         }
 
