@@ -74,18 +74,30 @@ namespace OpenTween
         private Point _tabMouseDownPoint;
         private string _rclickTabName;      //右クリックしたタブの名前（Tabコントロール機能不足対応）
         private readonly object _syncObject = new object();    //ロック用
-        private const string detailHtmlFormatMono1 = "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\"><style type=\"text/css\"><!-- pre {font-family: \"";
-        private const string detailHtmlFormat2 = "\", sans-serif; font-size: ";
-        private const string detailHtmlFormat3 = "pt; margin: 0; word-wrap: break-word; color:rgb(";
-        private const string detailHtmlFormat4 = ");} a:link, a:visited, a:active, a:hover {color:rgb(";
-        private const string detailHtmlFormat5 = ");} html {overflow-y: scroll;} --></style></head><body style=\"margin:0px; background-color:rgb(";
-        private const string detailHtmlFormatMono6 = ");\"><pre>";
-        private const string detailHtmlFormatMono7 = "</pre></body></html>";
-        private const string detailHtmlFormat1 = "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\"><style type=\"text/css\"><!-- p {font-family: \"";
-        private const string detailHtmlFormat6 = ");\"><p><span style=\"vertical-align:text-bottom\">";
-        private const string detailHtmlFormat7 = "</span></p></body></html>";
+
+        private const string detailHtmlFormatHeaderMono = 
+            "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">"
+            + "<style type=\"text/css\"><!-- "
+            + "pre {font-family: \"%FONT_FAMILY%\", sans-serif; font-size: %FONT_SIZE%pt; margin: 0; word-wrap: break-word; color:rgb(%FONT_COLOR%);} "
+            + "a:link, a:visited, a:active, a:hover {color:rgb(%LINK_COLOR%); } "
+            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em;} "
+            + "html {overflow-y: scroll;} "
+            + "--></style>"
+            + "</head><body style=\"margin:0px; background-color:rgb(%BG_COLOR%);\"><pre>";
+        private const string detailHtmlFormatFooterMono = "</pre></body></html>";
+        private const string detailHtmlFormatHeaderColor = 
+            "<html><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">"
+            + "<style type=\"text/css\"><!-- "
+            + "p {font-family: \"%FONT_FAMILY%\", sans-serif; font-size: %FONT_SIZE%pt; margin: 0; word-wrap: break-word; color:rgb(%FONT_COLOR%);} "
+            + "a:link, a:visited, a:active, a:hover {color:rgb(%LINK_COLOR%); } "
+            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em;} "
+            + "html {overflow-y: scroll;} "
+            + "--></style>"
+            + "</head><body style=\"margin:0px; background-color:rgb(%BG_COLOR%);\"><p><span style=\"vertical-align:text-bottom\">";
+        private const string detailHtmlFormatFooterColor = "</span></p></body></html>";
         private string detailHtmlFormatHeader;
         private string detailHtmlFormatFooter;
+
         private bool _myStatusError = false;
         private bool _myStatusOnline = false;
         private bool soundfileListup = false;
@@ -1328,23 +1340,21 @@ namespace OpenTween
         {
             if (this._cfgCommon.IsMonospace)
             {
-                detailHtmlFormatHeader = detailHtmlFormatMono1;
-                detailHtmlFormatFooter = detailHtmlFormatMono7;
+                detailHtmlFormatHeader = detailHtmlFormatHeaderMono;
+                detailHtmlFormatFooter = detailHtmlFormatFooterMono;
             }
             else
             {
-                detailHtmlFormatHeader = detailHtmlFormat1;
-                detailHtmlFormatFooter = detailHtmlFormat7;
+                detailHtmlFormatHeader = detailHtmlFormatHeaderColor;
+                detailHtmlFormatFooter = detailHtmlFormatFooterColor;
             }
-            detailHtmlFormatHeader += _fntDetail.Name + detailHtmlFormat2 + _fntDetail.Size.ToString() + detailHtmlFormat3 + _clDetail.R.ToString() + "," + _clDetail.G.ToString() + "," + _clDetail.B.ToString() + detailHtmlFormat4 + _clDetailLink.R.ToString() + "," + _clDetailLink.G.ToString() + "," + _clDetailLink.B.ToString() + detailHtmlFormat5 + _clDetailBackcolor.R.ToString() + "," + _clDetailBackcolor.G.ToString() + "," + _clDetailBackcolor.B.ToString();
-            if (this._cfgCommon.IsMonospace)
-            {
-                detailHtmlFormatHeader += detailHtmlFormatMono6;
-            }
-            else
-            {
-                detailHtmlFormatHeader += detailHtmlFormat6;
-            }
+
+            detailHtmlFormatHeader = detailHtmlFormatHeader
+                    .Replace("%FONT_FAMILY%", _fntDetail.Name)
+                    .Replace("%FONT_SIZE%", _fntDetail.Size.ToString())
+                    .Replace("%FONT_COLOR%", _clDetail.R.ToString() + "," + _clDetail.G.ToString() + "," + _clDetail.B.ToString())
+                    .Replace("%LINK_COLOR%", _clDetailLink.R.ToString() + "," + _clDetailLink.G.ToString() + "," + _clDetailLink.B.ToString())
+                    .Replace("%BG_COLOR%", _clDetailBackcolor.R.ToString() + "," + _clDetailBackcolor.G.ToString() + "," + _clDetailBackcolor.B.ToString());
         }
 
         private void webBrowserKeyCanceler_SpaceCancel(object sender, EventArgs e)
@@ -6207,7 +6217,6 @@ namespace OpenTween
                         .First(x => x.Text == tabName);
 
                     this.ListTab.SelectedTab = tabPage;
-                    this.ListTabSelect(tabPage);
 
                     this.ApplyPostFilters();
                     this.SaveConfigsTabs();
@@ -6465,6 +6474,9 @@ namespace OpenTween
 
         public string createDetailHtml(string orgdata)
         {
+            if (this._cfgLocal.UseTwemoji)
+                orgdata = EmojiFormatter.ReplaceEmojiToImg(orgdata);
+
             return detailHtmlFormatHeader + orgdata + detailHtmlFormatFooter;
         }
 
@@ -7038,11 +7050,9 @@ namespace OpenTween
                                 if (ListTab.TabPages.Count < tabNo)
                                     return false;
                                 ListTab.SelectedIndex = tabNo;
-                                ListTabSelect(ListTab.TabPages[tabNo]);
                                 return true;
                             case Keys.D9:
                                 ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                                ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
                                 return true;
                         }
                     }
@@ -7106,24 +7116,6 @@ namespace OpenTween
                         //フォーカスPostBrowserもしくは関係なし
                         switch (KeyCode)
                         {
-                            case Keys.A:
-                                PostBrowser.Document.ExecCommand("SelectAll", false, null);
-                                return true;
-                            case Keys.C:
-                            case Keys.Insert:
-                                string _selText = WebBrowser_GetSelectionText(PostBrowser);
-                                if (!string.IsNullOrEmpty(_selText))
-                                {
-                                    try
-                                    {
-                                        Clipboard.SetDataObject(_selText, false, 5, 100);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        MessageBox.Show(ex.Message);
-                                    }
-                                }
-                                return true;
                             case Keys.Y:
                                 MultiLineMenuItem.Checked = !MultiLineMenuItem.Checked;
                                 MultiLineMenuItem_Click(null, null);
@@ -7472,7 +7464,6 @@ namespace OpenTween
                 if (idx < 0) idx = ListTab.TabPages.Count - 1;
             }
             ListTab.SelectedIndex = idx;
-            ListTabSelect(ListTab.TabPages[idx]);
         }
 
         private void CopyStot()
@@ -7647,7 +7638,6 @@ namespace OpenTween
                     if (_statuses.Tabs[tp.Text][idx].StatusId == targetId)
                     {
                         ListTab.SelectedIndex = tabidx;
-                        ListTabSelect(ListTab.TabPages[tabidx]);
                         SelectListItem(_curList, idx);
                         _curList.EnsureVisible(idx);
                         found = true;
@@ -8159,7 +8149,6 @@ namespace OpenTween
                 {
                     int idx = tc.IndexOf(statusId);
                     ListTab.SelectedIndex = tabidx;
-                    ListTabSelect(tp);
                     SelectListItem(_curList, idx);
                     _curList.EnsureVisible(idx);
                     return true;
@@ -8179,7 +8168,6 @@ namespace OpenTween
                 {
                     int idx = tc.IndexOf(statusId);
                     ListTab.SelectedIndex = tabidx;
-                    ListTabSelect(tp);
                     SelectListItem(_curList, idx);
                     _curList.EnsureVisible(idx);
                     return true;
@@ -8488,6 +8476,24 @@ namespace OpenTween
             if (KeyRes)
             {
                 e.IsInputKey = true;
+                return;
+            }
+
+            if (Enum.IsDefined(typeof(Shortcut), (Shortcut)e.KeyData))
+            {
+                var shortcut = (Shortcut)e.KeyData;
+                switch (shortcut)
+                {
+                    case Shortcut.CtrlA:
+                    case Shortcut.CtrlC:
+                    case Shortcut.CtrlIns:
+                        // 既定の動作を有効にする
+                        return;
+                    default:
+                        // その他のショートカットキーは無効にする
+                        e.IsInputKey = true;
+                        return;
+                }
             }
         }
         public bool TabRename(ref string tabName)
@@ -9290,14 +9296,12 @@ namespace OpenTween
                     if (tabUsage == MyCommon.TabUsageType.PublicSearch)
                     {
                         ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                        ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
                         ListTab.SelectedTab.Controls["panelSearch"].Controls["comboSearch"].Focus();
                     }
                     else if (tabUsage == MyCommon.TabUsageType.Lists)
                     {
                         ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                        ListTabSelect(ListTab.TabPages[ListTab.TabPages.Count - 1]);
-                        var tab = this._statuses.Tabs[this._curTab.Name];
+                        var tab = this._statuses.Tabs[this._curTab.Text];
                         this.GetListTimelineAsync(tab);
                     }
                 }
@@ -10842,20 +10846,10 @@ namespace OpenTween
             //}
         }
 
-        public string WebBrowser_GetSelectionText(WebBrowser ComponentInstance)
-        {
-            //発言詳細で「選択文字列をコピー」を行う
-            //WebBrowserコンポーネントのインスタンスを渡す
-            Type typ = ComponentInstance.ActiveXInstance.GetType();
-            object _SelObj = typ.InvokeMember("selection", BindingFlags.GetProperty, null, ComponentInstance.Document.DomDocument, null);
-            object _objRange = _SelObj.GetType().InvokeMember("createRange", BindingFlags.InvokeMethod, null, _SelObj, null);
-            return (string)_objRange.GetType().InvokeMember("text", BindingFlags.GetProperty, null, _objRange, null);
-        }
-
         private void SelectionCopyContextMenuItem_Click(object sender, EventArgs e)
         {
             //発言詳細で「選択文字列をコピー」
-            string _selText = WebBrowser_GetSelectionText(PostBrowser);
+            string _selText = this.PostBrowser.GetSelectedText();
             try
             {
                 Clipboard.SetDataObject(_selText, false, 5, 100);
@@ -10869,7 +10863,7 @@ namespace OpenTween
         private void doSearchToolStrip(string url)
         {
             //発言詳細で「選択文字列で検索」（選択文字列取得）
-            string _selText = WebBrowser_GetSelectionText(PostBrowser);
+            string _selText = this.PostBrowser.GetSelectedText();
 
             if (_selText != null)
             {
@@ -10987,7 +10981,7 @@ namespace OpenTween
                 ListManageUserContextToolStripMenuItem.Enabled = false;
             }
             // 文字列選択されていないときは選択文字列関係の項目を非表示に
-            string _selText = WebBrowser_GetSelectionText(PostBrowser);
+            string _selText = this.PostBrowser.GetSelectedText();
             if (_selText == null)
             {
                 SelectionSearchContextMenuItem.Enabled = false;
@@ -11024,7 +11018,7 @@ namespace OpenTween
         private void CurrentTabToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //発言詳細の選択文字列で現在のタブを検索
-            string _selText = WebBrowser_GetSelectionText(PostBrowser);
+            string _selText = this.PostBrowser.GetSelectedText();
 
             if (_selText != null)
             {
@@ -11055,7 +11049,10 @@ namespace OpenTween
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                SelectMedia_DragDrop(e);
+                if (!e.Data.GetDataPresent(DataFormats.Html, false))  // WebBrowserコントロールからの絵文字画像Drag&Dropは弾く
+                {
+                    SelectMedia_DragDrop(e);
+                }
             }
             else if (e.Data.GetDataPresent("UniformResourceLocatorW"))
             {
@@ -11071,6 +11068,12 @@ namespace OpenTween
                     this.StatusText.Text = appendText;
                 else
                     this.StatusText.Text += " " + appendText;
+            }
+            else if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                var text = (string)e.Data.GetData(DataFormats.UnicodeText);
+                if (text != null)
+                    this.StatusText.Text += text;
             }
             else if (e.Data.GetDataPresent(DataFormats.StringFormat))
             {
@@ -11135,8 +11138,29 @@ namespace OpenTween
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                SelectMedia_DragEnter(e);
+                if (!e.Data.GetDataPresent(DataFormats.Html, false))  // WebBrowserコントロールからの絵文字画像Drag&Dropは弾く
+                {
+                    SelectMedia_DragEnter(e);
+                    return;
+                }
             }
+            else if (e.Data.GetDataPresent("UniformResourceLocatorW"))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+            else if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+            else if (e.Data.GetDataPresent(DataFormats.StringFormat))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+
+            e.Effect = DragDropEffects.None;
         }
 
         private void TweenMain_DragLeave(object sender, EventArgs e)
@@ -11146,22 +11170,6 @@ namespace OpenTween
 
         private void TweenMain_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                SelectMedia_DragOver(e);
-            }
-            else if (e.Data.GetDataPresent("UniformResourceLocatorW"))
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
-            else if (e.Data.GetDataPresent(DataFormats.StringFormat))
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
         }
 
         public bool IsNetworkAvailable()
@@ -12159,7 +12167,6 @@ namespace OpenTween
                             {
                                 listView = (DetailsListView)tabPage.Tag;
                                 ListTab.SelectedIndex = i;
-                                ListTabSelect(tabPage);
                                 break;
                             }
                         }
@@ -12180,7 +12187,6 @@ namespace OpenTween
                         var tabPage = ListTab.TabPages[ListTab.TabPages.Count - 1];
                         listView = (DetailsListView)tabPage.Tag;
                         ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                        ListTabSelect(tabPage);
                     }
                 }
                 else
@@ -12198,7 +12204,6 @@ namespace OpenTween
                     var tabPage = ListTab.TabPages[ListTab.TabPages.Count - 1];
                     listView = (DetailsListView)tabPage.Tag;
                     ListTab.SelectedIndex = ListTab.TabPages.Count - 1;
-                    ListTabSelect(tabPage);
                 }
                 SaveConfigsTabs();
 
@@ -13070,11 +13075,6 @@ namespace OpenTween
                 _dragEnterKeyState = null;
         }
 
-        private void SelectMedia_DragOver(DragEventArgs e)
-        {
-            //何も触らない
-        }
-
         private void SelectMedia_DragDrop(DragEventArgs e)
         {
             this.Activate();
@@ -13254,7 +13254,6 @@ namespace OpenTween
                 if (tabName == tabPage.Text)
                 {
                     this.ListTab.SelectedIndex = i;
-                    this.ListTabSelect(tabPage);
                     break;
                 }
             }
@@ -13684,7 +13683,7 @@ namespace OpenTween
 
         private async void SelectionTranslationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var text = this.WebBrowser_GetSelectionText(this.PostBrowser);
+            var text = this.PostBrowser.GetSelectedText();
             await this.doTranslation(text);
         }
 

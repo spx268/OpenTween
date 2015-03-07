@@ -122,12 +122,14 @@
     <Compile Include="Connection\Mobypicture.cs" />
     <Compile Include="Connection\Networking.cs" />
     <Compile Include="Connection\TwipplePhoto.cs" />
+    <Compile Include="EmojiFormatter.cs" />
     <Compile Include="EventViewerDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="EventViewerDialog.Designer.cs">
       <DependentUpon>EventViewerDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Extensions.cs" />
     <Compile Include="FilterDialog.cs">
       <SubType>Form</SubType>
     </Compile>
