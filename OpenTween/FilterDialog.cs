@@ -55,6 +55,28 @@ namespace OpenTween
             None,
         }
 
+        private enum EnableButtonMode
+        {
+            NotSelected,
+            Enable,
+            Disable,
+        }
+
+        private EnableButtonMode RuleEnableButtonMode
+        {
+            get { return this._ruleEnableButtonMode; }
+            set
+            {
+                this._ruleEnableButtonMode = value;
+
+                this.buttonRuleToggleEnabled.Text = value == FilterDialog.EnableButtonMode.Enable
+                    ? Properties.Resources.EnableButtonCaption
+                    : Properties.Resources.DisableButtonCaption;
+                this.buttonRuleToggleEnabled.Enabled = value != EnableButtonMode.NotSelected;
+            }
+        }
+        private EnableButtonMode _ruleEnableButtonMode = FilterDialog.EnableButtonMode.NotSelected;
+
         public FilterDialog()
         {
             InitializeComponent();
@@ -94,6 +116,25 @@ namespace OpenTween
 
             if (_directAdd) return;
 
+            if (tab.TabType == MyCommon.TabUsageType.Mute)
+            {
+                this.CheckManageRead.Enabled = false;
+                this.CheckNotifyNew.Enabled = false;
+                this.ComboSound.Enabled = false;
+
+                this.GroupBox1.Visible = false;
+                this.labelMuteTab.Visible = true;
+            }
+            else
+            {
+                this.CheckManageRead.Enabled = true;
+                this.CheckNotifyNew.Enabled = true;
+                this.ComboSound.Enabled = true;
+
+                this.GroupBox1.Visible = true;
+                this.labelMuteTab.Visible = false;
+            }
+
             ListTabs.Enabled = true;
             GroupTab.Enabled = true;
             ListFilters.Enabled = true;
@@ -114,6 +155,7 @@ namespace OpenTween
                     ButtonRuleDown.Enabled = false;
                     ButtonRuleCopy.Enabled = false;
                     ButtonRuleMove.Enabled = false;
+                    buttonRuleToggleEnabled.Enabled = false;
                     break;
                 default:
                     ButtonNew.Enabled = true;
@@ -125,6 +167,7 @@ namespace OpenTween
                         ButtonRuleDown.Enabled = true;
                         ButtonRuleCopy.Enabled = true;
                         ButtonRuleMove.Enabled = true;
+                        buttonRuleToggleEnabled.Enabled = true;
                     }
                     else
                     {
@@ -134,6 +177,7 @@ namespace OpenTween
                         ButtonRuleDown.Enabled = false;
                         ButtonRuleCopy.Enabled = false;
                         ButtonRuleMove.Enabled = false;
+                        buttonRuleToggleEnabled.Enabled = false;
                     }
                     break;
             }
@@ -166,6 +210,9 @@ namespace OpenTween
                 case MyCommon.TabUsageType.UserTimeline:
                     LabelTabType.Text = Properties.Resources.TabUsageTypeName_UserTimeline;
                     break;
+                case MyCommon.TabUsageType.Mute:
+                    LabelTabType.Text = "Mute";
+                    break;
                 default:
                     LabelTabType.Text = "UNKNOWN";
                     break;
@@ -196,6 +243,7 @@ namespace OpenTween
             ButtonRuleDown.Enabled = false;
             ButtonRuleCopy.Enabled = false;
             ButtonRuleMove.Enabled = false;
+            buttonRuleToggleEnabled.Enabled = false;
             ButtonDelete.Enabled = false;
             ButtonClose.Enabled = false;
             EditFilterGroup.Enabled = true;
@@ -255,6 +303,7 @@ namespace OpenTween
             ButtonRuleDown.Enabled = false;
             ButtonRuleCopy.Enabled = false;
             ButtonRuleMove.Enabled = false;
+            buttonRuleToggleEnabled.Enabled = false;
             ButtonDelete.Enabled = false;
             ButtonClose.Enabled = false;
             EditFilterGroup.Enabled = true;
@@ -317,6 +366,7 @@ namespace OpenTween
             ButtonRuleDown.Enabled = false;
             ButtonRuleCopy.Enabled = false;
             ButtonRuleMove.Enabled = false;
+            buttonRuleToggleEnabled.Enabled = false;
             EditFilterGroup.Enabled = true;
             ListTabs.Enabled = false;
             GroupTab.Enabled = false;
@@ -376,6 +426,7 @@ namespace OpenTween
                 ButtonRuleDown.Enabled = true;
                 ButtonRuleCopy.Enabled = true;
                 ButtonRuleMove.Enabled = true;
+                buttonRuleToggleEnabled.Enabled = true;
             }
             else
             {
@@ -385,6 +436,7 @@ namespace OpenTween
                 ButtonRuleDown.Enabled = false;
                 ButtonRuleCopy.Enabled = false;
                 ButtonRuleMove.Enabled = false;
+                buttonRuleToggleEnabled.Enabled = false;
             }
             ButtonClose.Enabled = true;
             if (_directAdd)
@@ -480,6 +532,7 @@ namespace OpenTween
                 ButtonRuleDown.Enabled = true;
                 ButtonRuleCopy.Enabled = true;
                 ButtonRuleMove.Enabled = true;
+                buttonRuleToggleEnabled.Enabled = true;
             }
             else
             {
@@ -522,6 +575,7 @@ namespace OpenTween
                 ButtonRuleDown.Enabled = false;
                 ButtonRuleCopy.Enabled = false;
                 ButtonRuleMove.Enabled = false;
+                buttonRuleToggleEnabled.Enabled = false;
             }
         }
 
@@ -549,6 +603,7 @@ namespace OpenTween
                 return;
             }
 
+            var tab = this._sts.Tabs[(string)this.ListTabs.SelectedItem];
             int i = ListFilters.SelectedIndex;
 
             PostFilterRule ft;
@@ -557,8 +612,16 @@ namespace OpenTween
             else
                 ft = (PostFilterRule)this.ListFilters.SelectedItem;
 
-            ft.MoveMatches = OptMove.Checked;
-            ft.MarkMatches = CheckMark.Checked;
+            if (tab.TabType != MyCommon.TabUsageType.Mute)
+            {
+                ft.MoveMatches = OptMove.Checked;
+                ft.MarkMatches = CheckMark.Checked;
+            }
+            else
+            {
+                ft.MoveMatches = true;
+                ft.MarkMatches = false;
+            }
 
             string bdy = "";
             if (RadioAND.Checked)
@@ -633,11 +696,11 @@ namespace OpenTween
 
             if (_mode == EDITMODE.AddNew)
             {
-                if (!_sts.Tabs[ListTabs.SelectedItem.ToString()].AddFilter(ft))
+                if (!tab.AddFilter(ft))
                     MessageBox.Show(Properties.Resources.ButtonOK_ClickText4, Properties.Resources.ButtonOK_ClickText2, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            SetFilters(ListTabs.SelectedItem.ToString());
+            SetFilters(tab.TabName);
             ListFilters.SelectedIndex = -1;
             if (_mode == EDITMODE.AddNew)
             {
@@ -792,8 +855,24 @@ namespace OpenTween
 
         private void ListFilters_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!_moveRules)
-                ShowDetail();
+            if (_moveRules)
+                return;
+
+            ShowDetail();
+
+            if (this.RuleEnableButtonMode == EnableButtonMode.NotSelected)
+            {
+                if (this.ListFilters.SelectedIndices.Count != 0)
+                {
+                    var topItem = (PostFilterRule)this.ListFilters.SelectedItem;
+                    this.RuleEnableButtonMode = topItem.Enabled ? EnableButtonMode.Disable : EnableButtonMode.Enable;
+                }
+            }
+            else // this.RuleEnableButtonMode != EnableButtonMode.NotSelected
+            {
+                if (this.ListFilters.SelectedIndices.Count == 0)
+                    this.RuleEnableButtonMode = EnableButtonMode.NotSelected;
+            }
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
@@ -974,34 +1053,52 @@ namespace OpenTween
 
         private void ButtonUp_Click(object sender, EventArgs e)
         {
-            if (ListTabs.SelectedIndex > 0 && !string.IsNullOrEmpty(ListTabs.SelectedItem.ToString()))
-            {
-                string selName = ListTabs.SelectedItem.ToString();
-                string tgtName = ListTabs.Items[ListTabs.SelectedIndex - 1].ToString();
-                ((TweenMain)this.Owner).ReOrderTab(
-                    selName,
-                    tgtName,
-                    true);
-                int idx = ListTabs.SelectedIndex;
-                ListTabs.Items.RemoveAt(idx - 1);
-                ListTabs.Items.Insert(idx, tgtName);
-            }
+            if (this.ListTabs.SelectedIndex == -1 || this.ListTabs.SelectedIndex == 0)
+                return;
+
+            var selectedTabName = (string)this.ListTabs.SelectedItem;
+            var selectedTab = this._sts.Tabs[selectedTabName];
+
+            var targetTabName = (string)this.ListTabs.Items[this.ListTabs.SelectedIndex - 1];
+            var targetTab = this._sts.Tabs[targetTabName];
+
+            // ミュートタブは移動禁止
+            if (selectedTab.TabType == MyCommon.TabUsageType.Mute || targetTab.TabType == MyCommon.TabUsageType.Mute)
+                return;
+
+            var tweenMain = (TweenMain)this.Owner;
+            tweenMain.ReOrderTab(selectedTabName, targetTabName, true);
+
+            // ListTab のアイテム並び替え
+            // 選択が解除されてしまうのを防ぐため SelectedIndex のアイテムは操作せず前後のアイテムを移動する
+            var idx = this.ListTabs.SelectedIndex;
+            this.ListTabs.Items.RemoveAt(idx - 1);
+            this.ListTabs.Items.Insert(idx, targetTabName);
         }
 
         private void ButtonDown_Click(object sender, EventArgs e)
         {
-            if (ListTabs.SelectedIndex > -1 && ListTabs.SelectedIndex < ListTabs.Items.Count - 1 && !string.IsNullOrEmpty(ListTabs.SelectedItem.ToString()))
-            {
-                string selName = ListTabs.SelectedItem.ToString();
-                string tgtName = ListTabs.Items[ListTabs.SelectedIndex + 1].ToString();
-                ((TweenMain)this.Owner).ReOrderTab(
-                    selName,
-                    tgtName,
-                    false);
-                int idx = ListTabs.SelectedIndex;
-                ListTabs.Items.RemoveAt(idx + 1);
-                ListTabs.Items.Insert(idx, tgtName);
-            }
+            if (this.ListTabs.SelectedIndex == -1 || this.ListTabs.SelectedIndex == this.ListTabs.Items.Count - 1)
+                return;
+
+            var selectedTabName = (string)this.ListTabs.SelectedItem;
+            var selectedTab = this._sts.Tabs[selectedTabName];
+
+            var targetTabName = (string)this.ListTabs.Items[this.ListTabs.SelectedIndex + 1];
+            var targetTab = this._sts.Tabs[targetTabName];
+
+            // ミュートタブは移動禁止
+            if (selectedTab.TabType == MyCommon.TabUsageType.Mute || targetTab.TabType == MyCommon.TabUsageType.Mute)
+                return;
+
+            var tweenMain = (TweenMain)this.Owner;
+            tweenMain.ReOrderTab(selectedTabName, targetTabName, false);
+
+            // ListTab のアイテム並び替え
+            // 選択が解除されてしまうのを防ぐため SelectedIndex のアイテムは操作せず前後のアイテムを移動する
+            var idx = this.ListTabs.SelectedIndex;
+            this.ListTabs.Items.RemoveAt(idx + 1);
+            this.ListTabs.Items.Insert(idx, targetTabName);
         }
 
         private void CheckLocked_CheckedChanged(object sender, EventArgs e)
@@ -1111,6 +1208,28 @@ namespace OpenTween
             {
                 _moveRules = false;
             }
+        }
+
+        private void buttonRuleToggleEnabled_Click(object sender, EventArgs e)
+        {
+            if (this.RuleEnableButtonMode == EnableButtonMode.NotSelected)
+                return;
+
+            var enabled = this.RuleEnableButtonMode == EnableButtonMode.Enable;
+
+            foreach (var idx in this.ListFilters.SelectedIndices.Cast<int>())
+            {
+                var filter = (PostFilterRule)this.ListFilters.Items[idx];
+                if (filter.Enabled != enabled)
+                {
+                    filter.Enabled = enabled;
+
+                    var itemRect = this.ListFilters.GetItemRectangle(idx);
+                    this.ListFilters.Invalidate(itemRect);
+                }
+            }
+
+            this.RuleEnableButtonMode = enabled ? EnableButtonMode.Disable : EnableButtonMode.Enable;
         }
 
         private void ButtonRuleCopy_Click(object sender, EventArgs e)
@@ -1247,6 +1366,29 @@ namespace OpenTween
                 main.ShowSuplDialog(tbox, main.HashSupl);
                 e.Handled = true;
             }
+        }
+
+        private void ListFilters_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            e.DrawBackground();
+
+            var filter = (PostFilterRule)this.ListFilters.Items[e.Index];
+
+            Brush textBrush;
+            if (filter.Enabled)
+                textBrush = SystemBrushes.ControlText;
+            else
+                textBrush = SystemBrushes.GrayText;
+
+            e.Graphics.DrawString(filter.ToString(), e.Font, textBrush, e.Bounds);
+
+            e.DrawFocusRectangle();
+        }
+
+        protected override void OnFontChanged(EventArgs e)
+        {
+            base.OnFontChanged(e);
+            this.ListFilters.ItemHeight = this.ListFilters.Font.Height;
         }
     }
 }

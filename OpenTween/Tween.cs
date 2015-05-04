@@ -1274,8 +1274,25 @@ namespace OpenTween
                     tab.TabType = MyCommon.TabUsageType.Favorites;
                 }
             }
+            if (_statuses.GetTabByType(MyCommon.TabUsageType.Mute) == null)
+            {
+                TabClass tab;
+                if (!_statuses.Tabs.TryGetValue(MyCommon.DEFAULTTAB.MUTE, out tab))
+                {
+                    _statuses.AddTab(MyCommon.DEFAULTTAB.MUTE, MyCommon.TabUsageType.Mute, null);
+                }
+                else
+                {
+                    tab.TabType = MyCommon.TabUsageType.Mute;
+                }
+            }
+
             foreach (var tab in _statuses.Tabs.Values)
             {
+                // ミュートタブは表示しない
+                if (tab.TabType == MyCommon.TabUsageType.Mute)
+                    continue;
+
                 if (tab.TabType == MyCommon.TabUsageType.Undefined)
                 {
                     tab.TabType = MyCommon.TabUsageType.UserDefined;
@@ -8354,6 +8371,7 @@ namespace OpenTween
             {
                 if (_statuses.Tabs[ListTab.TabPages[i].Text].TabType != MyCommon.TabUsageType.Related) tabSetting.Tabs.Add(_statuses.Tabs[ListTab.TabPages[i].Text]);
             }
+            tabSetting.Tabs.Add(this._statuses.GetTabByType(MyCommon.TabUsageType.Mute));
             tabSetting.Save();
         }
 
@@ -8637,25 +8655,22 @@ namespace OpenTween
 
         public void ReOrderTab(string targetTabText, string baseTabText, bool isBeforeBaseTab)
         {
-            int baseIndex = 0;
-            for (baseIndex = 0; baseIndex < ListTab.TabPages.Count; baseIndex++)
-            {
-                if (ListTab.TabPages[baseIndex].Text == baseTabText) break;
-            }
+            var baseIndex = this.GetTabPageIndex(baseTabText);
+            if (baseIndex == -1)
+                return;
+
+            var targetIndex = this.GetTabPageIndex(targetTabText);
+            if (targetIndex == -1)
+                return;
 
             using (ControlTransaction.Layout(this.ListTab))
             {
-                TabPage mTp = null;
-                for (int j = 0; j < ListTab.TabPages.Count; j++)
-                {
-                    if (ListTab.TabPages[j].Text == targetTabText)
-                    {
-                        mTp = ListTab.TabPages[j];
-                        ListTab.TabPages.Remove(mTp);
-                        if (j < baseIndex) baseIndex -= 1;
-                        break;
-                    }
-                }
+                var mTp = this.ListTab.TabPages[targetIndex];
+                this.ListTab.TabPages.Remove(mTp);
+
+                if (targetIndex < baseIndex)
+                    baseIndex--;
+
                 if (isBeforeBaseTab)
                     ListTab.TabPages.Insert(baseIndex, mTp);
                 else
@@ -9186,11 +9201,9 @@ namespace OpenTween
 
         public void ChangeTabUnreadManage(string tabName, bool isManage)
         {
-            int idx;
-            for (idx = 0; idx < ListTab.TabCount; idx++)
-            {
-                if (ListTab.TabPages[idx].Text == tabName) break;
-            }
+            var idx = this.GetTabPageIndex(tabName);
+            if (idx == -1)
+                return;
 
             _statuses.Tabs[tabName].UnreadManage = isManage;
             if (this._cfgCommon.TabIconDisp)
@@ -9443,9 +9456,20 @@ namespace OpenTween
             //タブ選択（or追加）
             if (!SelectTab(out tabName)) return;
 
-            bool mv = false;
-            bool mk = false;
-            MoveOrCopy(ref mv, ref mk);
+            var tab = this._statuses.Tabs[tabName];
+
+            bool mv;
+            bool mk;
+            if (tab.TabType != MyCommon.TabUsageType.Mute)
+            {
+                this.MoveOrCopy(out mv, out mk);
+            }
+            else
+            {
+                // ミュートタブでは常に MoveMatches を true にする
+                mv = true;
+                mk = false;
+            }
 
             List<string> ids = new List<string>();
             foreach (int idx in _curList.SelectedIndices)
@@ -9468,7 +9492,7 @@ namespace OpenTween
                     fc.MarkMatches = mk;
                     fc.UseRegex = false;
                     fc.FilterByUrl = false;
-                    _statuses.Tabs[tabName].AddFilter(fc);
+                    tab.AddFilter(fc);
                 }
             }
             if (ids.Count != 0)
@@ -9497,13 +9521,22 @@ namespace OpenTween
             if (!this.SelectTab(out tabName))
                 return;
 
-            // フィルタ動作選択ダイアログを表示（移動/コピー, マーク有無）
-            var mv = false;
-            var mk = false;
-            this.MoveOrCopy(ref mv, ref mk);
-
             var currentTab = this._statuses.Tabs[this._curTab.Text];
             var filterTab = this._statuses.Tabs[tabName];
+
+            bool mv;
+            bool mk;
+            if (filterTab.TabType != MyCommon.TabUsageType.Mute)
+            {
+                // フィルタ動作選択ダイアログを表示（移動/コピー, マーク有無）
+                this.MoveOrCopy(out mv, out mk);
+            }
+            else
+            {
+                // ミュートタブでは常に MoveMatches を true にする
+                mv = true;
+                mk = false;
+            }
 
             // 振り分けルールに追加するSource
             var sources = new HashSet<string>();
@@ -9581,7 +9614,7 @@ namespace OpenTween
             while (true);
         }
 
-        private void MoveOrCopy(ref bool move, ref bool mark)
+        private void MoveOrCopy(out bool move, out bool mark)
         {
             {
                 //移動するか？
@@ -9599,6 +9632,10 @@ namespace OpenTween
                     mark = true;
                 else
                     mark = false;
+            }
+            else
+            {
+                mark = false;
             }
         }
         private void CopySTOTMenuItem_Click(object sender, EventArgs e)
@@ -12139,6 +12176,26 @@ namespace OpenTween
             await this.DoRefreshMore();
         }
 
+        /// <summary>
+        /// 指定されたタブのListTabにおける位置を返します
+        /// </summary>
+        /// <remarks>
+        /// 非表示のタブについて -1 が返ることを常に考慮して下さい
+        /// </remarks>
+        public int GetTabPageIndex(string tabName)
+        {
+            var index = 0;
+            foreach (var tabPage in this.ListTab.TabPages.Cast<TabPage>())
+            {
+                if (tabPage.Text == tabName)
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
+
         private void UndoRemoveTabMenuItem_Click(object sender, EventArgs e)
         {
             if (_statuses.RemovedTab.Count == 0)
@@ -12160,6 +12217,7 @@ namespace OpenTween
                         tb.TabName = relatedTab.TabName;
                         this.ClearTab(tb.TabName, false);
                         _statuses.Tabs[tb.TabName] = tb;
+
                         for (int i = 0; i < ListTab.TabPages.Count; i++)
                         {
                             var tabPage = ListTab.TabPages[i];
@@ -12247,9 +12305,20 @@ namespace OpenTween
                 //タブ選択（or追加）
                 if (!SelectTab(out tabName)) return;
 
-                bool mv = false;
-                bool mk = false;
-                MoveOrCopy(ref mv, ref mk);
+                var tab = this._statuses.Tabs[tabName];
+
+                bool mv;
+                bool mk;
+                if (tab.TabType != MyCommon.TabUsageType.Mute)
+                {
+                    this.MoveOrCopy(out mv, out mk);
+                }
+                else
+                {
+                    // ミュートタブでは常に MoveMatches を true にする
+                    mv = true;
+                    mk = false;
+                }
 
                 PostFilterRule fc = new PostFilterRule();
                 fc.FilterName = name;
@@ -12258,7 +12327,7 @@ namespace OpenTween
                 fc.MarkMatches = mk;
                 fc.UseRegex = false;
                 fc.FilterByUrl = false;
-                _statuses.Tabs[tabName].AddFilter(fc);
+                tab.AddFilter(fc);
 
                 this.ApplyPostFilters();
                 SaveConfigsTabs();
