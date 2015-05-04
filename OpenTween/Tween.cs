@@ -6568,25 +6568,8 @@ namespace OpenTween
 
             using (ControlTransaction.Update(this.TableLayoutPanel1))
             {
-                var sourceText = "";
-                string sourceUrl = null;
-                if (!_curPost.IsDm)
-                {
-                    var mc = Regex.Match(_curPost.SourceHtml, "<a href=\"(?<sourceurl>.+?)\"");
-                    if (mc.Success)
-                    {
-                        var src = mc.Groups["sourceurl"].Value;
-                        if (Regex.IsMatch(src, "^https?://"))
-                            sourceUrl = src;
-                        else
-                            sourceUrl = "https://twitter.com/" + src;
-                    }
-
-                    if (_curPost.Source != null)
-                        sourceText = _curPost.Source;
-                }
-                SourceLinkLabel.Text = sourceText;
-                SourceLinkLabel.Tag = sourceUrl;
+                SourceLinkLabel.Text = this._curPost.Source;
+                SourceLinkLabel.Tag = this._curPost.SourceUri;
                 SourceLinkLabel.TabStop = false; // Text を更新すると勝手に true にされる
 
                 string nameText;
@@ -13218,21 +13201,21 @@ namespace OpenTween
             set { _modifySettingAtId = value; }
         }
 
-        private void SourceLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private async void SourceLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            string link = (string)SourceLinkLabel.Tag;
-            if (!string.IsNullOrEmpty(link) && e.Button == MouseButtons.Left)
+            var sourceUri = (Uri)this.SourceLinkLabel.Tag;
+            if (sourceUri != null && e.Button == MouseButtons.Left)
             {
-                OpenUriAsync(link);
+                await this.OpenUriAsync(sourceUri.AbsoluteUri);
             }
         }
 
         private void SourceLinkLabel_MouseEnter(object sender, EventArgs e)
         {
-            string link = (string)SourceLinkLabel.Tag;
-            if (!string.IsNullOrEmpty(link))
+            var sourceUri = (Uri)this.SourceLinkLabel.Tag;
+            if (sourceUri != null)
             {
-                StatusLabelUrl.Text = MyCommon.ConvertToReadableUrl(link);
+                StatusLabelUrl.Text = MyCommon.ConvertToReadableUrl(sourceUri.AbsoluteUri);
             }
         }
 
@@ -13885,10 +13868,10 @@ namespace OpenTween
 
         private void SourceUrlCopyMenuItem_Click(object sender, EventArgs e)
         {
-            string selText = (string)SourceLinkLabel.Tag;
+            var sourceUri = (Uri)this.SourceLinkLabel.Tag;
             try
             {
-                Clipboard.SetDataObject(selText, false, 5, 100);
+                Clipboard.SetDataObject(sourceUri.AbsoluteUri, false, 5, 100);
             }
             catch (Exception ex)
             {
