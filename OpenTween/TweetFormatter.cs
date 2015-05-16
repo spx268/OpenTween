@@ -35,22 +35,7 @@ namespace OpenTween
     {
         public static string AutoLinkHtml(string text, TwitterEntities entities)
         {
-            if (entities == null)
-                return AutoLinkHtml(text, Enumerable.Empty<TwitterEntity>());
-
-            var urls = entities.Urls ?? new TwitterEntityUrl[0];
-            var hashtags = entities.Hashtags ?? new TwitterEntityHashtag[0];
-            var mentions = entities.UserMentions ?? new TwitterEntityMention[0];
-            var media = entities.Media ?? new TwitterEntityMedia[0];
-
-            var entitiesQuery = urls.Cast<TwitterEntity>()
-                .Concat(hashtags)
-                .Concat(mentions)
-                .Concat(media)
-                .Where(x => x != null)
-                .Where(x => x.Indices != null && x.Indices.Length == 2);
-
-            return string.Concat(AutoLinkHtmlInternal(text, entitiesQuery));
+            return AutoLinkHtml(text, entities.AsEnumerable());
         }
 
         public static string AutoLinkHtml(string text, IEnumerable<TwitterEntity> entities)
@@ -151,7 +136,19 @@ namespace OpenTween
             }
 
             expandedUrl = MyCommon.ConvertToReadableUrl(entity.ExpandedUrl);
-            return "<a href=\"" + e(entity.Url) + "\" title=\"" + e(expandedUrl) + "\">" + t(e(entity.DisplayUrl)) + "</a>";
+            var linkUrl = entity.Url;
+
+            // twitter.com へのリンクは t.co を経由せずに直接リンクする (但し pic.twitter.com はそのまま)
+            if (!(entity is TwitterEntityMedia))
+            {
+                if (entity.ExpandedUrl.StartsWith("https://twitter.com/") ||
+                    entity.ExpandedUrl.StartsWith("http://twitter.com/"))
+                {
+                    linkUrl = entity.ExpandedUrl;
+                }
+            }
+
+            return "<a href=\"" + e(linkUrl) + "\" title=\"" + e(expandedUrl) + "\">" + t(e(entity.DisplayUrl)) + "</a>";
         }
 
         private static string FormatHashtagEntity(string targetText, TwitterEntityHashtag entity)

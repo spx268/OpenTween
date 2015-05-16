@@ -1677,6 +1677,10 @@ namespace OpenTween
             post.TextFromApi = WebUtility.HtmlDecode(post.TextFromApi);
             post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
 
+            post.QuoteStatusIds = GetQuoteTweetStatusIds(entities)
+                .Where(x => x != post.StatusId && x != post.RetweetedId)
+                .Distinct().ToArray();
+
             //Source整形
             var source = ParseSource(sourceHtml);
             post.Source = source.Item1;
@@ -1696,6 +1700,25 @@ namespace OpenTween
 
             post.IsDm = false;
             return post;
+        }
+
+        /// <summary>
+        /// ツイートに含まれる引用ツイートのURLからステータスIDを抽出
+        /// </summary>
+        public static IEnumerable<long> GetQuoteTweetStatusIds(IEnumerable<TwitterEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                var entityUrl = entity as TwitterEntityUrl;
+                if (entityUrl == null)
+                    continue;
+
+                var match = Twitter.StatusUrlRegex.Match(entityUrl.ExpandedUrl);
+                if (match.Success)
+                {
+                    yield return long.Parse(match.Groups["StatusId"].Value);
+                }
+            }
         }
 
         private string CreatePostsFromJson(string content, MyCommon.WORKERTYPE gType, TabClass tab, bool read, int count, ref long minimumId)
@@ -2089,6 +2112,8 @@ namespace OpenTween
                     post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
                     post.IsFav = false;
 
+                    post.QuoteStatusIds = GetQuoteTweetStatusIds(message.Entities).Distinct().ToArray();
+
                     //以下、ユーザー情報
                     TwitterUser user;
                     if (gType == MyCommon.WORKERTYPE.UserStream)
@@ -2331,6 +2356,10 @@ namespace OpenTween
                     post.TextFromApi = this.ReplaceTextFromApi(post.TextFromApi, entities);
                     post.TextFromApi = WebUtility.HtmlDecode(post.TextFromApi);
                     post.TextFromApi = post.TextFromApi.Replace("<3", "\u2661");
+
+                    post.QuoteStatusIds = GetQuoteTweetStatusIds(entities)
+                        .Where(x => x != post.StatusId && x != post.RetweetedId)
+                        .Distinct().ToArray();
 
                     //Source整形
                     var source = ParseSource(sourceHtml);
@@ -3073,10 +3102,10 @@ namespace OpenTween
             var match = Regex.Match(sourceHtml, "^<a href=\"(?<uri>.+?)\".*?>(?<text>.+)</a>$", RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                sourceText = match.Groups["text"].Value;
+                sourceText = WebUtility.HtmlDecode(match.Groups["text"].Value);
                 try
                 {
-                    var uriStr = match.Groups["uri"].Value;
+                    var uriStr = WebUtility.HtmlDecode(match.Groups["uri"].Value);
                     sourceUri = new Uri(new Uri("https://twitter.com/"), uriStr);
                 }
                 catch (UriFormatException)
@@ -3086,11 +3115,10 @@ namespace OpenTween
             }
             else
             {
-                sourceText = sourceHtml;
+                sourceText = WebUtility.HtmlDecode(sourceHtml);
                 sourceUri = null;
             }
 
-            sourceText = WebUtility.HtmlEncode(WebUtility.HtmlDecode(sourceText));
             return Tuple.Create(sourceText, sourceUri);
         }
 

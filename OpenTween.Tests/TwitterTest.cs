@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using OpenTween.Api;
 using Xunit;
 using Xunit.Extensions;
 
@@ -143,23 +144,39 @@ namespace OpenTween
         }
 
         [Fact]
-        public void ParseSource_EscapeTest()
+        public void ParseSource_UnescapeTest()
         {
-            string sourceHtml = "<a href=\"http://example.com\" rel=\"nofollow\"><script>alert(1)</script></a>";
+            string sourceHtml = "<a href=\"http://example.com/?aaa=123&amp;bbb=456\" rel=\"nofollow\">&lt;&lt;hogehoge&gt;&gt;</a>";
 
             var result = Twitter.ParseSource(sourceHtml);
-            Assert.Equal("&lt;script&gt;alert(1)&lt;/script&gt;", result.Item1);
-            Assert.Equal(new Uri("http://example.com"), result.Item2);
+            Assert.Equal("<<hogehoge>>", result.Item1);
+            Assert.Equal(new Uri("http://example.com/?aaa=123&bbb=456"), result.Item2);
         }
 
         [Fact]
-        public void ParseSource_EscapeNoUriTest()
+        public void ParseSource_UnescapeNoUriTest()
         {
-            string sourceHtml = "<script>alert(1)</script>";
+            string sourceHtml = "&lt;&lt;hogehoge&gt;&gt;";
 
             var result = Twitter.ParseSource(sourceHtml);
-            Assert.Equal("&lt;script&gt;alert(1)&lt;/script&gt;", result.Item1);
+            Assert.Equal("<<hogehoge>>", result.Item1);
             Assert.Equal(null, result.Item2);
+        }
+
+        [Fact]
+        public void GetQuoteTweetStatusIds_Test()
+        {
+            var entities = new[]
+            {
+                new TwitterEntityUrl
+                {
+                    Url = "https://t.co/3HXq0LrbJb",
+                    ExpandedUrl = "https://twitter.com/kim_upsilon/status/599261132361072640",
+                },
+            };
+
+            var statusIds = Twitter.GetQuoteTweetStatusIds(entities);
+            Assert.Equal(new[] { 599261132361072640L }, statusIds);
         }
     }
 }
