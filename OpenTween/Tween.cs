@@ -82,7 +82,7 @@ namespace OpenTween
             + "body, p, pre {margin: 0;} "
             + "pre {font-family: \"%FONT_FAMILY%\", sans-serif; font-size: %FONT_SIZE%pt; background-color:rgb(%BG_COLOR%); word-wrap: break-word; color:rgb(%FONT_COLOR%);} "
             + "a:link, a:visited, a:active, a:hover {color:rgb(%LINK_COLOR%); } "
-            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em;} "
+            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; border: none;} "
             + ".quote-tweet {border: 1px solid #ccc; margin: 1em; padding: 0.5em;} "
             + ".quote-tweet-link {color: inherit !important; text-decoration: none;}"
             + "--></style>"
@@ -95,7 +95,7 @@ namespace OpenTween
             + "body, p, pre {margin: 0;} "
             + "body {font-family: \"%FONT_FAMILY%\", sans-serif; font-size: %FONT_SIZE%pt; background-color:rgb(%BG_COLOR%); margin: 0; word-wrap: break-word; color:rgb(%FONT_COLOR%);} "
             + "a:link, a:visited, a:active, a:hover {color:rgb(%LINK_COLOR%); } "
-            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em;} "
+            + "img.emoji {width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; border: none;} "
             + ".quote-tweet {border: 1px solid #ccc; margin: 1em; padding: 0.5em;} "
             + ".quote-tweet-link {color: inherit !important; text-decoration: none;}"
             + "--></style>"
@@ -9752,18 +9752,22 @@ namespace OpenTween
 
         private async void OpenURLMenuItem_Click(object sender, EventArgs e)
         {
-            if (PostBrowser.Document.Links.Count > 0)
+            var linkElements = this.PostBrowser.Document.Links.Cast<HtmlElement>()
+                .Where(x => x.GetAttribute("className") != "tweet-quote-link") // 引用ツイートで追加されたリンクを除く
+                .ToArray();
+
+            if (linkElements.Length > 0)
             {
                 UrlDialog.ClearUrl();
 
                 string openUrlStr = "";
 
-                if (PostBrowser.Document.Links.Count == 1)
+                if (linkElements.Length == 1)
                 {
                     string urlStr = "";
                     try
                     {
-                        urlStr = MyCommon.IDNEncode(PostBrowser.Document.Links[0].GetAttribute("href"));
+                        urlStr = MyCommon.IDNEncode(linkElements[0].GetAttribute("href"));
                     }
                     catch (ArgumentException)
                     {
@@ -9779,7 +9783,7 @@ namespace OpenTween
                 }
                 else
                 {
-                    foreach (HtmlElement linkElm in PostBrowser.Document.Links)
+                    foreach (var linkElm in linkElements)
                     {
                         string urlStr = "";
                         string linkText = "";

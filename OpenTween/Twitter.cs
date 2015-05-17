@@ -3585,54 +3585,47 @@ namespace OpenTween
                     var tweetEvent = TwitterStreamEvent<TwitterStatus>.ParseJson(content);
                     evt.Target = "@" + tweetEvent.TargetObject.User.ScreenName + ":" + WebUtility.HtmlDecode(tweetEvent.TargetObject.Text);
                     evt.Id = tweetEvent.TargetObject.Id;
+
                     if (SettingCommon.Instance.IsRemoveSameEvent)
                     {
-                        if (StoredEvent.Any(ev =>
-                                           {
-                                               return ev.Username == evt.Username && ev.Eventtype == evt.Eventtype && ev.Target == evt.Target;
-                                           })) return;
+                        if (this.StoredEvent.Any(ev => ev.Username == evt.Username && ev.Eventtype == evt.Eventtype && ev.Target == evt.Target))
+                            return;
                     }
-                    if (TabInformations.GetInstance().ContainsKey(tweetEvent.TargetObject.Id))
+
+                    var tabinfo = TabInformations.GetInstance();
+
+                    PostClass post;
+                    var statusId = tweetEvent.TargetObject.Id;
+                    if (!tabinfo.Posts.TryGetValue(statusId, out post))
+                        break;
+
+                    if (eventData.Event == "favorite")
                     {
-                        var post = TabInformations.GetInstance()[tweetEvent.TargetObject.Id];
-                        if (eventData.Event == "favorite")
+                        var favTab = tabinfo.GetTabByType(MyCommon.TabUsageType.Favorites);
+                        if (!favTab.Contains(post.StatusId))
+                            favTab.Add(post.StatusId, post.IsRead, false);
+
+                        if (tweetEvent.Source.Id == this.UserId)
                         {
-                            if (evt.Username.ToLower().Equals(_uname))
-                            {
-                                post.IsFav = true;
-                                TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites).Add(post.StatusId, post.IsRead, false);
-                            }
-                            else
-                            {
-                                post.FavoritedCount++;
-                                if (!TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites).Contains(post.StatusId))
-                                {
-                                    if (SettingCommon.Instance.FavEventUnread && post.IsRead)
-                                    {
-                                        post.IsRead = false;
-                                    }
-                                    TabInformations.GetInstance().GetTabByType(MyCommon.TabUsageType.Favorites).Add(post.StatusId, post.IsRead, false);
-                                }
-                                else
-                                {
-                                    if (SettingCommon.Instance.FavEventUnread)
-                                    {
-                                        TabInformations.GetInstance().SetReadAllTab(post.StatusId, read: false);
-                                    }
-                                }
-                            }
+                            post.IsFav = true;
                         }
-                        else
+                        else if (tweetEvent.Target.Id == this.UserId)
                         {
-                            if (evt.Username.ToLower().Equals(_uname))
-                            {
-                                post.IsFav = false;
-                            }
-                            else
-                            {
-                                post.FavoritedCount--;
-                                if (post.FavoritedCount < 0) post.FavoritedCount = 0;
-                            }
+                            post.FavoritedCount++;
+
+                            if (SettingCommon.Instance.FavEventUnread)
+                                tabinfo.SetReadAllTab(post.StatusId, read: false);
+                        }
+                    }
+                    else // unfavorite
+                    {
+                        if (tweetEvent.Source.Id == this.UserId)
+                        {
+                            post.IsFav = false;
+                        }
+                        else if (tweetEvent.Target.Id == this.UserId)
+                        {
+                            post.FavoritedCount = Math.Max(0, post.FavoritedCount - 1);
                         }
                     }
                     break;
