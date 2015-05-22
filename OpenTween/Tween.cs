@@ -2459,7 +2459,7 @@ namespace OpenTween
             if (StatusText.Text.StartsWith("Google:", StringComparison.OrdinalIgnoreCase) && StatusText.Text.Trim().Length > 7)
             {
                 string tmp = string.Format(Properties.Resources.SearchItem2Url, Uri.EscapeDataString(StatusText.Text.Substring(7)));
-                await this.OpenUriAsync(tmp);
+                await this.OpenUriInBrowserAsync(tmp);
             }
 
             await this.PostMessageAsync(status);
@@ -3721,7 +3721,7 @@ namespace OpenTween
                     break;
                 case 2:
                     if (_curPost != null)
-                        ShowUserStatus(_curPost.ScreenName, false);
+                        await this.ShowUserStatus(_curPost.ScreenName, false);
                     break;
                 case 3:
                     ShowUserTimeline();
@@ -3850,15 +3850,15 @@ namespace OpenTween
         private async void MoveToHomeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_curList.SelectedIndices.Count > 0)
-                await this.OpenUriAsync(MyCommon.TwitterUrl + GetCurTabPost(_curList.SelectedIndices[0]).ScreenName);
+                await this.OpenUriInBrowserAsync(MyCommon.TwitterUrl + GetCurTabPost(_curList.SelectedIndices[0]).ScreenName);
             else if (_curList.SelectedIndices.Count == 0)
-                await this.OpenUriAsync(MyCommon.TwitterUrl);
+                await this.OpenUriInBrowserAsync(MyCommon.TwitterUrl);
         }
 
         private async void MoveToFavToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_curList.SelectedIndices.Count > 0)
-                await this.OpenUriAsync(MyCommon.TwitterUrl + "#!/" + GetCurTabPost(_curList.SelectedIndices[0]).ScreenName + "/favorites");
+                await this.OpenUriInBrowserAsync(MyCommon.TwitterUrl + "#!/" + GetCurTabPost(_curList.SelectedIndices[0]).ScreenName + "/favorites");
         }
 
         private void TweenMain_ClientSizeChanged(object sender, EventArgs e)
@@ -4723,7 +4723,7 @@ namespace OpenTween
             if (e.Url.AbsoluteUri != "about:blank")
             {
                 await this.DispSelectedPost();
-                await this.OpenUriAsync(e.Url.OriginalString);
+                await this.OpenUriInBrowserAsync(e.Url.OriginalString);
             }
         }
 
@@ -4736,64 +4736,7 @@ namespace OpenTween
             else if (e.Url.AbsoluteUri != "about:blank")
             {
                 e.Cancel = true;
-
-                var statusUrlMatch = Twitter.StatusUrlRegex.Match(e.Url.AbsoluteUri);
-                if (statusUrlMatch.Success)
-                {
-                    var statusId = long.Parse(statusUrlMatch.Groups["StatusId"].Value);
-                    await this.OpenRelatedTab(statusId);
-                    return;
-                }
-
-                if (e.Url.AbsoluteUri.StartsWith("http://twitter.com/search?q=%23") ||
-                   e.Url.AbsoluteUri.StartsWith("https://twitter.com/search?q=%23"))
-                {
-                    //ハッシュタグの場合
-                    string urlStr = Uri.UnescapeDataString(e.Url.AbsoluteUri);
-                    int i = urlStr.IndexOf('#');
-                    if (i == -1) return;
-
-                    // Ctrlを押しながらハッシュタグをクリックした場合はブラウザで開く
-                    if (MyCommon.IsKeyDown(Keys.Control))
-                    {
-                        OpenUriAsync(e.Url.OriginalString);
-                    }
-                    else
-                    {
-                        //タブで開く
-                        string hash = urlStr.Substring(i);
-                        HashSupl.AddItem(hash);
-                        HashMgr.AddHashToHistory(hash.Trim(), false);
-                        AddNewTabForSearch(hash);
-                    }
-                    return;
-                }
-                else
-                {
-                    Match m = Regex.Match(e.Url.AbsoluteUri, "^https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)$");
-                    if (m.Success && IsTwitterId(m.Result("${ScreenName}")))
-                    {
-                        // Ctrlを押しながらリンクをクリックした場合は設定と逆の動作をする
-                        if (this._cfgCommon.OpenUserTimeline)
-                        {
-                            if (MyCommon.IsKeyDown(Keys.Control))
-                                await this.OpenUriAsync(e.Url.OriginalString);
-                            else
-                                this.AddNewTabForUserTimeline(m.Result("${ScreenName}"));
-                        }
-                        else
-                        {
-                            if (MyCommon.IsKeyDown(Keys.Control))
-                                this.AddNewTabForUserTimeline(m.Result("${ScreenName}"));
-                            else
-                                await this.OpenUriAsync(e.Url.OriginalString);
-                        }
-                    }
-                    else
-                    {
-                        await this.OpenUriAsync(e.Url.OriginalString);
-                    }
-                }
+                await this.OpenUriAsync(e.Url);
             }
         }
 
@@ -6359,7 +6302,7 @@ namespace OpenTween
             if (_curList.SelectedIndices.Count > 0 && _statuses.Tabs[_curTab.Text].TabType != MyCommon.TabUsageType.DirectMessage)
             {
                 var post = _statuses.Tabs[_curTab.Text][_curList.SelectedIndices[0]];
-                await this.OpenUriAsync(MyCommon.GetStatusUrl(post));
+                await this.OpenUriInBrowserAsync(MyCommon.GetStatusUrl(post));
             }
         }
 
@@ -6368,7 +6311,7 @@ namespace OpenTween
             if (_curList.SelectedIndices.Count > 0)
             {
                 PostClass post = _statuses.Tabs[_curTab.Text][_curList.SelectedIndices[0]];
-                await this.OpenUriAsync(Properties.Resources.FavstarUrl + "users/" + post.ScreenName + "/recent");
+                await this.OpenUriInBrowserAsync(Properties.Resources.FavstarUrl + "users/" + post.ScreenName + "/recent");
             }
         }
 
@@ -6461,7 +6404,7 @@ namespace OpenTween
 
                     if (dialog.ShowDialog(this) == DialogResult.Yes)
                     {
-                        await this.OpenUriAsync(versionInfo.DownloadUri.OriginalString);
+                        await this.OpenUriInBrowserAsync(versionInfo.DownloadUri.OriginalString);
                     }
                 }
             }
@@ -6553,11 +6496,6 @@ namespace OpenTween
         }
 
         private PostClass displayPost = new PostClass();
-
-        /// <summary>
-        /// サムネイルの表示処理を表すタスク
-        /// </summary>
-        private Task thumbnailTask = null;
 
         /// <summary>
         /// サムネイル表示に使用する CancellationToken の生成元
@@ -6773,12 +6711,18 @@ namespace OpenTween
                 " (@" + WebUtility.HtmlEncode(post.ScreenName) + ") " +
                 WebUtility.HtmlEncode(post.CreatedAt.ToString());
 
-            return FormatQuoteTweetHtml(post.StatusId, innerHtml);
+            return FormatQuoteTweetHtml(post.ScreenName, post.StatusId, innerHtml);
         }
 
         internal static string FormatQuoteTweetHtml(long statusId, string innerHtml)
         {
-            return "<a class=\"quote-tweet-link\" href=\"https://twitter.com/status/status/" + statusId + "\">" +
+            // screenName が不明な場合、とりあえず https://twitter.com/statuses/status/{statusId} にリンクする
+            return FormatQuoteTweetHtml("statuses", statusId, innerHtml);
+        }
+
+        internal static string FormatQuoteTweetHtml(string screenName, long statusId, string innerHtml)
+        {
+            return "<a class=\"quote-tweet-link\" href=\"https://twitter.com/" + WebUtility.HtmlEncode(screenName) + "/status/" + statusId + "\">" +
                 "<blockquote class=\"quote-tweet\">" + innerHtml + "</blockquote>" +
                 "</a>";
         }
@@ -6799,12 +6743,12 @@ namespace OpenTween
 
         private async Task OpenApplicationWebsite()
         {
-            await this.OpenUriAsync(ApplicationSettings.WebsiteUrl);
+            await this.OpenUriInBrowserAsync(ApplicationSettings.WebsiteUrl);
         }
 
         private async void ShortcutKeyListMenuItem_Click(object sender, EventArgs e)
         {
-            await this.OpenUriAsync(ApplicationSettings.ShortcutKeyUrl);
+            await this.OpenUriInBrowserAsync(ApplicationSettings.ShortcutKeyUrl);
         }
 
         private async void ListTab_KeyDown(object sender, KeyEventArgs e)
@@ -7297,7 +7241,7 @@ namespace OpenTween
                         case Keys.P:
                             if (_curPost != null)
                             {
-                                doShowUserStatus(_curPost.ScreenName, false);
+                                asyncTask = this.doShowUserStatus(_curPost.ScreenName, false);
                                 return true;
                             }
                             break;
@@ -8006,7 +7950,7 @@ namespace OpenTween
                 if (!string.IsNullOrEmpty(r) || post == null)
                 {
                     this.StatusLabel.Text = r;
-                    await this.OpenUriAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
+                    await this.OpenUriInBrowserAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
                     return;
                 }
 
@@ -8019,7 +7963,7 @@ namespace OpenTween
                 inReplyPost = inReplyToPosts.FirstOrDefault();
                 if (inReplyPost == null)
                 {
-                    await this.OpenUriAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
+                    await this.OpenUriInBrowserAsync("https://twitter.com/" + inReplyToUser + "/statuses/" + inReplyToId.ToString());
                     return;
                 }
                 inReplyToTabName = inReplyPost.Tab.TabName;
@@ -9822,26 +9766,7 @@ namespace OpenTween
                 }
                 if (string.IsNullOrEmpty(openUrlStr)) return;
 
-                if (openUrlStr.StartsWith("http://twitter.com/search?q=") ||
-                    openUrlStr.StartsWith("https://twitter.com/search?q="))
-                {
-                    //ハッシュタグの場合は、タブで開く
-                    string urlStr = Uri.UnescapeDataString(openUrlStr);
-                    string hash = urlStr.Substring(urlStr.IndexOf("#"));
-                    HashSupl.AddItem(hash);
-                    HashMgr.AddHashToHistory(hash.Trim(), false);
-                    AddNewTabForSearch(hash);
-                    return;
-                }
-                else
-                {
-                    Match m = Regex.Match(openUrlStr, "^https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)$");
-                    if (this._cfgCommon.OpenUserTimeline && m.Success && IsTwitterId(m.Result("${ScreenName}")))
-                        this.AddNewTabForUserTimeline(m.Result("${ScreenName}"));
-                    else
-                        await this.OpenUriAsync(openUrlStr);
-                    return;
-                }
+                await this.OpenUriAsync(new Uri(openUrlStr));
             }
         }
 
@@ -10318,7 +10243,7 @@ namespace OpenTween
             {
                 if (MyCommon.IsKeyDown(Keys.Shift))
                 {
-                    await this.OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
+                    await this.OpenUriInBrowserAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
                     return;
                 }
                 if (_statuses.ContainsKey(_curPost.InReplyToStatusId.Value))
@@ -10335,7 +10260,7 @@ namespace OpenTween
                         MessageBox.Show(repPost.ScreenName + " / " + repPost.Nickname + "   (" + repPost.CreatedAt.ToString() + ")" + Environment.NewLine + repPost.TextFromApi);
                         return;
                     }
-                    await this.OpenUriAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
+                    await this.OpenUriInBrowserAsync(MyCommon.GetStatusUrl(_curPost.InReplyToUser, _curPost.InReplyToStatusId.Value));
                 }
             }
         }
@@ -10454,7 +10379,7 @@ namespace OpenTween
         {
             if (_curPost == null) return;
             string name = _curPost.ImageUrl;
-            await this.OpenUriAsync(name.Remove(name.LastIndexOf("_normal"), 7)); // "_normal".Length
+            await this.OpenUriInBrowserAsync(name.Remove(name.LastIndexOf("_normal"), 7)); // "_normal".Length
         }
 
         private async void ReloadIconToolStripMenuItem_Click(object sender, EventArgs e)
@@ -10975,7 +10900,7 @@ namespace OpenTween
                 }
 
                 string tmp = string.Format(url, Uri.EscapeDataString(_selText));
-                await this.OpenUriAsync(tmp);
+                await this.OpenUriInBrowserAsync(tmp);
             }
         }
 
@@ -11280,7 +11205,56 @@ namespace OpenTween
             return nw;
         }
 
-        public Task OpenUriAsync(string UriString)
+        public async Task OpenUriAsync(Uri uri)
+        {
+            var uriStr = uri.AbsoluteUri;
+
+            // ツイートURL
+            var statusUriMatch = Twitter.StatusUrlRegex.Match(uriStr);
+            if (statusUriMatch.Success)
+            {
+                var statusId = long.Parse(statusUriMatch.Groups["StatusId"].Value);
+                await this.OpenRelatedTab(statusId);
+                return;
+            }
+
+            // ハッシュタグを含む Twitter 検索
+            if (uri.Host == "twitter.com" && uri.AbsolutePath == "/search" && uri.Query.Contains("q=%23"))
+            {
+                // ハッシュタグの場合は、タブで開く
+                var unescapedQuery = Uri.UnescapeDataString(uri.Query);
+                var pos = unescapedQuery.IndexOf('#');
+                if (pos == -1) return;
+
+                var hash = unescapedQuery.Substring(pos);
+                this.HashSupl.AddItem(hash);
+                this.HashMgr.AddHashToHistory(hash.Trim(), false);
+                this.AddNewTabForSearch(hash);
+                return;
+            }
+
+            // ユーザープロフィールURL
+            // Ctrlを押しながらリンクをクリックした場合は設定と逆の動作をする
+            if (this._cfgCommon.OpenUserTimeline && !MyCommon.IsKeyDown(Keys.Control) ||
+                !this._cfgCommon.OpenUserTimeline && MyCommon.IsKeyDown(Keys.Control))
+            {
+                var userUriMatch = Regex.Match(uriStr, "^https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)$");
+                if (userUriMatch.Success)
+                {
+                    var screenName = userUriMatch.Groups["ScreenName"].Value;
+                    if (this.IsTwitterId(screenName))
+                    {
+                        this.AddNewTabForUserTimeline(screenName);
+                        return;
+                    }
+                }
+            }
+
+            // どのパターンにも該当しないURL
+            await this.OpenUriInBrowserAsync(uriStr);
+        }
+
+        public Task OpenUriInBrowserAsync(string UriString)
         {
             return Task.Run(() =>
             {
@@ -11750,295 +11724,246 @@ namespace OpenTween
             await UrlConvertAsync(MyCommon.UrlConverter.Jmp);
         }
 
-
-        private void GetApiInfo_Dowork(object sender, DoWorkEventArgs e)
+        private async void ApiUsageInfoMenuItem_Click(object sender, EventArgs e)
         {
-            e.Result = tw.GetInfoApi();
-        }
+            TwitterApiStatus apiStatus;
 
-        private void ApiUsageInfoMenuItem_Click(object sender, EventArgs e)
-        {
-            var result = false;
-
-            using (var dlg = new FormInfo(this, Properties.Resources.ApiInfo6, GetApiInfo_Dowork))
+            using (var dialog = new WaitingDialog(Properties.Resources.ApiInfo6))
             {
-                dlg.ShowDialog();
+                var cancellationToken = dialog.EnableCancellation();
 
-                result = dlg.Result != null;
-            }
+                var task = Task.Run(() => this.tw.GetInfoApi());
+                apiStatus = await dialog.WaitForAsync(this, task);
 
-            if (result)
-            {
-                using (var apiDlg = new ApiInfoDialog())
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
+                if (apiStatus == null)
                 {
-                    apiDlg.ShowDialog();
+                    MessageBox.Show(Properties.Resources.ApiInfo5, Properties.Resources.ApiInfo4, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
             }
-            else
-            {
-                MessageBox.Show(Properties.Resources.ApiInfo5, Properties.Resources.ApiInfo4, MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-}
 
-        private void FollowCommandMenuItem_Click(object sender, EventArgs e)
+            using (var apiDlg = new ApiInfoDialog())
+            {
+                apiDlg.ShowDialog(this);
+            }
+        }
+
+        private async void FollowCommandMenuItem_Click(object sender, EventArgs e)
         {
             string id = "";
             if (_curPost != null) id = _curPost.ScreenName;
-            FollowCommand(id);
+
+            await this.FollowCommand(id);
         }
 
-        private void FollowCommand_DoWork(object sender, DoWorkEventArgs e)
+        private async Task FollowCommand(string id)
         {
-            FollowRemoveCommandArgs arg = (FollowRemoveCommandArgs)e.Argument;
-            e.Result = arg.tw.PostFollowCommand(arg.id);
-        }
-
-        private void FollowCommand(string id)
-        {
-            using (InputTabName inputName = new InputTabName())
+            using (var inputName = new InputTabName())
             {
                 inputName.FormTitle = "Follow";
                 inputName.FormDescription = Properties.Resources.FRMessage1;
                 inputName.TabName = id;
-                if (inputName.ShowDialog() == DialogResult.OK &&
-                    !string.IsNullOrEmpty(inputName.TabName.Trim()))
+
+                if (inputName.ShowDialog(this) != DialogResult.OK)
+                    return;
+                if (string.IsNullOrWhiteSpace(inputName.TabName))
+                    return;
+
+                id = inputName.TabName.Trim();
+            }
+
+            using (var dialog = new WaitingDialog(Properties.Resources.FollowCommandText1))
+            {
+                var task = Task.Run(() => this.tw.PostFollowCommand(id));
+                var err = await dialog.WaitForAsync(this, task);
+                if (!string.IsNullOrEmpty(err))
                 {
-                    FollowRemoveCommandArgs arg = new FollowRemoveCommandArgs();
-                    arg.tw = tw;
-                    arg.id = inputName.TabName.Trim();
-                    using (FormInfo _info = new FormInfo(this, Properties.Resources.FollowCommandText1,
-                                                         FollowCommand_DoWork,
-                                                         null,
-                                                         arg))
-                    {
-                        _info.ShowDialog();
-                        string ret = (string)_info.Result;
-                        if (!string.IsNullOrEmpty(ret))
-                            MessageBox.Show(Properties.Resources.FRMessage2 + ret);
-                        else
-                            MessageBox.Show(Properties.Resources.FRMessage3);
-                    }
+                    MessageBox.Show(Properties.Resources.FRMessage2 + err);
+                    return;
                 }
             }
+
+            MessageBox.Show(Properties.Resources.FRMessage3);
         }
 
-        private void RemoveCommandMenuItem_Click(object sender, EventArgs e)
+        private async void RemoveCommandMenuItem_Click(object sender, EventArgs e)
         {
             string id = "";
             if (_curPost != null) id = _curPost.ScreenName;
-            RemoveCommand(id, false);
+
+            await this.RemoveCommand(id, false);
         }
 
-        private class FollowRemoveCommandArgs
+        private async Task RemoveCommand(string id, bool skipInput)
         {
-            public Twitter tw;
-            public string id;
-        }
-
-        private void RemoveCommand_DoWork(object sender , DoWorkEventArgs e)
-        {
-            FollowRemoveCommandArgs arg = (FollowRemoveCommandArgs)e.Argument;
-            e.Result = arg.tw.PostRemoveCommand(arg.id);
-        }
-
-        private void RemoveCommand(string id, bool skipInput)
-        {
-            FollowRemoveCommandArgs arg = new FollowRemoveCommandArgs();
-            arg.tw = tw;
-            arg.id = id;
             if (!skipInput)
             {
-                using (InputTabName inputName = new InputTabName())
+                using (var inputName = new InputTabName())
                 {
                     inputName.FormTitle = "Unfollow";
                     inputName.FormDescription = Properties.Resources.FRMessage1;
                     inputName.TabName = id;
-                    if (inputName.ShowDialog() == DialogResult.OK &&
-                        !string.IsNullOrEmpty(inputName.TabName.Trim()))
-                    {
-                        arg.tw = tw;
-                        arg.id = inputName.TabName.Trim();
-                    }
-                    else
-                    {
+
+                    if (inputName.ShowDialog(this) != DialogResult.OK)
                         return;
-                    }
+                    if (string.IsNullOrWhiteSpace(inputName.TabName))
+                        return;
+
+                    id = inputName.TabName.Trim();
                 }
             }
 
-            using (FormInfo _info = new FormInfo(this, Properties.Resources.RemoveCommandText1,
-                                                 RemoveCommand_DoWork,
-                                                 null,
-                                                 arg))
+            using (var dialog = new WaitingDialog(Properties.Resources.RemoveCommandText1))
             {
-                _info.ShowDialog();
-                string ret = (string)_info.Result;
-                if (!string.IsNullOrEmpty(ret))
-                    MessageBox.Show(Properties.Resources.FRMessage2 + ret);
-                else
-                    MessageBox.Show(Properties.Resources.FRMessage3);
+                var task = Task.Run(() => this.tw.PostRemoveCommand(id));
+                var err = await dialog.WaitForAsync(this, task);
+                if (!string.IsNullOrEmpty(err))
+                {
+                    MessageBox.Show(Properties.Resources.FRMessage2 + err);
+                    return;
+                }
             }
+
+            MessageBox.Show(Properties.Resources.FRMessage3);
         }
 
-        private void FriendshipMenuItem_Click(object sender, EventArgs e)
+        private async void FriendshipMenuItem_Click(object sender, EventArgs e)
         {
             string id = "";
             if (_curPost != null)
                 id = _curPost.ScreenName;
 
-            ShowFriendship(id);
+            await this.ShowFriendship(id);
         }
 
-        private class ShowFriendshipArgs
+        private async Task ShowFriendship(string id)
         {
-            public Twitter tw;
-            public class FriendshipInfo
-            {
-                public string id = "";
-                public bool isFollowing = false;
-                public bool isFollowed = false;
-                public FriendshipInfo(string id)
-                {
-                    this.id = id;
-                }
-            }
-            public List<FriendshipInfo> ids = new List<FriendshipInfo>();
-        }
-
-        private void ShowFriendship_DoWork(object sender, DoWorkEventArgs e)
-        {
-            ShowFriendshipArgs arg = (ShowFriendshipArgs)e.Argument;
-            string result = "";
-            foreach (ShowFriendshipArgs.FriendshipInfo fInfo in arg.ids)
-            {
-                string rt = arg.tw.GetFriendshipInfo(fInfo.id, ref fInfo.isFollowing, ref fInfo.isFollowed);
-                if (!string.IsNullOrEmpty(rt))
-                {
-                    if (string.IsNullOrEmpty(result)) result = rt;
-                }
-            }
-            e.Result = result;
-        }
-
-        private void ShowFriendship(string id)
-        {
-            ShowFriendshipArgs args = new ShowFriendshipArgs();
-            args.tw = tw;
-            using (InputTabName inputName = new InputTabName())
+            using (var inputName = new InputTabName())
             {
                 inputName.FormTitle = "Show Friendships";
                 inputName.FormDescription = Properties.Resources.FRMessage1;
                 inputName.TabName = id;
-                if (inputName.ShowDialog() == DialogResult.OK &&
-                    !string.IsNullOrEmpty(inputName.TabName.Trim()))
+
+                if (inputName.ShowDialog(this) != DialogResult.OK)
+                    return;
+                if (string.IsNullOrWhiteSpace(inputName.TabName))
+                    return;
+
+                id = inputName.TabName.Trim();
+            }
+
+            var isFollowing = false;
+            var isFollowed = false;
+
+            using (var dialog = new WaitingDialog(Properties.Resources.ShowFriendshipText1))
+            {
+                var cancellationToken = dialog.EnableCancellation();
+
+                var task = Task.Run(() => this.tw.GetFriendshipInfo(id, ref isFollowing, ref isFollowed));
+                var err = await dialog.WaitForAsync(this, task);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
+                if (!string.IsNullOrEmpty(err))
                 {
-                    string ret = "";
-                    args.ids.Add(new ShowFriendshipArgs.FriendshipInfo(inputName.TabName.Trim()));
-                    using (FormInfo _info = new FormInfo(this, Properties.Resources.ShowFriendshipText1,
-                                                         ShowFriendship_DoWork,
-                                                         null,
-                                                         args))
+                    MessageBox.Show(err);
+                    return;
+                }
+            }
+
+            string result = "";
+            if (isFollowing)
+            {
+                result = Properties.Resources.GetFriendshipInfo1 + System.Environment.NewLine;
+            }
+            else
+            {
+                result = Properties.Resources.GetFriendshipInfo2 + System.Environment.NewLine;
+            }
+            if (isFollowed)
+            {
+                result += Properties.Resources.GetFriendshipInfo3;
+            }
+            else
+            {
+                result += Properties.Resources.GetFriendshipInfo4;
+            }
+            result = id + Properties.Resources.GetFriendshipInfo5 + System.Environment.NewLine + result;
+            MessageBox.Show(result);
+        }
+
+        private async Task ShowFriendship(string[] ids)
+        {
+            foreach (string id in ids)
+            {
+                var isFollowing = false;
+                var isFollowed = false;
+
+                using (var dialog = new WaitingDialog(Properties.Resources.ShowFriendshipText1))
+                {
+                    var cancellationToken = dialog.EnableCancellation();
+
+                    var task = Task.Run(() => this.tw.GetFriendshipInfo(id, ref isFollowing, ref isFollowed));
+                    var err = await dialog.WaitForAsync(this, task);
+
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
+                    if (!string.IsNullOrEmpty(err))
                     {
-                        _info.ShowDialog();
-                        ret = (string)_info.Result;
+                        MessageBox.Show(err);
+                        continue;
                     }
-                    string result = "";
-                    if (string.IsNullOrEmpty(ret))
+                }
+
+                string result = "";
+                string ff = "";
+
+                ff = "  ";
+                if (isFollowing)
+                {
+                    ff += Properties.Resources.GetFriendshipInfo1;
+                }
+                else
+                {
+                    ff += Properties.Resources.GetFriendshipInfo2;
+                }
+
+                ff += System.Environment.NewLine + "  ";
+                if (isFollowed)
+                {
+                    ff += Properties.Resources.GetFriendshipInfo3;
+                }
+                else
+                {
+                    ff += Properties.Resources.GetFriendshipInfo4;
+                }
+                result += id + Properties.Resources.GetFriendshipInfo5 + System.Environment.NewLine + ff;
+                if (isFollowing)
+                {
+                    if (MessageBox.Show(
+                        Properties.Resources.GetFriendshipInfo7 + System.Environment.NewLine + result, Properties.Resources.GetFriendshipInfo8,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question,
+                        MessageBoxDefaultButton.Button2) == DialogResult.Yes)
                     {
-                        if (args.ids[0].isFollowing)
-                        {
-                            result = Properties.Resources.GetFriendshipInfo1 + System.Environment.NewLine;
-                        }
-                        else
-                        {
-                            result = Properties.Resources.GetFriendshipInfo2 + System.Environment.NewLine;
-                        }
-                        if (args.ids[0].isFollowed)
-                        {
-                            result += Properties.Resources.GetFriendshipInfo3;
-                        }
-                        else
-                        {
-                            result += Properties.Resources.GetFriendshipInfo4;
-                        }
-                        result = args.ids[0].id + Properties.Resources.GetFriendshipInfo5 + System.Environment.NewLine + result;
+                        await this.RemoveCommand(id, true);
                     }
-                    else
-                    {
-                        result = ret;
-                    }
+                }
+                else
+                {
                     MessageBox.Show(result);
                 }
             }
         }
 
-        private void ShowFriendship(string[] ids)
+        private async void OwnStatusMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (string id in ids)
-            {
-                string ret = "";
-                ShowFriendshipArgs args = new ShowFriendshipArgs();
-                args.tw = tw;
-                args.ids.Add(new ShowFriendshipArgs.FriendshipInfo(id.Trim()));
-                using (FormInfo _info = new FormInfo(this, Properties.Resources.ShowFriendshipText1,
-                                                     ShowFriendship_DoWork,
-                                                     null,
-                                                     args))
-                {
-                    _info.ShowDialog();
-                    ret = (string)_info.Result;
-                }
-                string result = "";
-                ShowFriendshipArgs.FriendshipInfo fInfo = args.ids[0];
-                string ff = "";
-                if (string.IsNullOrEmpty(ret))
-                {
-                    ff = "  ";
-                    if (fInfo.isFollowing)
-                    {
-                        ff += Properties.Resources.GetFriendshipInfo1;
-                    }
-                    else
-                    {
-                        ff += Properties.Resources.GetFriendshipInfo2;
-                    }
-
-                    ff += System.Environment.NewLine + "  ";
-                    if (fInfo.isFollowed)
-                    {
-                        ff += Properties.Resources.GetFriendshipInfo3;
-                    }
-                    else
-                    {
-                        ff += Properties.Resources.GetFriendshipInfo4;
-                    }
-                    result += fInfo.id + Properties.Resources.GetFriendshipInfo5 + System.Environment.NewLine + ff;
-                    if (fInfo.isFollowing)
-                    {
-                        if (MessageBox.Show(
-                            Properties.Resources.GetFriendshipInfo7 + System.Environment.NewLine + result, Properties.Resources.GetFriendshipInfo8,
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question,
-                            MessageBoxDefaultButton.Button2) == DialogResult.Yes)
-                        {
-                            RemoveCommand(fInfo.id, true);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(result);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show(ret);
-                }
-            }
-        }
-
-        private void OwnStatusMenuItem_Click(object sender, EventArgs e)
-        {
-            doShowUserStatus(tw.Username, false);
+            await this.doShowUserStatus(tw.Username, false);
             //if (!string.IsNullOrEmpty(tw.UserInfoXml))
             //{
             //    doShowUserStatus(tw.Username, false);
@@ -12070,25 +11995,28 @@ namespace OpenTween
                 return null;
         }
 
-        private void FollowContextMenuItem_Click(object sender, EventArgs e)
+        private async void FollowContextMenuItem_Click(object sender, EventArgs e)
         {
             string name = GetUserId();
-            if (name != null) FollowCommand(name);
+            if (name != null)
+                await this.FollowCommand(name);
         }
 
-        private void RemoveContextMenuItem_Click(object sender, EventArgs e)
+        private async void RemoveContextMenuItem_Click(object sender, EventArgs e)
         {
             string name = GetUserId();
-            if (name != null) RemoveCommand(name, false);
+            if (name != null)
+                await this.RemoveCommand(name, false);
         }
 
-        private void FriendshipContextMenuItem_Click(object sender, EventArgs e)
+        private async void FriendshipContextMenuItem_Click(object sender, EventArgs e)
         {
             string name = GetUserId();
-            if (name != null) ShowFriendship(name);
+            if (name != null)
+                await this.ShowFriendship(name);
         }
 
-        private void FriendshipAllMenuItem_Click(object sender, EventArgs e)
+        private async void FriendshipAllMenuItem_Click(object sender, EventArgs e)
         {
             MatchCollection ma = Regex.Matches(this.PostBrowser.DocumentText, @"href=""https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)(/status(es)?/[0-9]+)?""");
             List<string> ids = new List<string>();
@@ -12099,13 +12027,15 @@ namespace OpenTween
                     ids.Add(mu.Result("${ScreenName}"));
                 }
             }
-            ShowFriendship(ids.ToArray());
+
+            await this.ShowFriendship(ids.ToArray());
         }
 
-        private void ShowUserStatusContextMenuItem_Click(object sender, EventArgs e)
+        private async void ShowUserStatusContextMenuItem_Click(object sender, EventArgs e)
         {
             string name = GetUserId();
-            if (name != null) ShowUserStatus(name);
+            if (name != null)
+                await this.ShowUserStatus(name);
         }
 
         private void SearchPostsDetailToolStripMenuItem_Click(object sender, EventArgs e)
@@ -12345,7 +12275,7 @@ namespace OpenTween
                 PostClass post = GetCurTabPost(_curList.SelectedIndices[0]);
                 if (post.RetweetedId != null)
                 {
-                    await this.OpenUriAsync("https://twitter.com/" + GetCurTabPost(_curList.SelectedIndices[0]).RetweetedBy);
+                    await this.OpenUriInBrowserAsync("https://twitter.com/" + GetCurTabPost(_curList.SelectedIndices[0]).RetweetedBy);
                 }
             }
         }
@@ -12736,87 +12666,59 @@ namespace OpenTween
             SetNotifyIconText();
         }
 
-        private void UserStatusToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void UserStatusToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string id = "";
             if (_curPost != null)
             {
                 id = _curPost.ScreenName;
             }
-            ShowUserStatus(id);
+
+            await this.ShowUserStatus(id);
         }
 
-        private class GetUserInfoArgs
-        {
-            public Twitter tw;
-            public string id;
-            public TwitterUser user;
-        }
-
-        private void GetUserInfo_DoWork(object sender, DoWorkEventArgs e)
-        {
-            GetUserInfoArgs args = (GetUserInfoArgs)e.Argument;
-            e.Result = args.tw.GetUserInfo(args.id, ref args.user);
-        }
-
-        private void doShowUserStatus(string id, bool ShowInputDialog)
+        private async Task doShowUserStatus(string id, bool ShowInputDialog)
         {
             TwitterUser user = null;
-            GetUserInfoArgs args = new GetUserInfoArgs();
+
             if (ShowInputDialog)
             {
-                using (InputTabName inputName = new InputTabName())
+                using (var inputName = new InputTabName())
                 {
                     inputName.FormTitle = "Show UserStatus";
                     inputName.FormDescription = Properties.Resources.FRMessage1;
                     inputName.TabName = id;
-                    if (inputName.ShowDialog() == DialogResult.OK &&
-                        !string.IsNullOrEmpty(inputName.TabName.Trim()))
-                    {
-                        id = inputName.TabName.Trim();
-                        args.tw = tw;
-                        args.id = id;
-                        args.user = user;
-                        using (FormInfo _info = new FormInfo(this, Properties.Resources.doShowUserStatusText1,
-                                                             GetUserInfo_DoWork,
-                                                             null,
-                                                             args))
-                        {
-                            _info.ShowDialog();
-                            string ret = (string)_info.Result;
-                            if (string.IsNullOrEmpty(ret))
-                                doShowUserStatus(args.user);
-                            else
-                                MessageBox.Show(ret);
-                        }
-                    }
+
+                    if (inputName.ShowDialog(this) != DialogResult.OK)
+                        return;
+                    if (string.IsNullOrWhiteSpace(inputName.TabName))
+                        return;
+
+                    id = inputName.TabName.Trim();
                 }
             }
-            else
+
+            using (var dialog = new WaitingDialog(Properties.Resources.doShowUserStatusText1))
             {
-                args.tw = tw;
-                args.id = id;
-                args.user = user;
-                using (FormInfo _info = new FormInfo(this, Properties.Resources.doShowUserStatusText1,
-                                                     GetUserInfo_DoWork,
-                                                     null,
-                                                     args))
+                var cancellationToken = dialog.EnableCancellation();
+
+                var task = Task.Run(() => this.tw.GetUserInfo(id, ref user));
+                var err = await dialog.WaitForAsync(this, task);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
+                if (!string.IsNullOrEmpty(err))
                 {
-                    _info.ShowDialog();
-                    string ret = (string)_info.Result;
-                    if (string.IsNullOrEmpty(ret))
-                    {
-                        doShowUserStatus(args.user);
-                    }
-                    else
-                    {
-                        MessageBox.Show(ret);
-                    }
+                    MessageBox.Show(err);
+                    return;
                 }
             }
+
+            await this.doShowUserStatus(user);
         }
 
-        private async void doShowUserStatus(TwitterUser user)
+        private async Task doShowUserStatus(TwitterUser user)
         {
             using (var userDialog = new UserInfoDialog(this, this.tw))
             {
@@ -12831,58 +12733,58 @@ namespace OpenTween
             }
         }
 
-        private void ShowUserStatus(string id, bool ShowInputDialog)
+        private Task ShowUserStatus(string id, bool ShowInputDialog)
         {
-            doShowUserStatus(id, ShowInputDialog);
+            return this.doShowUserStatus(id, ShowInputDialog);
         }
 
-        private void ShowUserStatus(string id)
+        private Task ShowUserStatus(string id)
         {
-            doShowUserStatus(id, true);
+            return this.doShowUserStatus(id, true);
         }
 
-        private void FollowToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void FollowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (NameLabel.Tag != null)
             {
                 string id = (string)NameLabel.Tag;
                 if (id != tw.Username)
                 {
-                    FollowCommand(id);
+                    await this.FollowCommand(id);
                 }
             }
         }
 
-        private void UnFollowToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void UnFollowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (NameLabel.Tag != null)
             {
                 string id = (string)NameLabel.Tag;
                 if (id != tw.Username)
                 {
-                    RemoveCommand(id, false);
+                    await this.RemoveCommand(id, false);
                 }
             }
         }
 
-        private void ShowFriendShipToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void ShowFriendShipToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (NameLabel.Tag != null)
             {
                 string id = (string)NameLabel.Tag;
                 if (id != tw.Username)
                 {
-                    ShowFriendship(id);
+                    await this.ShowFriendship(id);
                 }
             }
         }
 
-        private void ShowUserStatusToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void ShowUserStatusToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (NameLabel.Tag != null)
             {
                 string id = (string)NameLabel.Tag;
-                ShowUserStatus(id, false);
+                await this.ShowUserStatus(id, false);
             }
         }
 
@@ -12904,54 +12806,40 @@ namespace OpenTween
             }
         }
 
-        private void ShowProfileMenuItem_Click(object sender, EventArgs e)
+        private async void ShowProfileMenuItem_Click(object sender, EventArgs e)
         {
             if (_curPost != null)
             {
-                ShowUserStatus(_curPost.ScreenName, false);
+                await this.ShowUserStatus(_curPost.ScreenName, false);
             }
         }
 
-        private void GetRetweet_DoWork(object sender, DoWorkEventArgs e)
+        private async void RtCountMenuItem_Click(object sender, EventArgs e)
         {
-            int counter = 0;
+            if (!this.ExistCurrentPost)
+                return;
 
-            long statusid;
-            if (_curPost.RetweetedId != null)
-            {
-                statusid = _curPost.RetweetedId.Value;
-            }
-            else
-            {
-                statusid = _curPost.StatusId;
-            }
-            tw.GetStatus_Retweeted_Count(statusid, ref counter);
+            var statusId = this._curPost.RetweetedId ?? this._curPost.StatusId;
+            int retweetCount = 0;
 
-            e.Result = counter;
-        }
-
-        private void RtCountMenuItem_Click(object sender, EventArgs e)
-        {
-            if (this.ExistCurrentPost)
+            using (var dialog = new WaitingDialog(Properties.Resources.RtCountMenuItem_ClickText1))
             {
-                using (FormInfo _info = new FormInfo(this, Properties.Resources.RtCountMenuItem_ClickText1,
-                                                     GetRetweet_DoWork))
+                var cancellationToken = dialog.EnableCancellation();
+
+                var task = Task.Run(() => this.tw.GetStatus_Retweeted_Count(statusId, ref retweetCount));
+                var err = await dialog.WaitForAsync(this, task);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
+                if (!string.IsNullOrEmpty(err))
                 {
-                    int retweet_count = 0;
-
-                    // ダイアログ表示
-                    _info.ShowDialog();
-                    retweet_count = (int)_info.Result;
-                    if (retweet_count < 0)
-                    {
-                        MessageBox.Show(Properties.Resources.RtCountText2);
-                    }
-                    else
-                    {
-                        MessageBox.Show(retweet_count.ToString() + Properties.Resources.RtCountText1);
-                    }
+                    MessageBox.Show(Properties.Resources.RtCountText2 + Environment.NewLine + err);
+                    return;
                 }
             }
+
+            MessageBox.Show(retweetCount + Properties.Resources.RtCountText1);
         }
 
         private HookGlobalHotkey _hookGlobalHotkey;
@@ -13027,7 +12915,7 @@ namespace OpenTween
         {
             if (NameLabel.Tag != null)
             {
-                await this.OpenUriAsync(MyCommon.TwitterUrl + NameLabel.Tag.ToString());
+                await this.OpenUriInBrowserAsync(MyCommon.TwitterUrl + NameLabel.Tag.ToString());
             }
         }
 
@@ -13286,7 +13174,7 @@ namespace OpenTween
             var sourceUri = (Uri)this.SourceLinkLabel.Tag;
             if (sourceUri != null && e.Button == MouseButtons.Left)
             {
-                await this.OpenUriAsync(sourceUri.AbsoluteUri);
+                await this.OpenUriInBrowserAsync(sourceUri.AbsoluteUri);
             }
         }
 
@@ -13816,12 +13704,12 @@ namespace OpenTween
         private async void OpenOwnFavedMenuItem_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(tw.Username))
-                await this.OpenUriAsync(Properties.Resources.FavstarUrl + "users/" + tw.Username + "/recent");
+                await this.OpenUriInBrowserAsync(Properties.Resources.FavstarUrl + "users/" + tw.Username + "/recent");
         }
 
         private async void OpenOwnHomeMenuItem_Click(object sender, EventArgs e)
         {
-            await this.OpenUriAsync(MyCommon.TwitterUrl + tw.Username);
+            await this.OpenUriInBrowserAsync(MyCommon.TwitterUrl + tw.Username);
         }
 
         private async Task doTranslation(string str)
@@ -13912,7 +13800,7 @@ namespace OpenTween
             string id = GetUserIdFromCurPostOrInput("Show Favstar");
             if (!string.IsNullOrEmpty(id))
             {
-                await this.OpenUriAsync(Properties.Resources.FavstarUrl + "users/" + id + "/recent");
+                await this.OpenUriInBrowserAsync(Properties.Resources.FavstarUrl + "users/" + id + "/recent");
             }
         }
 
@@ -13957,12 +13845,12 @@ namespace OpenTween
                         {
                             xUrl = xUrl.Replace("{STATUS}", _curPost.StatusId.ToString());
                         }
-                        await this.OpenUriAsync(xUrl);
+                        await this.OpenUriInBrowserAsync(xUrl);
                     }
                 }
                 else
                 {
-                    await this.OpenUriAsync(this._cfgCommon.UserAppointUrl);
+                    await this.OpenUriInBrowserAsync(this._cfgCommon.UserAppointUrl);
                 }
             }
         }
@@ -14088,7 +13976,7 @@ namespace OpenTween
 
         private async void tweetThumbnail1_ThumbnailImageSearchClick(object sender, ThumbnailImageSearchEventArgs e)
         {
-            await this.OpenUriAsync(e.ImageUrl);
+            await this.OpenUriInBrowserAsync(e.ImageUrl);
         }
 
         private async Task OpenThumbnailPicture(ThumbnailInfo thumbnail)
@@ -14096,12 +13984,12 @@ namespace OpenTween
             var url = thumbnail.FullSizeImageUrl ?? thumbnail.ImageUrl;
             url = url.Replace(" ", "%20");
 
-            await this.OpenUriAsync(url);
+            await this.OpenUriInBrowserAsync(url);
         }
 
         private async void TwitterApiStatusToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await this.OpenUriAsync(Twitter.ServiceAvailabilityStatusUrl);
+            await this.OpenUriInBrowserAsync(Twitter.ServiceAvailabilityStatusUrl);
         }
 
         private void PostButton_KeyDown(object sender, KeyEventArgs e)

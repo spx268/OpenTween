@@ -333,7 +333,7 @@ namespace OpenTween
             if (linkUrl == null)
                 return;
 
-            await this.mainForm.OpenUriAsync(linkUrl);
+            await this.mainForm.OpenUriInBrowserAsync(linkUrl);
         }
 
         private void ButtonFollow_Click(object sender, EventArgs e)
@@ -390,30 +390,7 @@ namespace OpenTween
             if (e.Url.AbsoluteUri != "about:blank")
             {
                 e.Cancel = true;
-
-                if (e.Url.AbsoluteUri.StartsWith("http://twitter.com/search?q=%23") ||
-                    e.Url.AbsoluteUri.StartsWith("https://twitter.com/search?q=%23"))
-                {
-                    //ハッシュタグの場合は、タブで開く
-                    string urlStr = Uri.UnescapeDataString(e.Url.AbsoluteUri);
-                    string hash = urlStr.Substring(urlStr.IndexOf("#"));
-                    this.mainForm.HashSupl.AddItem(hash);
-                    this.mainForm.HashMgr.AddHashToHistory(hash.Trim(), false);
-                    this.mainForm.AddNewTabForSearch(hash);
-                    return;
-                }
-                else
-                {
-                    Match m = Regex.Match(e.Url.AbsoluteUri, @"^https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)$");
-                    if (SettingCommon.Instance.OpenUserTimeline && m.Success && this.mainForm.IsTwitterId(m.Result("${ScreenName}")))
-                    {
-                        this.mainForm.AddNewTabForUserTimeline(m.Result("${ScreenName}"));
-                    }
-                    else
-                    {
-                        await this.mainForm.OpenUriAsync(e.Url.OriginalString);
-                    }
-                }
+                await this.mainForm.OpenUriAsync(e.Url);
             }
         }
 
@@ -450,12 +427,12 @@ namespace OpenTween
 
         private async void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            await this.mainForm.OpenUriAsync("https://support.twitter.com/groups/31-twitter-basics/topics/111-features/articles/268350-x8a8d-x8a3c-x6e08-x307f-x30a2-x30ab-x30a6-x30f3-x30c8-x306b-x3064-x3044-x3066");
+            await this.mainForm.OpenUriInBrowserAsync("https://support.twitter.com/groups/31-twitter-basics/topics/111-features/articles/268350-x8a8d-x8a3c-x6e08-x307f-x30a2-x30ab-x30a6-x30f3-x30c8-x306b-x3064-x3044-x3066");
         }
 
         private async void LinkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            await this.mainForm.OpenUriAsync("https://support.twitter.com/groups/31-twitter-basics/topics/107-my-profile-account-settings/articles/243055-x516c-x958b-x3001-x975e-x516c-x958b-x30a2-x30ab-x30a6-x30f3-x30c8-x306b-x3064-x3044-x3066");
+            await this.mainForm.OpenUriInBrowserAsync("https://support.twitter.com/groups/31-twitter-basics/topics/107-my-profile-account-settings/articles/243055-x516c-x958b-x3001-x975e-x516c-x958b-x30a2-x30ab-x30a6-x30f3-x30c8-x306b-x3064-x3044-x3066");
         }
 
         private void ButtonSearchPosts_Click(object sender, EventArgs e)
@@ -468,7 +445,7 @@ namespace OpenTween
             var imageUrl = this._displayUser.ProfileImageUrlHttps;
             imageUrl = imageUrl.Remove(imageUrl.LastIndexOf("_normal"), 7);
 
-            await this.mainForm.OpenUriAsync(imageUrl);
+            await this.mainForm.OpenUriInBrowserAsync(imageUrl);
         }
 
         private bool IsEditing = false;
