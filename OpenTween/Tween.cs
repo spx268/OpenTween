@@ -6698,7 +6698,7 @@ namespace OpenTween
                     return FormatQuoteTweetHtml(statusId, WebUtility.HtmlEncode(err));
 
                 post.IsRead = true;
-                this._statuses.AddPost(post);
+                this._statuses.AddQuoteTweet(post);
             }
 
             return FormatQuoteTweetHtml(post);
