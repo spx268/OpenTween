@@ -1192,11 +1192,15 @@ namespace OpenTween
                     );
         }
 
-        public void AddQuoteTweet(PostClass item)
+        public bool AddQuoteTweet(PostClass item)
         {
             lock (LockObj)
             {
+                if (IsMuted(item) || BlockIds.Contains(item.UserId))
+                    return false;
+
                 _quotes[item.StatusId] = item;
+                return true;
             }
         }
 
