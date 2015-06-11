@@ -1768,7 +1768,7 @@ namespace OpenTween
         //無条件に追加
         private void Add(long ID, bool Read)
         {
-            if (this._ids.Contains(ID)) return;
+            if (this.Contains(ID)) return;
 
             if (this.SortMode == ComparerMode.Id)
             {
@@ -1905,7 +1905,7 @@ namespace OpenTween
 
         public void Remove(long Id)
         {
-            if (!this._ids.Contains(Id))
+            if (!this.Contains(Id))
                 return;
 
             this._ids.Remove(Id);
@@ -1993,7 +1993,7 @@ namespace OpenTween
         /// <returns>既読状態に変化があれば true、変化がなければ false</returns>
         internal bool SetReadState(long statusId, bool read)
         {
-            if (!this._ids.Contains(statusId))
+            if (!this.Contains(statusId))
                 throw new ArgumentException("statusId");
 
             if (this.IsInnerStorageTabType)
@@ -2070,6 +2070,24 @@ namespace OpenTween
             }
         }
 
+        private class ReverseComparer<T> : IComparer<T>
+        {
+            public int Compare(T x, T y)
+            {
+                return Comparer<T>.Default.Compare(y, x);
+            }
+            public static readonly IComparer<T> Default = new ReverseComparer<T>();
+        }
+
+        private IComparer<long> BinarySearchIdComparer
+        {
+            get
+            {
+                return (this.SortOrder == SortOrder.Ascending) ?
+                    Comparer<long>.Default : ReverseComparer<long>.Default;
+            }
+        }
+
         public bool IsSortedById
         {
             get
@@ -2082,7 +2100,15 @@ namespace OpenTween
 
         public bool Contains(long ID)
         {
-            return _ids.Contains(ID);
+            lock (this._lockObj)
+            {
+                if (this.IsSortedById)
+                {
+                    var idx = this._ids.BinarySearch(ID, this.BinarySearchIdComparer);
+                    return idx >= 0;
+                }
+                return _ids.Contains(ID);
+            }
         }
 
         public void ClearIDs()
@@ -2148,7 +2174,15 @@ namespace OpenTween
 
         public int IndexOf(long ID)
         {
-            return _ids.IndexOf(ID);
+            lock (this._lockObj)
+            {
+                if (this.IsSortedById)
+                {
+                    var idx = this._ids.BinarySearch(ID, this.BinarySearchIdComparer);
+                    return idx >= 0 ? idx : -1;
+                }
+                return _ids.IndexOf(ID);
+            }
         }
 
         [XmlIgnore]

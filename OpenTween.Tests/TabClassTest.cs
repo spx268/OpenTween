@@ -438,6 +438,82 @@ namespace OpenTween
 
             Assert.Equal(false, tab.IsSortedById);
         }
+
+        [Theory]
+        [InlineData(ComparerMode.Id, SortOrder.Ascending, true)]
+        [InlineData(ComparerMode.Id, SortOrder.Descending, true)]
+        [InlineData(ComparerMode.Name, SortOrder.Ascending, false)]
+        [InlineData(ComparerMode.Name, SortOrder.Descending, false)]
+        public void BinarySearch_ContainsTest(ComparerMode sortMode, SortOrder sortOrder, bool expected)
+        {
+            var tab = new TabClass { TabType = MyCommon.TabUsageType.UserTimeline };
+
+            tab.SortMode = sortMode;
+            tab.SortOrder = sortOrder;
+
+            var ids = new long[] { 100L, 101L, 102L, 105L, 103L };
+            var exids = new long[] { 99L, 106L, 104L };
+
+            foreach (var id in ids)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                    ScreenName = "Name",
+                });
+            }
+            tab.AddSubmit();
+            tab.Sort();
+
+            Assert.Equal(expected, tab.IsSortedById);
+
+            foreach (var id in ids)
+            {
+                Assert.Equal(true, tab.Contains(id));
+            }
+            foreach (var id in exids)
+            {
+                Assert.Equal(false, tab.Contains(id));
+            }
+        }
+
+        [Theory]
+        [InlineData(ComparerMode.Id, SortOrder.Ascending, true)]
+        [InlineData(ComparerMode.Id, SortOrder.Descending, true)]
+        [InlineData(ComparerMode.Name, SortOrder.Ascending, false)]
+        [InlineData(ComparerMode.Name, SortOrder.Descending, false)]
+        public void BinarySearch_IndexOfTest(ComparerMode sortMode, SortOrder sortOrder, bool expected)
+        {
+            var tab = new TabClass { TabType = MyCommon.TabUsageType.UserTimeline };
+
+            tab.SortMode = sortMode;
+            tab.SortOrder = sortOrder;
+
+            var ids = new long[] { 100L, 101L, 102L, 105L, 103L };
+            var exids = new long[] { 99L, 106L, 104L };
+
+            foreach (var id in ids)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                    ScreenName = "Name",
+                });
+            }
+            tab.AddSubmit();
+            tab.Sort();
+
+            Assert.Equal(expected, tab.IsSortedById);
+
+            foreach (var id in ids)
+            {
+                Assert.Equal(true, tab.IndexOf(id) >= 0);
+            }
+            foreach (var id in exids)
+            {
+                Assert.Equal(-1, tab.IndexOf(id));
+            }
+        }
     }
 
     public class TabUsageTypeExtTest
