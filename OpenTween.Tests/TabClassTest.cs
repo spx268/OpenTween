@@ -294,6 +294,150 @@ namespace OpenTween
 
             Assert.False(tab.FilterModified);
         }
+
+        [Theory]
+        [InlineData(ComparerMode.Data, false)]
+        [InlineData(ComparerMode.Name, false)]
+        [InlineData(ComparerMode.Nickname, false)]
+        [InlineData(ComparerMode.Source, false)]
+        [InlineData(ComparerMode.Id, true)]
+        public void IsSortedById_SortModeTest(ComparerMode sortMode, bool expected)
+        {
+            var tab = new TabClass { TabType = MyCommon.TabUsageType.UserTimeline };
+
+            tab.SortMode = ComparerMode.Id;
+            tab.SortOrder = SortOrder.Ascending;
+
+            var ids = new long[] { 100L, 101L };
+
+            foreach (var id in ids)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                });
+            }
+            tab.AddSubmit();
+            tab.Sort();
+
+            Assert.Equal(true, tab.IsSortedById);
+
+            tab.SortMode = sortMode;
+
+            Assert.Equal(expected, tab.IsSortedById);
+
+            // ソート後に戻す
+            tab.Sort();
+
+            tab.SortMode = ComparerMode.Id;
+
+            Assert.Equal(expected, tab.IsSortedById);
+        }
+
+        [Fact]
+        public void IsSortedById_SortOrderTest()
+        {
+            var tab = new TabClass { TabType = MyCommon.TabUsageType.UserTimeline };
+
+            tab.SortMode = ComparerMode.Id;
+            tab.SortOrder = SortOrder.Ascending;
+
+            var ids = new long[] { 100L, 101L };
+
+            foreach (var id in ids)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                });
+            }
+            tab.AddSubmit();
+            tab.Sort();
+
+            Assert.Equal(true, tab.IsSortedById);
+
+            tab.SortOrder = SortOrder.Descending;
+
+            Assert.Equal(false, tab.IsSortedById);
+
+            // ソート後に戻す
+            tab.Sort();
+
+            tab.SortOrder = SortOrder.Ascending;
+
+            Assert.Equal(false, tab.IsSortedById);
+        }
+
+        [Theory]
+        [InlineData(SortOrder.Ascending,  100L, 105L, 100L, 110L, 100L, 120L)]
+        [InlineData(SortOrder.Descending, 105L, 100L, 110L, 100L, 120L, 100L)]
+        public void AddSubmit_KeepSortedByIdTest(SortOrder sortOrder, long ex1First, long ex1Last, long ex2First, long ex2Last, long ex3First, long ex3Last)
+        {
+            var tab = new TabClass { TabType = MyCommon.TabUsageType.UserTimeline };
+
+            tab.SortMode = ComparerMode.Id;
+            tab.SortOrder = sortOrder;
+
+            // 初期状態ならtrue（のはず）
+            Assert.Equal(true, tab.IsSortedById);
+
+            var ids1 = new long[] { 100L, 101L, 102L, 105L, 103L, 104L };
+
+            foreach (var id in ids1)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                });
+            }
+            tab.AddSubmit();
+
+            Assert.Equal(true, tab.IsSortedById);
+            Assert.Equal(0, tab.IndexOf(ex1First));
+            Assert.Equal(tab.AllCount - 1, tab.IndexOf(ex1Last));
+
+            var ids2 = new long[] { 110L, 109L };
+
+            foreach (var id in ids2)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                });
+            }
+            tab.AddSubmit();
+
+            Assert.Equal(true, tab.IsSortedById);
+            Assert.Equal(0, tab.IndexOf(ex2First));
+            Assert.Equal(tab.AllCount - 1, tab.IndexOf(ex2Last));
+
+            var ids3 = new long[] { 120L, 108L };
+
+            foreach (var id in ids3)
+            {
+                tab.AddPostToInnerStorage(new PostClass
+                {
+                    StatusId = id,
+                });
+            }
+            tab.AddSubmit();
+
+            Assert.Equal(false, tab.IsSortedById);
+
+            tab.Sort();
+
+            Assert.Equal(true, tab.IsSortedById);
+            Assert.Equal(0, tab.IndexOf(ex3First));
+            Assert.Equal(tab.AllCount - 1, tab.IndexOf(ex3Last));
+
+            // 強制追加
+            var id4 = 130L;
+
+            tab.Add(id4, true, false);
+            tab.AddSubmit();
+
+            Assert.Equal(false, tab.IsSortedById);
+        }
     }
 
     public class TabUsageTypeExtTest

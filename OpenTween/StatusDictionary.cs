@@ -653,6 +653,14 @@ namespace OpenTween
             }
         }
 
+        private void SortPostsIfNeeded()
+        {
+            foreach (var tab in _tabs.Values)
+            {
+                tab.SortIfNeeded();
+            }
+        }
+
         private SortOrder _sortOrder = SortOrder.Ascending;
         public SortOrder SortOrder
         {
@@ -913,10 +921,9 @@ namespace OpenTween
                 //{
                 //    isUserStream = false;
                 //}
-                if (!isUserStream || this.SortMode != ComparerMode.Id)
-                {
-                    this.SortPosts();
-                }
+
+                this.SortPostsIfNeeded();
+
                 if (isUserStream)
                 {
                     isDeletePost = this._deletedIds.Count > 0;
@@ -1514,6 +1521,7 @@ namespace OpenTween
         private List<TemporaryId> _tmpIds = new List<TemporaryId>();
         private SortedSet<long> unreadIds = new SortedSet<long>();
         private MyCommon.TabUsageType _tabType = MyCommon.TabUsageType.Undefined;
+        private bool _isDirty = false;
 
         private readonly object _lockObj = new object();
 
@@ -1662,6 +1670,11 @@ namespace OpenTween
             this.ListInfo = list;
         }
 
+        public void SortIfNeeded()
+        {
+            if (this._isDirty) this.Sort();
+        }
+
         public void Sort()
         {
             IEnumerable<long> sortedIds;
@@ -1713,13 +1726,44 @@ namespace OpenTween
             }
 
             this._ids = sortedIds.ToList();
+            this._isDirty = false;
         }
 
         [XmlIgnore]
-        public ComparerMode SortMode { get; set; }
+        public ComparerMode SortMode
+        {
+            get
+            {
+                return this._sortMode;
+            }
+            set
+            {
+                if (this._sortMode == value) return;
+                this._sortMode = value;
+
+                if (this._ids.Count > 1)
+                    this._isDirty = true;
+            }
+        }
+        private ComparerMode _sortMode = ComparerMode.Id;
 
         [XmlIgnore]
-        public SortOrder SortOrder { get; set; }
+        public SortOrder SortOrder
+        {
+            get
+            {
+                return this._sortOrder;
+            }
+            set
+            {
+                if (this._sortOrder == value) return;
+                this._sortOrder = value;
+
+                if (this._ids.Count > 1)
+                    this._isDirty = true;
+            }
+        }
+        private SortOrder _sortOrder = SortOrder.Ascending;
 
         //無条件に追加
         private void Add(long ID, bool Read)
@@ -1750,6 +1794,7 @@ namespace OpenTween
         {
             if (!Temporary)
             {
+                this._isDirty = true;  //追加すべき位置が不明のため、ソートが必要
                 this.Add(ID, Read);
             }
             else
@@ -1820,7 +1865,30 @@ namespace OpenTween
         public void AddSubmit(ref bool isMentionIncluded)
         {
             if (_tmpIds.Count == 0) return;
-            _tmpIds.Sort((x, y) => x.Id.CompareTo(y.Id));
+            _tmpIds.Sort((x, y) => x.Id.CompareTo(y.Id));  // 追加前に必ず昇順ソートしておく
+
+            do
+            {
+                // ComparerMode.Idでソート済みの場合のみ：
+                // _idsの持つ最新のstatusIdが、_tmpIdsの持つ最古のstatusIdよりも古ければ、追加処理後もソート済みとみなす
+                if (this.IsSortedById)
+                {
+                    if (this._ids.Count == 0) break;
+
+                    if (this.SortOrder == SortOrder.Ascending)
+                    {
+                        if (this._tmpIds[0].Id > this._ids[this._ids.Count - 1]) break;
+                    }
+                    else
+                    {
+                        if (this._tmpIds[0].Id > this._ids[0]) break;
+                    }
+                }
+                // 除外条件から外れたらソートが必要
+                this._isDirty = true;
+            }
+            while (false);
+
             foreach (var tId in _tmpIds)
             {
                 if (this.TabType == MyCommon.TabUsageType.Mentions && TabInformations.GetInstance()[tId.Id].IsReply) isMentionIncluded = true;
@@ -2001,6 +2069,17 @@ namespace OpenTween
                 }
             }
         }
+
+        public bool IsSortedById
+        {
+            get
+            {
+                return
+                    this.SortMode == ComparerMode.Id &&
+                    !this._isDirty;
+            }
+        }
+
         public bool Contains(long ID)
         {
             return _ids.Contains(ID);
@@ -2012,6 +2091,7 @@ namespace OpenTween
             _tmpIds.Clear();
             this.unreadIds.Clear();
             _innerPosts.Clear();
+            this._isDirty = false;
         }
 
         public PostClass this[int Index]
