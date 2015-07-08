@@ -899,15 +899,9 @@ namespace OpenTween
             return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"X-Access-Level", ""},
-                {"X-RateLimit-Limit", ""},
-                {"X-RateLimit-Remaining", ""},
-                {"X-RateLimit-Reset", ""},
                 {"X-Rate-Limit-Limit", ""},
                 {"X-Rate-Limit-Remaining", ""},
                 {"X-Rate-Limit-Reset", ""},
-                {"X-MediaRateLimit-Limit", ""},
-                {"X-MediaRateLimit-Remaining", ""},
-                {"X-MediaRateLimit-Reset", ""},
             };
         }
 
