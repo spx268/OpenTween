@@ -423,20 +423,22 @@ namespace OpenTween
                 var xmove = (int)((movepos.X - this.originPos.X) * 1.5);
                 var ymove = (int)((movepos.Y - this.originPos.Y) * 1.5);
 
+                var virtualScreen = SystemInformation.VirtualScreen;
+
                 var left = this.startupBounds.X + ((xmove <= 0) ? xmove : 0);
                 var width = this.startupBounds.Width + xmove * ((xmove <= 0) ? -1 : 1);
-                if (left < SystemInformation.VirtualScreen.Left)  // upper-left 方向へは仮想スクリーン座標で制限
+                if (left < virtualScreen.Left)  // upper-left 方向へは仮想スクリーン座標で制限
                 {
-                    width += left - SystemInformation.VirtualScreen.Left;
-                    left = SystemInformation.VirtualScreen.Left;
+                    width += left - virtualScreen.Left;
+                    left = virtualScreen.Left;
                 }
 
                 var top = this.startupBounds.Y + ((ymove <= 0) ? ymove : 0);
                 var height = this.startupBounds.Height + ymove * ((ymove <= 0) ? -1 : 1);
-                if (top < SystemInformation.VirtualScreen.Top)  // upper-left 方向へは仮想スクリーン座標で制限
+                if (top < virtualScreen.Top)  // upper-left 方向へは仮想スクリーン座標で制限
                 {
-                    height += top - SystemInformation.VirtualScreen.Top;
-                    top = SystemInformation.VirtualScreen.Top;
+                    height += top - virtualScreen.Top;
+                    top = virtualScreen.Top;
                 }
 
                 this.SetBounds(left, top, width, height);
