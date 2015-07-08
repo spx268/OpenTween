@@ -218,7 +218,9 @@ namespace OpenTween
             {
                 remainCountText = this._ApiLimit.AccessLimitRemain.ToString();
                 maxCountText = this._ApiLimit.AccessLimitCount.ToString();
-                minuteText = Math.Ceiling(this.remainMinutes).ToString();
+
+                var minute = (int)Math.Ceiling(this.remainMinutes);
+                minuteText = (minute >= 0) ? minute.ToString() : "0";  //過ぎてたら 0 として扱う
             }
 
             var endpointText = string.IsNullOrEmpty(this._ApiEndpoint) ? "unknown" : this._ApiEndpoint;
