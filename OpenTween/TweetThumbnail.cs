@@ -377,41 +377,41 @@ namespace OpenTween
 
         private bool disposed = false;
 
-        protected ThumbnailZoomWindow(MemoryImage thumbnail, Rectangle startupBounds, Point originPos)
+        protected ThumbnailZoomWindow(MemoryImage thumbnail, ThumbnailInfo thumbInfo, Rectangle startupBounds, Point originPos)
         {
             this.startupBounds = startupBounds;
             this.originPos = originPos;
 
-            this.SuspendLayout();
-
-            this.DoubleBuffered = true;
-
-            this.TopMost = true;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.ShowInTaskbar = false;
-
-            this.StartPosition = FormStartPosition.Manual;
-            this.Bounds = startupBounds;
-
-            this.Capture = true;
-
-            this.MouseMove += ThumbnailZoomWindow_MouseMove;
-            this.MouseUp += ThumbnailZoomWindow_MouseUp;
-
-            var picbox = new OTPictureBox()
+            using (ControlTransaction.Layout(this, false))
             {
-                Name = "picbox",
-                Image = thumbnail,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                WaitOnLoad = false,
-                Dock = DockStyle.Fill,
-            };
-            this.Controls.Add(picbox);
+                this.DoubleBuffered = true;
 
-            picbox.MouseMove += ThumbnailZoomWindow_MouseMove;
-            picbox.MouseUp += ThumbnailZoomWindow_MouseUp;
+                this.TopMost = true;
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.ShowInTaskbar = false;
 
-            this.ResumeLayout(false);
+                this.StartPosition = FormStartPosition.Manual;
+                this.Bounds = startupBounds;
+
+                this.Capture = true;
+
+                this.MouseMove += ThumbnailZoomWindow_MouseMove;
+                this.MouseUp += ThumbnailZoomWindow_MouseUp;
+
+                var picbox = new OTPictureBox()
+                {
+                    Name = "picbox",
+                    Image = thumbnail,
+                    Tag = thumbInfo,
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    WaitOnLoad = false,
+                    Dock = DockStyle.Fill,
+                };
+                this.Controls.Add(picbox);
+
+                picbox.MouseMove += ThumbnailZoomWindow_MouseMove;
+                picbox.MouseUp += ThumbnailZoomWindow_MouseUp;
+            }
         }
 
         private void ThumbnailZoomWindow_MouseMove(object sender, MouseEventArgs e)
@@ -460,6 +460,7 @@ namespace OpenTween
                 {
                     var picbox = (OTPictureBox)this.Controls["picbox"];
                     this.Controls.Remove(picbox);
+                    picbox.Tag = null;
                     picbox.Dispose();
                 }
 
@@ -483,7 +484,7 @@ namespace OpenTween
             var thumbnail = picbox.Image;
             picbox.Image = null;
 
-            var popup = new ThumbnailZoomWindow(thumbnail, picbox.RectangleToScreen(picbox.Bounds), picbox.PointToScreen(originPos))
+            var popup = new ThumbnailZoomWindow(thumbnail, (ThumbnailInfo)picbox.Tag, picbox.RectangleToScreen(picbox.Bounds), picbox.PointToScreen(originPos))
             {
                 BackColor = picbox.BackColor,
             };
