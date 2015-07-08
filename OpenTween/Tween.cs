@@ -4740,7 +4740,8 @@ namespace OpenTween
             else if (e.Url.AbsoluteUri != "about:blank")
             {
                 e.Cancel = true;
-                await this.OpenUriAsync(e.Url);
+                // Ctrlを押しながらリンクを開いた場合は、設定と逆の動作をするフラグを true としておく
+                await this.OpenUriAsync( e.Url, MyCommon.IsKeyDown( Keys.Control ) );
             }
         }
 
@@ -9720,6 +9721,9 @@ namespace OpenTween
 
                 if (linkElements.Length == 1)
                 {
+                    // ツイートに含まれる URL が 1 つのみの場合
+                    //   => OpenURL ダイアログを表示せずにリンクを開く
+
                     string urlStr = "";
                     try
                     {
@@ -9736,9 +9740,15 @@ namespace OpenTween
                     }
                     if (string.IsNullOrEmpty(urlStr)) return;
                     openUrlStr = MyCommon.urlEncodeMultibyteChar(urlStr);
+
+                    // Ctrl+E で呼ばれた場合を考慮し isReverseSettings の判定を行わない
+                    await this.OpenUriAsync(new Uri(openUrlStr));
                 }
                 else
                 {
+                    // ツイートに含まれる URL が複数ある場合
+                    //   => OpenURL を表示しユーザーが選択したリンクを開く
+
                     foreach (var linkElm in linkElements)
                     {
                         string urlStr = "";
@@ -9768,6 +9778,9 @@ namespace OpenTween
                         if (UrlDialog.ShowDialog() == DialogResult.OK)
                         {
                             openUrlStr = UrlDialog.SelectedUrl;
+
+                            // Ctrlを押しながらリンクを開いた場合は、設定と逆の動作をするフラグを true としておく
+                            await this.OpenUriAsync(new Uri(openUrlStr), MyCommon.IsKeyDown(Keys.Control));
                         }
                     }
                     catch (Exception)
@@ -9776,9 +9789,6 @@ namespace OpenTween
                     }
                     this.TopMost = this._cfgCommon.AlwaysTop;
                 }
-                if (string.IsNullOrEmpty(openUrlStr)) return;
-
-                await this.OpenUriAsync(new Uri(openUrlStr));
             }
         }
 
@@ -11217,7 +11227,7 @@ namespace OpenTween
             return nw;
         }
 
-        public async Task OpenUriAsync(Uri uri)
+        public async Task OpenUriAsync(Uri uri, bool isReverseSettings = false)
         {
             var uriStr = uri.AbsoluteUri;
 
@@ -11246,9 +11256,9 @@ namespace OpenTween
             }
 
             // ユーザープロフィールURL
-            // Ctrlを押しながらリンクをクリックした場合は設定と逆の動作をする
-            if (this._cfgCommon.OpenUserTimeline && !MyCommon.IsKeyDown(Keys.Control) ||
-                !this._cfgCommon.OpenUserTimeline && MyCommon.IsKeyDown(Keys.Control))
+            // フラグが立っている場合は設定と逆の動作をする
+            if( this._cfgCommon.OpenUserTimeline && !isReverseSettings ||
+                !this._cfgCommon.OpenUserTimeline && isReverseSettings )
             {
                 var userUriMatch = Regex.Match(uriStr, "^https?://twitter.com/(#!/)?(?<ScreenName>[a-zA-Z0-9_]+)$");
                 if (userUriMatch.Success)
