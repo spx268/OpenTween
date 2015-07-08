@@ -57,6 +57,7 @@ namespace OpenTween
             get { return this.pictureBox.Count; }
         }
 
+        private readonly Size dragSize = SystemInformation.DragSize;
         private Point? popupMouseDownPos = null;
 
         public TweetThumbnail()
@@ -331,8 +332,8 @@ namespace OpenTween
                 this.popupMouseDownPos.HasValue)
             {
                 // ダブルクリック時の些細な移動で反応するのを阻止
-                if (Math.Abs(e.X - this.popupMouseDownPos.Value.X) < 3 ||
-                    Math.Abs(e.Y - this.popupMouseDownPos.Value.Y) < 3) return;
+                if (Math.Abs(e.X - this.popupMouseDownPos.Value.X) < this.dragSize.Width &&
+                    Math.Abs(e.Y - this.popupMouseDownPos.Value.Y) < this.dragSize.Height) return;
 
                 var originPos = this.popupMouseDownPos.Value;
                 this.popupMouseDownPos = null;
