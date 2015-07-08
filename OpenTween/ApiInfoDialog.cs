@@ -43,8 +43,9 @@ namespace OpenTween
         {
             "/statuses/home_timeline",
             "/statuses/mentions_timeline",
-            "/statuses/show/:id",
             "/statuses/user_timeline",
+            "/statuses/show/:id",
+            "/statuses/lookup",
             "/favorites/list",
             "/direct_messages",
             "/direct_messages/sent",
