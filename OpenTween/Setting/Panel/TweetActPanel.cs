@@ -61,6 +61,7 @@ namespace OpenTween.Setting.Panel
 
             this.CheckUseRecommendStatus.Checked = settingLocal.UseRecommendStatus;
             this.CheckRetweetNoConfirm.Checked = settingCommon.RetweetNoConfirm;
+            this.CheckUseUnofficialPostMenus.Checked = settingCommon.UseUnofficialPostMenus;
             this.CheckAtIdSupple.Checked = settingCommon.UseAtIdSupplement;
             this.CheckHashSupple.Checked = settingCommon.UseHashSupplement;
         }
@@ -87,6 +88,7 @@ namespace OpenTween.Setting.Panel
 
             settingLocal.UseRecommendStatus = this.CheckUseRecommendStatus.Checked;
             settingCommon.RetweetNoConfirm = this.CheckRetweetNoConfirm.Checked;
+            settingCommon.UseUnofficialPostMenus = this.CheckUseUnofficialPostMenus.Checked;
             settingCommon.UseAtIdSupplement = this.CheckAtIdSupple.Checked;
             settingCommon.UseHashSupplement = this.CheckHashSupple.Checked;
         }

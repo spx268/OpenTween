@@ -191,6 +191,7 @@ namespace OpenTween
         public string DateTimeFormat = "yyyy/MM/dd H:mm:ss";
         public int DefaultTimeOut = 20;
         public bool RetweetNoConfirm = false;
+        public bool UseUnofficialPostMenus = true;
         public bool LimitBalloon = false;
         public bool TabIconDisp = true;
         public MyCommon.REPLY_ICONSTATE ReplyIconState = MyCommon.REPLY_ICONSTATE.StaticIcon;

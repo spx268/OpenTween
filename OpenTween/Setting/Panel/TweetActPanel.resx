@@ -351,6 +351,33 @@
   <data name="&gt;&gt;StatusText.ZOrder" xml:space="preserve">
     <value>7</value>
   </data>
+  <data name="CheckUseUnofficialPostMenus.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="CheckUseUnofficialPostMenus.Location" type="System.Drawing.Point, System.Drawing">
+    <value>23, 204</value>
+  </data>
+  <data name="CheckUseUnofficialPostMenus.Size" type="System.Drawing.Size, System.Drawing">
+    <value>205, 16</value>
+  </data>
+  <data name="CheckUseUnofficialPostMenus.TabIndex" type="System.Int32, mscorlib">
+    <value>24</value>
+  </data>
+  <data name="CheckUseUnofficialPostMenus.Text" xml:space="preserve">
+    <value>非公式RT/QT等のメニューを使用する</value>
+  </data>
+  <data name="&gt;&gt;CheckUseUnofficialPostMenus.Name" xml:space="preserve">
+    <value>CheckUseUnofficialPostMenus</value>
+  </data>
+  <data name="&gt;&gt;CheckUseUnofficialPostMenus.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;CheckUseUnofficialPostMenus.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;CheckUseUnofficialPostMenus.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>

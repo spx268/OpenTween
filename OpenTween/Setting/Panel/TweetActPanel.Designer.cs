@@ -37,6 +37,7 @@
             this.Label12 = new System.Windows.Forms.Label();
             this.CheckUseRecommendStatus = new System.Windows.Forms.CheckBox();
             this.StatusText = new System.Windows.Forms.TextBox();
+            this.CheckUseUnofficialPostMenus = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // CheckHashSupple
@@ -90,10 +91,17 @@
             resources.ApplyResources(this.StatusText, "StatusText");
             this.StatusText.Name = "StatusText";
             // 
+            // CheckUseUnofficialPostMenus
+            // 
+            resources.ApplyResources(this.CheckUseUnofficialPostMenus, "CheckUseUnofficialPostMenus");
+            this.CheckUseUnofficialPostMenus.Name = "CheckUseUnofficialPostMenus";
+            this.CheckUseUnofficialPostMenus.UseVisualStyleBackColor = true;
+            // 
             // TweetActPanel
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.Controls.Add(this.CheckUseUnofficialPostMenus);
             this.Controls.Add(this.CheckHashSupple);
             this.Controls.Add(this.CheckAtIdSupple);
             this.Controls.Add(this.ComboBoxPostKeySelect);
@@ -118,5 +126,6 @@
         internal System.Windows.Forms.Label Label12;
         internal System.Windows.Forms.CheckBox CheckUseRecommendStatus;
         internal System.Windows.Forms.TextBox StatusText;
+        internal System.Windows.Forms.CheckBox CheckUseUnofficialPostMenus;
     }
 }
