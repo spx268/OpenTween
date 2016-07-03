@@ -149,6 +149,7 @@
     <Compile Include="SendErrorReportForm.Designer.cs">
       <DependentUpon>SendErrorReportForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Setting\SettingSearchProvider.cs" />
     <Compile Include="ShortcutCommand.cs" />
     <Compile Include="Thumbnail\Services\PbsTwimgCom.cs" />
     <Compile Include="TweetExtractor.cs" />
