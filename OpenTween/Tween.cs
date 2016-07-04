@@ -923,7 +923,7 @@ namespace OpenTween
             UrlDialog.Owner = this;
 
             //ユーザ定義検索プロバイダの初期化
-            this.searchProviders = new List<SearchProvider>(SettingSearchProvider.Load().SearchProviders);
+            this.LoadUserDefinedSearchProvider();
             this.AddUserDefinedSearchMenu();
 
             //新着バルーン通知のチェック状態設定
@@ -10503,49 +10503,6 @@ namespace OpenTween
             }
         }
 
-        private async Task doUserDefinedSearchToolStrip(string searchProviderName)
-        {
-            //発言詳細で「選択文字列で検索」（選択文字列取得）
-            string _selText = this.PostBrowser.GetSelectedText();
-
-            if (_selText != null)
-            {
-                var tmp = this.MakeUserDefinedSearchUrl(searchProviderName, _selText);
-                if (tmp != null)
-                    await this.OpenUriInBrowserAsync(tmp);
-            }
-        }
-
-        private string MakeUserDefinedSearchUrl(string name, string query)
-        {
-            if (string.IsNullOrEmpty(name))
-                return null;
-
-            var provider = this.searchProviders.Where(x => x.Name == name).FirstOrDefault();
-            if (provider == null) return null;
-
-            try
-            {
-                var encoding = Encoding.GetEncoding(provider.QueryEncoding ?? "utf-8");
-                var encodedQuery = System.Web.HttpUtility.UrlEncode(query, encoding);
-
-                return provider.Url.Replace("${query}", encodedQuery);
-            }
-            catch (Exception e)
-            {
-                MyCommon.TraceOut(e.Message);
-                return null;
-            }
-        }
-
-        private async void SearchUserDefinedContextMenuItem_Click(object sender, EventArgs e)
-        {
-            var menuItem = sender as ToolStripMenuItem;
-            if (menuItem == null) return;
-
-            await this.doUserDefinedSearchToolStrip(menuItem.Text);
-        }
-
         private void SelectionAllContextMenuItem_Click(object sender, EventArgs e)
         {
             //発言詳細ですべて選択
@@ -13519,30 +13476,50 @@ namespace OpenTween
             ModifySettingCommon = true;
         }
 
+        private void LoadUserDefinedSearchProvider()
+        {
+            this.searchProviders = new List<SearchProvider>(SettingSearchProvider.Load().SearchProviders);
+        }
+
         private void AddUserDefinedSearchMenu()
         {
-            if (this.searchProviders.Count == 0) return;
-            var i = 0;
+            this.RemoveUserDefinedSearchMenu();
 
-            var separator = new ToolStripSeparator();
-            separator.Name = "UserDefinedSearchMenu_" + i++;
-            this.SelectionSearchContextMenuItem.DropDownItems.Add(separator);
-
-            foreach (var provider in this.searchProviders)
+            // ユーザ定義の検索メニューを追加
+            if (this.searchProviders.Count > 0)
             {
-                ToolStripItem item;
-                if (provider.Name == "-")
+                var i = 0;
+
+                var separator = new ToolStripSeparator();
+                separator.Name = "UserDefinedSearchMenu_" + i++;
+                this.SelectionSearchContextMenuItem.DropDownItems.Add(separator);
+
+                foreach (var provider in this.searchProviders)
                 {
-                    item = new ToolStripSeparator();
+                    ToolStripItem item;
+                    if (provider.Name == "-")
+                    {
+                        item = new ToolStripSeparator();
+                    }
+                    else
+                    {
+                        item = new ToolStripMenuItem(provider.Name);
+                        item.Click += this.SearchUserDefinedContextMenuItem_Click;
+                    }
+                    item.Name = "UserDefinedSearchMenu_" + i++;
+                    this.SelectionSearchContextMenuItem.DropDownItems.Add(item);
                 }
-                else
-                {
-                    item = new ToolStripMenuItem(provider.Name);
-                    item.Click += this.SearchUserDefinedContextMenuItem_Click;
-                }
-                item.Name = "UserDefinedSearchMenu_" + i++;
-                this.SelectionSearchContextMenuItem.DropDownItems.Add(item);
             }
+
+            // 設定再読み込み用のメニューを追加
+            var separatorReload = new ToolStripSeparator();
+            separatorReload.Name = "UserDefinedSearchMenu_ReloadSeparator";
+            this.SelectionSearchContextMenuItem.DropDownItems.Add(separatorReload);
+
+            var itemReload = new ToolStripMenuItem("設定をリロード (&R)");
+            itemReload.Name = "UserDefinedSearchMenu_Reload";
+            itemReload.Click += this.SearchUserDefinedContextMenuItem_Click;
+            this.SelectionSearchContextMenuItem.DropDownItems.Add(itemReload);
         }
 
         private void RemoveUserDefinedSearchMenu()
@@ -13555,6 +13532,56 @@ namespace OpenTween
                 item.Click -= this.SearchUserDefinedContextMenuItem_Click;
                 this.SelectionSearchContextMenuItem.DropDownItems.Remove(item);
                 item.Dispose();
+            }
+        }
+
+        private async void SearchUserDefinedContextMenuItem_Click(object sender, EventArgs e)
+        {
+            var menuItem = sender as ToolStripMenuItem;
+            if (menuItem == null) return;
+
+            if (menuItem.Text == "設定をリロード (&R)")
+            {
+                this.LoadUserDefinedSearchProvider();
+                this.AddUserDefinedSearchMenu();
+                return;
+            }
+
+            await this.doUserDefinedSearchToolStrip(menuItem.Text);
+        }
+
+        private async Task doUserDefinedSearchToolStrip(string searchProviderName)
+        {
+            //発言詳細で「選択文字列で検索」（選択文字列取得）
+            string _selText = this.PostBrowser.GetSelectedText();
+
+            if (_selText != null)
+            {
+                var tmp = this.MakeUserDefinedSearchUrl(searchProviderName, _selText);
+                if (tmp != null)
+                    await this.OpenUriInBrowserAsync(tmp);
+            }
+        }
+
+        private string MakeUserDefinedSearchUrl(string name, string query)
+        {
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            var provider = this.searchProviders.Where(x => x.Name == name).FirstOrDefault();
+            if (provider == null) return null;
+
+            try
+            {
+                var encoding = Encoding.GetEncoding(provider.QueryEncoding ?? "utf-8");
+                var encodedQuery = System.Web.HttpUtility.UrlEncode(query, encoding);
+
+                return provider.Url.Replace("${query}", encodedQuery);
+            }
+            catch (Exception e)
+            {
+                MyCommon.TraceOut(e.Message);
+                return null;
             }
         }
     }
