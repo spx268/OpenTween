@@ -7973,17 +7973,20 @@ namespace OpenTween
             UreadManageMenuItem.Checked = tb.UnreadManage;
             this.UnreadMngTbMenuItem.Checked = tb.UnreadManage;
 
-            TabMenuControl(_rclickTabName);
+            TabMenuControl(tb);
         }
 
         private void TabMenuControl(string tabName)
         {
-            var tabInfo = _statuses.GetTabByName(tabName);
+            TabMenuControl(_statuses.GetTabByName(tabName));
+        }
 
+        private void TabMenuControl(TabModel tab)
+        {
             this.FilterEditMenuItem.Enabled = true;
             this.EditRuleTbMenuItem.Enabled = true;
 
-            if (tabInfo.IsDefaultTabType)
+            if (tab.IsDefaultTabType)
             {
                 this.ProtectTabMenuItem.Enabled = false;
                 this.ProtectTbMenuItem.Enabled = false;
@@ -7994,7 +7997,7 @@ namespace OpenTween
                 this.ProtectTbMenuItem.Enabled = true;
             }
 
-            if (tabInfo.IsDefaultTabType || tabInfo.Protected)
+            if (tab.IsDefaultTabType || tab.Protected)
             {
                 this.ProtectTabMenuItem.Checked = true;
                 this.ProtectTbMenuItem.Checked = true;
@@ -8007,6 +8010,32 @@ namespace OpenTween
                 this.ProtectTbMenuItem.Checked = false;
                 this.DeleteTabMenuItem.Enabled = true;
                 this.DeleteTbMenuItem.Enabled = true;
+            }
+
+            var listTab = tab as ListTimelineTabModel;
+            if (listTab != null)
+            {
+                this.ListIncludeRTsMenuItem.Visible = true;
+                this.ListIncludeRTsTbMenuItem.Visible = true;
+                this.ListTabMenuSeparator.Visible = true;
+                this.ListTbMenuSeparator.Visible = true;
+
+                this.ListIncludeRTsMenuItem.Checked = listTab.ListInfo.IncludeRTs;
+                this.ListIncludeRTsTbMenuItem.Checked = listTab.ListInfo.IncludeRTs;
+                this.ListIncludeRTsMenuItem.Enabled = this._cfgCommon.IsListsIncludeRts;
+                this.ListIncludeRTsTbMenuItem.Enabled = this._cfgCommon.IsListsIncludeRts;
+            }
+            else
+            {
+                this.ListIncludeRTsMenuItem.Visible = false;
+                this.ListIncludeRTsTbMenuItem.Visible = false;
+                this.ListTabMenuSeparator.Visible = false;
+                this.ListTbMenuSeparator.Visible = false;
+
+                this.ListIncludeRTsMenuItem.Checked = false;
+                this.ListIncludeRTsTbMenuItem.Checked = false;
+                this.ListIncludeRTsMenuItem.Enabled = false;
+                this.ListIncludeRTsTbMenuItem.Enabled = false;
             }
         }
 
@@ -12138,6 +12167,27 @@ namespace OpenTween
             {
                 this.SetStatusLabelUrl();
             }
+        }
+
+        private void ListIncludeRTsTabMenuItem_Click(object sender, EventArgs e)
+        {
+            var menuItem = (ToolStripMenuItem)sender;
+            if (!menuItem.Enabled) return;
+
+            var checkState = menuItem.Checked;
+
+            // チェック状態を同期
+            this.ListIncludeRTsTbMenuItem.Checked = checkState;
+            this.ListIncludeRTsMenuItem.Checked = checkState;
+
+            if (string.IsNullOrEmpty(_rclickTabName)) return;
+
+            var tab = this._statuses.Tabs[_rclickTabName] as ListTimelineTabModel;
+            if (tab == null) return;
+
+            tab.ListInfo.IncludeRTs = checkState;
+
+            SaveConfigsTabs();
         }
     }
 }

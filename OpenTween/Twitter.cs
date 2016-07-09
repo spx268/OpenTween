@@ -935,16 +935,17 @@ namespace OpenTween
         public async Task GetListStatus(bool read, ListTimelineTabModel tab, bool more, bool startup)
         {
             var count = GetApiResultCount(MyCommon.WORKERTYPE.List, more, startup);
+            var includeRTs = SettingCommon.Instance.IsListsIncludeRts && tab.ListInfo.IncludeRTs;
 
             TwitterStatus[] statuses;
             if (more)
             {
-                statuses = await this.Api.ListsStatuses(tab.ListInfo.Id, count, maxId: tab.OldestId, includeRTs: SettingCommon.Instance.IsListsIncludeRts)
+                statuses = await this.Api.ListsStatuses(tab.ListInfo.Id, count, maxId: tab.OldestId, includeRTs: includeRTs)
                     .ConfigureAwait(false);
             }
             else
             {
-                statuses = await this.Api.ListsStatuses(tab.ListInfo.Id, count, includeRTs: SettingCommon.Instance.IsListsIncludeRts)
+                statuses = await this.Api.ListsStatuses(tab.ListInfo.Id, count, includeRTs: includeRTs)
                     .ConfigureAwait(false);
             }
 

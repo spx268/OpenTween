@@ -44,6 +44,8 @@ namespace OpenTween
         public string Username = "";
         public string Nickname = "";
 
+        public bool IncludeRTs = true;
+
         protected Twitter _tw;
 
         private List<UserInfo> _members = null;

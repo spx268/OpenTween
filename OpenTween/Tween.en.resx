@@ -253,6 +253,15 @@
   <data name="ToolStripSeparator18.Size" type="System.Drawing.Size, System.Drawing">
     <value>244, 6</value>
   </data>
+  <data name="ListIncludeRTsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>208, 22</value>
+  </data>
+  <data name="ListIncludeRTsMenuItem.Text" xml:space="preserve">
+    <value>&amp;Include RTs</value>
+  </data>
+  <data name="ListTabMenuSeparator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>205, 6</value>
+  </data>
   <data name="FilterEditMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>247, 24</value>
   </data>
@@ -787,6 +796,15 @@
   </data>
   <data name="ToolStripSeparator29.Size" type="System.Drawing.Size, System.Drawing">
     <value>245, 6</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>213, 22</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Text" xml:space="preserve">
+    <value>&amp;Include RTs</value>
+  </data>
+  <data name="ListTbMenuSeparator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>210, 6</value>
   </data>
   <data name="EditRuleTbMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>248, 24</value>

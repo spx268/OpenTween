@@ -47,6 +47,8 @@
             this.NotifyDispMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SoundFileComboBox = new System.Windows.Forms.ToolStripComboBox();
             this.ToolStripSeparator18 = new System.Windows.Forms.ToolStripSeparator();
+            this.ListIncludeRTsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ListTabMenuSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.FilterEditMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripSeparator19 = new System.Windows.Forms.ToolStripSeparator();
             this.ClearTabMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -140,6 +142,8 @@
             this.NotifyTbMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SoundFileTbComboBox = new System.Windows.Forms.ToolStripComboBox();
             this.ToolStripSeparator29 = new System.Windows.Forms.ToolStripSeparator();
+            this.ListIncludeRTsTbMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ListTbMenuSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.EditRuleTbMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripSeparator30 = new System.Windows.Forms.ToolStripSeparator();
             this.ClearTbMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -505,6 +509,8 @@
             this.NotifyDispMenuItem,
             this.SoundFileComboBox,
             this.ToolStripSeparator18,
+            this.ListIncludeRTsMenuItem,
+            this.ListTabMenuSeparator,
             this.FilterEditMenuItem,
             this.ToolStripSeparator19,
             this.ClearTabMenuItem,
@@ -565,6 +571,17 @@
             // 
             this.ToolStripSeparator18.Name = "ToolStripSeparator18";
             resources.ApplyResources(this.ToolStripSeparator18, "ToolStripSeparator18");
+            // 
+            // ListIncludeRTsMenuItem
+            // 
+            resources.ApplyResources(this.ListIncludeRTsMenuItem, "ListIncludeRTsMenuItem");
+            this.ListIncludeRTsMenuItem.Name = "ListIncludeRTsMenuItem";
+            this.ListIncludeRTsMenuItem.Click += new System.EventHandler(this.ListIncludeRTsTabMenuItem_Click);
+            // 
+            // ListTabMenuSeparator
+            // 
+            resources.ApplyResources(this.ListTabMenuSeparator, "ListTabMenuSeparator");
+            this.ListTabMenuSeparator.Name = "ListTabMenuSeparator";
             // 
             // FilterEditMenuItem
             // 
@@ -1186,6 +1203,8 @@
             this.NotifyTbMenuItem,
             this.SoundFileTbComboBox,
             this.ToolStripSeparator29,
+            this.ListIncludeRTsTbMenuItem,
+            this.ListTbMenuSeparator,
             this.EditRuleTbMenuItem,
             this.ToolStripSeparator30,
             this.ClearTbMenuItem,
@@ -1244,6 +1263,17 @@
             // 
             this.ToolStripSeparator29.Name = "ToolStripSeparator29";
             resources.ApplyResources(this.ToolStripSeparator29, "ToolStripSeparator29");
+            // 
+            // ListIncludeRTsTbMenuItem
+            // 
+            resources.ApplyResources(this.ListIncludeRTsTbMenuItem, "ListIncludeRTsTbMenuItem");
+            this.ListIncludeRTsTbMenuItem.Name = "ListIncludeRTsTbMenuItem";
+            this.ListIncludeRTsTbMenuItem.Click += new System.EventHandler(this.ListIncludeRTsTabMenuItem_Click);
+            // 
+            // ListTbMenuSeparator
+            // 
+            resources.ApplyResources(this.ListTbMenuSeparator, "ListTbMenuSeparator");
+            this.ListTbMenuSeparator.Name = "ListTbMenuSeparator";
             // 
             // EditRuleTbMenuItem
             // 
@@ -2358,5 +2388,9 @@
         private System.Windows.Forms.ToolStripMenuItem SourceRuleMenuItem;
         private System.Windows.Forms.TableLayoutPanel TableLayoutPanel2;
         private TweetDetailsView tweetDetailsView;
+        private System.Windows.Forms.ToolStripMenuItem ListIncludeRTsMenuItem;
+        private System.Windows.Forms.ToolStripSeparator ListTabMenuSeparator;
+        private System.Windows.Forms.ToolStripMenuItem ListIncludeRTsTbMenuItem;
+        private System.Windows.Forms.ToolStripSeparator ListTbMenuSeparator;
     }
 }

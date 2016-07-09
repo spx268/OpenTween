@@ -2277,6 +2277,42 @@
   <data name="LockListSortOrderToolStripMenuItem.Text" xml:space="preserve">
     <value>ソート順をロック</value>
   </data>
+  <data name="ListIncludeRTsMenuItem.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="ListIncludeRTsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>226, 22</value>
+  </data>
+  <data name="ListIncludeRTsMenuItem.Text" xml:space="preserve">
+    <value>RTを含める(&amp;I)</value>
+  </data>
+  <data name="ListIncludeRTsMenuItem.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="ListTabMenuSeparator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>223, 6</value>
+  </data>
+  <data name="ListTabMenuSeparator.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>226, 22</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Text" xml:space="preserve">
+    <value>RTを含める(&amp;I)</value>
+  </data>
+  <data name="ListIncludeRTsTbMenuItem.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="ListTbMenuSeparator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>223, 6</value>
+  </data>
+  <data name="ListTbMenuSeparator.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
   <data name="ContextMenuColumnHeader.Size" type="System.Drawing.Size, System.Drawing">
     <value>147, 54</value>
   </data>
@@ -3632,6 +3668,30 @@
   </data>
   <data name="&gt;&gt;LockListSortOrderToolStripMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ListIncludeRTsMenuItem.Name" xml:space="preserve">
+    <value>ListIncludeRTsMenuItem</value>
+  </data>
+  <data name="&gt;&gt;ListIncludeRTsMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ListTabMenuSeparator.Name" xml:space="preserve">
+    <value>ListTabMenuSeparator</value>
+  </data>
+  <data name="&gt;&gt;ListTabMenuSeparator.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ListIncludeRTsTbMenuItem.Name" xml:space="preserve">
+    <value>ListIncludeRTsTbMenuItem</value>
+  </data>
+  <data name="&gt;&gt;ListIncludeRTsTbMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ListTbMenuSeparator.Name" xml:space="preserve">
+    <value>ListTbMenuSeparator</value>
+  </data>
+  <data name="&gt;&gt;ListTbMenuSeparator.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>TweenMain</value>
