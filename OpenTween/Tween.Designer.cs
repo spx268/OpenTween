@@ -575,6 +575,7 @@
             // ListIncludeRTsMenuItem
             // 
             resources.ApplyResources(this.ListIncludeRTsMenuItem, "ListIncludeRTsMenuItem");
+            this.ListIncludeRTsMenuItem.CheckOnClick = true;
             this.ListIncludeRTsMenuItem.Name = "ListIncludeRTsMenuItem";
             this.ListIncludeRTsMenuItem.Click += new System.EventHandler(this.ListIncludeRTsTabMenuItem_Click);
             // 
@@ -1267,6 +1268,7 @@
             // ListIncludeRTsTbMenuItem
             // 
             resources.ApplyResources(this.ListIncludeRTsTbMenuItem, "ListIncludeRTsTbMenuItem");
+            this.ListIncludeRTsTbMenuItem.CheckOnClick = true;
             this.ListIncludeRTsTbMenuItem.Name = "ListIncludeRTsTbMenuItem";
             this.ListIncludeRTsTbMenuItem.Click += new System.EventHandler(this.ListIncludeRTsTabMenuItem_Click);
             // 
